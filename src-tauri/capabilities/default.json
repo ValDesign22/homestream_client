@@ -3,7 +3,8 @@
   "identifier": "default",
   "description": "Capability for the main window",
   "windows": [
-    "main"
+    "main",
+    "splashscreen"
   ],
   "permissions": [
     "path:default",
@@ -15,6 +16,16 @@
     "menu:default",
     "tray:default",
     "shell:allow-open",
-    "http:default"
+    "http:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://*.themoviedb.org/*"
+        }
+      ],
+      "deny": []
+    },
+    "fs:default"
   ]
 }
