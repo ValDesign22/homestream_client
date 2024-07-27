@@ -39,10 +39,12 @@ pub fn save_file(stream: &mut FtpStream, store: &str, content: &str) -> Result<(
     }
 
     let mut put_stream = stream.put_with_stream(format!("{}_store.json", store).as_str())?;
-    if let Err(e) = put_stream.write_all(content.as_bytes()) {
+    let write = put_stream.write_all(content.as_bytes());
+    if let Err(e) = write {
         return Err(e.into());
     }
-    if let Err(e) = stream.finalize_put_stream(put_stream) {
+    let finalize = stream.finalize_put_stream(put_stream);
+    if let Err(e) = finalize {
         return Err(e.into());
     }
 
