@@ -4,7 +4,6 @@ use utils::ftp::create_stream;
 use std::sync::Mutex;
 use tauri::async_runtime::spawn;
 use tauri::{AppHandle, Manager, State};
-use tokio::time::{sleep, Duration};
 
 pub mod utils;
 

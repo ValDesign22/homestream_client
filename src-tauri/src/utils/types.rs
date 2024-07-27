@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Movie {
   pub id: i32,
   pub collection_id: Option<i32>,
@@ -22,7 +22,7 @@ pub struct Season {}
 
 pub struct Episode {}
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Genre {
   pub id: i32,
   pub name: String,

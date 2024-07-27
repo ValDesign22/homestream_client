@@ -92,8 +92,9 @@ pub async fn explore_movies_folder(stream: &mut FtpStream, folder: Option<&str>)
                 continue;
             }
 
-            if existing_movies.iter().any(|movie| movie.path.as_ref().unwrap() == &format!("{}/{}", path, file)) {
-                println!("Movie already exists: {}", file);
+            let existing_movie = existing_movies.iter().find(|movie| movie.path.as_ref().unwrap() == &format!("{}/{}", path, file));
+            if existing_movie.is_some() {
+                movies.push(existing_movie.unwrap().clone());
                 continue;
             }
 
