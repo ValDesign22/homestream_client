@@ -1,6 +1,6 @@
 use dotenvy::dotenv;
-use utils::explore::{explore_movies_folder, save_file};
-use utils::ftp::create_stream;
+use utils::explore::explore_movies_folder;
+use utils::ftp::{create_stream, load_file, save_file};
 use std::sync::Mutex;
 use tauri::async_runtime::spawn;
 use tauri::{AppHandle, Manager, State};
@@ -17,11 +17,11 @@ pub fn run() {
     dotenv().expect("Failed to load .env file");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_fs::init())
         .manage(Mutex::new(SetupState {
             frontend_task: false,
             backend_task: false,
         }))
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![greet, set_complete])
@@ -68,6 +68,9 @@ async fn setup(app: AppHandle) -> Result<(), ()> {
 
     let movies_content = serde_json::to_string(&movies).unwrap();
     let _ = save_file(&mut stream, "movies", &movies_content);
+
+    let series = load_file(&mut stream, "series");
+    println!("Series: {:?}", series);
 
     let _ = stream.quit();
 

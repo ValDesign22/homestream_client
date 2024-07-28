@@ -27,3 +27,14 @@ pub struct Genre {
   pub id: i32,
   pub name: String,
 }
+
+pub struct ImagesResponse {
+  pub backdrop: Option<String>,
+  pub logo: Option<String>,
+  pub poster: Option<String>,
+}
+
+pub enum MediaType {
+  Movie,
+  Serie,
+}
