@@ -15,11 +15,13 @@
         "visible": false,
         "title": "homestream",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "center": true
       },
       {
         "label": "splashscreen",
-        "url": "/splashscreen"
+        "url": "/splashscreen",
+        "center": true
       }
     ],
     "security": {

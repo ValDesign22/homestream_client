@@ -38,6 +38,7 @@ pub fn load_file(stream: &mut FtpStream, store: &str) -> Vec<Movie> {
             json_data
         }
         Err(e) => {
+            println!("Error reading {}_store.json: {}", store, e);
             let _ = save_file(stream, store, "[]");
             vec![]
         }

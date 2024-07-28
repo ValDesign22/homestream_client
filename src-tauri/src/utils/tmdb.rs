@@ -23,6 +23,7 @@ async fn create_request(url: &str) -> Result<reqwest::Response, Box<dyn std::err
 
 async fn fetch_images(id: &str, media_type: MediaType) -> Result<ImagesResponse, Box<dyn std::error::Error>> {
     let base_url = match media_type {
+        MediaType::Anime => "https://api.themoviedb.org/3/movie/",
         MediaType::Movie => "https://api.themoviedb.org/3/movie/",
         MediaType::Serie => "https://api.themoviedb.org/3/tv/",
     };

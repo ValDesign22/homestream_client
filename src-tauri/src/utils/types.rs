@@ -16,10 +16,13 @@ pub struct Movie {
   pub path: Option<String>,
 }
 
-pub struct Series {}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Serie {}
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Season {}
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Episode {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -35,6 +38,7 @@ pub struct ImagesResponse {
 }
 
 pub enum MediaType {
+  Anime,
   Movie,
   Serie,
 }

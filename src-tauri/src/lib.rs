@@ -1,6 +1,7 @@
 use dotenvy::dotenv;
-use utils::explore::explore_movies_folder;
-use utils::ftp::{create_stream, load_file, save_file};
+use utils::explore::{explore_movies_folder, explore_series_folder};
+use utils::ftp::{create_stream, save_file};
+use utils::types::MediaType;
 use std::sync::Mutex;
 use tauri::async_runtime::spawn;
 use tauri::{AppHandle, Manager, State};
@@ -60,21 +61,22 @@ async fn set_complete(
 }
 
 async fn setup(app: AppHandle) -> Result<(), ()> {
-    println!("Performing really heavy backend setup task...");
-
     let mut stream = create_stream();
 
-    let movies = explore_movies_folder(&mut stream, None).await;
-
+    let movies = explore_movies_folder(&mut stream, MediaType::Movie, None).await;
     let movies_content = serde_json::to_string(&movies).unwrap();
     let _ = save_file(&mut stream, "movies", &movies_content);
 
-    let series = load_file(&mut stream, "series");
-    println!("Series: {:?}", series);
+    let animes = explore_movies_folder(&mut stream, MediaType::Anime, None).await;
+    let animes_content = serde_json::to_string(&animes).unwrap();
+    let _ = save_file(&mut stream, "animes", &animes_content);
+
+    let series = explore_series_folder(&mut stream, None).await;
+    let series_content = serde_json::to_string(&series).unwrap();
+    let _ = save_file(&mut stream, "series", &series_content);
 
     let _ = stream.quit();
 
-    println!("Backend setup task completed!");
     set_complete(
         app.clone(),
         app.state::<Mutex<SetupState>>(),
