@@ -1,6 +1,21 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Config {
+  pub ftp_host: String,
+  pub ftp_port: String,
+  pub ftp_user: String,
+  pub ftp_password: String,
+  pub ftp_path: String,
+  pub movies_folder: String,
+  pub series_folder: String,
+  pub animes_folder: String,
+  pub app_storage_path: String,
+  pub tmdb_api_key: String,
+  pub tmdb_language: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Movie {
   pub id: i32,
   pub collection_id: Option<i32>,

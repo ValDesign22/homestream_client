@@ -1,3 +1,4 @@
+use commands::config::get_config;
 use dotenvy::dotenv;
 use utils::explore::{explore_movies_folder, explore_series_folder};
 use utils::ftp::{create_stream, save_file};
@@ -6,6 +7,7 @@ use std::sync::Mutex;
 use tauri::async_runtime::spawn;
 use tauri::{AppHandle, Manager, State};
 
+pub mod commands;
 pub mod utils;
 
 struct SetupState {
@@ -25,7 +27,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet, set_complete])
+        .invoke_handler(tauri::generate_handler![get_config, greet, set_complete])
         .setup(|app| {
             spawn(setup(app.handle().clone()));
             Ok(())
@@ -61,6 +63,17 @@ async fn set_complete(
 }
 
 async fn setup(app: AppHandle) -> Result<(), ()> {
+    let config = get_config(app.clone());
+    if config.is_none() {
+        set_complete(
+            app.clone(),
+            app.state::<Mutex<SetupState>>(),
+            "backend".to_string(),
+        )
+        .await?;
+        return Ok(());
+    }
+
     let mut stream = create_stream();
 
     let movies = explore_movies_folder(&mut stream, MediaType::Movie, None).await;
