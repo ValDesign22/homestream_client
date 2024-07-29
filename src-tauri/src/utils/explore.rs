@@ -2,7 +2,11 @@ use std::collections::VecDeque;
 
 use suppaftp::FtpStream;
 
-use super::{ftp::{load_movies, load_series}, tmdb::{search_episode, search_movie, search_season, search_serie}, types::{Episode, MediaType, Movie, Season, Serie}};
+use super::{
+    ftp::{load_movies, load_series},
+    tmdb::{search_episode, search_movie, search_season, search_serie},
+    types::{Episode, MediaType, Movie, Season, Serie}
+};
 
 pub async fn explore_movies_folder(stream: &mut FtpStream, media_type: MediaType, folder: Option<&str>) -> Vec<Movie> {
     let default_path = format!(
