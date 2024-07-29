@@ -1,7 +1,7 @@
 use serde_json::Value;
 use tauri_plugin_http::reqwest;
 
-use super::types::{Genre, ImagesResponse, MediaType, Movie};
+use super::types::{Episode, Genre, ImagesResponse, MediaType, Movie, Season, Serie};
 
 async fn create_request(url: &str) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
     let tmdb_api_key = std::env::var("TMDB_API_KEY").expect("TMDB_API_KEY not set");
@@ -21,6 +21,18 @@ async fn create_request(url: &str) -> Result<reqwest::Response, Box<dyn std::err
     }
 }
 
+fn find_image_path<'a>(images: &'a [Value], language: &str) -> Option<String> {
+    images.iter().find_map(|image| {
+        image.get("iso_639_1").and_then(|lang| {
+            if lang == language || lang == "en" {
+                image.get("file_path").and_then(|file_path| file_path.as_str().map(String::from))
+            } else {
+                None
+            }
+        })
+    })
+}
+
 async fn fetch_images(id: &str, media_type: MediaType) -> Result<ImagesResponse, Box<dyn std::error::Error>> {
     let base_url = match media_type {
         MediaType::Anime => "https://api.themoviedb.org/3/movie/",
@@ -33,18 +45,6 @@ async fn fetch_images(id: &str, media_type: MediaType) -> Result<ImagesResponse,
     let images_data: Value = images_res.json().await?;
 
     let language = std::env::var("TMDB_LANGUAGE").expect("TMDB_LANGUAGE not set");
-
-    fn find_image_path<'a>(images: &'a [Value], language: &str) -> Option<String> {
-        images.iter().find_map(|image| {
-            image.get("iso_639_1").and_then(|lang| {
-                if lang == language || lang == "en" {
-                    image.get("file_path").and_then(|file_path| file_path.as_str().map(String::from))
-                } else {
-                    None
-                }
-            })
-        })
-    }
 
     let backdrops = images_data["backdrops"].as_array().map(Vec::as_slice).unwrap_or(&[]);
     let backdrop = find_image_path(backdrops, &language)
@@ -131,6 +131,144 @@ pub async fn search_movie(
         release_date: movie_data["release_date"].as_str().unwrap().to_string(),
         runtime: movie_data["runtime"].as_i64().unwrap() as i32,
         genres,
+        path: None::<String>,
+    })
+}
+
+pub async fn search_serie(
+    title: &str,
+    date: Option<&str>,
+) -> Result<Serie, Box<dyn std::error::Error>> {
+    let tmdb_language = std::env::var("TMDB_LANGUAGE").expect("TMDB_LANGUAGE not set");
+
+    let search_url = format!(
+        "https://api.themoviedb.org/3/search/tv?query={}&include_adult=false&language={}{}",
+        title,
+        tmdb_language,
+        match date {
+            Some(date) => format!("&year={}", date),
+            None => "".to_string(),
+        }
+    );
+
+    let search_res = create_request(&search_url).await?;
+    let search_data: Value = search_res.json().await?;
+
+    if search_data["results"].as_array().unwrap().is_empty() {
+        return Err("No results found".into());
+    }
+
+    let serie_id = search_data["results"][0]["id"].as_i64().unwrap();
+    let serie_url = format!(
+        "https://api.themoviedb.org/3/tv/{}?language={}",
+        serie_id, tmdb_language
+    );
+
+    let serie_res = create_request(&serie_url).await?;
+    let serie_data: Value = serie_res.json().await?;
+
+    let genres = match serie_data["genres"].as_array() {
+        Some(genres) => Some(
+            genres
+                .iter()
+                .map(|genre| {
+                    let genre = genre.as_object().unwrap();
+                    Genre {
+                        id: genre["id"].as_i64().unwrap() as i32,
+                        name: genre["name"].as_str().unwrap().to_string(),
+                    }
+                })
+                .collect::<Vec<Genre>>(),
+        ),
+        None => None::<Vec<Genre>>,
+    };
+
+    let images_res = fetch_images(&serie_id.to_string(), MediaType::Serie).await?;
+
+    Ok(Serie {
+        id: serie_data["id"].as_i64().unwrap() as i32,
+        title: serie_data["name"].as_str().unwrap().to_string(),
+        overview: serie_data["overview"].as_str().unwrap().to_string(),
+        poster_path: images_res.poster,
+        backdrop_path: images_res.backdrop,
+        logo_path: images_res.logo,
+        genres,
+        seasons: None::<Vec<Season>>,
+        path: None::<String>,
+    })
+}
+
+pub async fn search_season(
+    serie_id: i32,
+    season_number: i32,
+) -> Result<Season, Box<dyn std::error::Error>> {
+    let tmdb_language = std::env::var("TMDB_LANGUAGE").expect("TMDB_LANGUAGE not set");
+
+    let season_url = format!(
+        "https://api.themoviedb.org/3/tv/{}/season/{}?language={}",
+        serie_id, season_number, tmdb_language
+    );
+
+    let season_res = create_request(&season_url).await?;
+    let season_data: Value = season_res.json().await?;
+
+    let posters_url = format!(
+        "https://api.themoviedb.org/3/tv/{}/season/{}/images",
+        serie_id, season_number
+    );
+
+    let posters_res = create_request(&posters_url).await?;
+    let posters_data: Value = posters_res.json().await?;
+
+    let posters = posters_data["posters"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+    let poster_path = find_image_path(posters, &tmdb_language)
+        .or_else(|| find_image_path(posters, "en"));
+
+    Ok(Season {
+        id: season_data["id"].as_i64().unwrap() as i32,
+        season_number: season_data["season_number"].as_i64().unwrap() as i32,
+        name: season_data["name"].as_str().unwrap().to_string(),
+        overview: season_data["overview"].as_str().unwrap().to_string(),
+        episodes: None::<Vec<Episode>>,
+        poster_path,
+        path: None::<String>,
+    })
+}
+
+pub async fn search_episode(
+    serie_id: i32,
+    season_number: i32,
+    episode_number: i32,
+) -> Result<Episode, Box<dyn std::error::Error>> {
+    let tmdb_language = std::env::var("TMDB_LANGUAGE").expect("TMDB_LANGUAGE not set");
+
+    let episode_url = format!(
+        "https://api.themoviedb.org/3/tv/{}/season/{}/episode/{}?language={}",
+        serie_id, season_number, episode_number, tmdb_language
+    );
+
+    let episode_res = create_request(&episode_url).await?;
+    let episode_data: Value = episode_res.json().await?;
+
+    let stills_url = format!(
+        "https://api.themoviedb.org/3/tv/{}/season/{}/episode/{}/images",
+        serie_id, season_number, episode_number
+    );
+
+    let stills_res = create_request(&stills_url).await?;
+    let stills_data: Value = stills_res.json().await?;
+
+    let stills = stills_data["stills"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+    let still_path = find_image_path(stills, &tmdb_language)
+        .or_else(|| find_image_path(stills, "en"));
+
+    Ok(Episode {
+        id: episode_data["id"].as_i64().unwrap() as i32,
+        episode_number: episode_data["episode_number"].as_i64().unwrap() as i32,
+        name: episode_data["name"].as_str().unwrap().to_string(),
+        overview: episode_data["overview"].as_str().unwrap().to_string(),
+        air_date: episode_data["air_date"].as_str().unwrap().to_string(),
+        still_path,
         path: None::<String>,
     })
 }
