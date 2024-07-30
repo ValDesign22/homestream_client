@@ -1,4 +1,4 @@
-use commands::config::get_config;
+use commands::config::{get_config, save_config};
 use dotenvy::dotenv;
 use utils::explore::{explore_movies_folder, explore_series_folder};
 use utils::ftp::{create_stream, save_file};
@@ -27,7 +27,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![get_config, greet, set_complete])
+        .invoke_handler(tauri::generate_handler![get_config, greet, save_config, set_complete])
         .setup(|app| {
             spawn(setup(app.handle().clone()));
             Ok(())

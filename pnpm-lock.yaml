@@ -20,6 +20,9 @@ importers:
       '@tauri-apps/plugin-shell':
         specifier: '>=2.0.0-beta.0'
         version: 2.0.0-beta.8
+      '@vueuse/core':
+        specifier: ^10.11.0
+        version: 10.11.0(vue@3.4.33(typescript@5.5.4))
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0
@@ -41,6 +44,9 @@ importers:
       vue:
         specifier: ^3.3.4
         version: 3.4.33(typescript@5.5.4)
+      vue-router:
+        specifier: '4'
+        version: 4.4.0(vue@3.4.33(typescript@5.5.4))
     devDependencies:
       '@eslint/js':
         specifier: ^9.7.0
@@ -602,6 +608,9 @@ packages:
 
   '@vue/compiler-ssr@3.4.33':
     resolution: {integrity: sha512-0WveC9Ai+eT/1b6LCV5IfsufBZ0HP7pSSTdDjcuW302tTEgoBw8rHVHKPbGUtzGReUFCRXbv6zQDDgucnV2WzQ==}
+
+  '@vue/devtools-api@6.6.3':
+    resolution: {integrity: sha512-0MiMsFma/HqA6g3KLKn+AGpL1kgKhFWszC9U29NfpWK5LE7bjeXxySWJrOJ77hBz+TBrBQ7o4QJqbPbqbs8rJw==}
 
   '@vue/language-core@2.0.28':
     resolution: {integrity: sha512-0z4tyCCaqqPbdyz0T4yTFQeLpCo4TOM/ZHAC3geGLHeCiFAjVbROB9PiEtrXR1AoLObqUPFHSmKZeWtEMssSqw==}
@@ -1549,6 +1558,11 @@ packages:
     peerDependencies:
       eslint: '>=6.0.0'
 
+  vue-router@4.4.0:
+    resolution: {integrity: sha512-HB+t2p611aIZraV2aPSRNXf0Z/oLZFrlygJm+sZbdJaW6lcFqEDQwnzUBXn+DApw+/QzDU/I9TeWx9izEjTmsA==}
+    peerDependencies:
+      vue: ^3.2.0
+
   vue-template-compiler@2.7.16:
     resolution: {integrity: sha512-AYbUWAJHLGGQM7+cNTELw+KsOG9nl2CnSv467WobS5Cv9uk3wFcnr1Etsz2sEIHEZvw1U+o9mRlEO6QbZvUPGQ==}
 
@@ -2040,6 +2054,8 @@ snapshots:
     dependencies:
       '@vue/compiler-dom': 3.4.33
       '@vue/shared': 3.4.33
+
+  '@vue/devtools-api@6.6.3': {}
 
   '@vue/language-core@2.0.28(typescript@5.5.4)':
     dependencies:
@@ -2984,6 +3000,11 @@ snapshots:
       semver: 7.6.3
     transitivePeerDependencies:
       - supports-color
+
+  vue-router@4.4.0(vue@3.4.33(typescript@5.5.4)):
+    dependencies:
+      '@vue/devtools-api': 6.6.3
+      vue: 3.4.33(typescript@5.5.4)
 
   vue-template-compiler@2.7.16:
     dependencies:
