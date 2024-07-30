@@ -24,18 +24,13 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![get_config, greet, save_config, set_complete])
+        .invoke_handler(tauri::generate_handler![get_config, save_config, set_complete])
         .setup(|app| {
             spawn(setup(app.handle().clone()));
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
 #[tauri::command]
