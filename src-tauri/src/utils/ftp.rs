@@ -2,25 +2,23 @@ use std::io::Write;
 use crate::utils::types::Movie;
 use suppaftp::FtpStream;
 
-use super::types::Serie;
+use super::types::{Config, Serie};
 
-pub fn create_stream() -> FtpStream {
+pub fn create_stream(config: Config) -> FtpStream {
     let ftp_url = format!(
         "{}:{}",
-        std::env::var("FTP_HOST").expect("FTP_HOST not set"),
-        std::env::var("FTP_PORT").expect("FTP_PORT not set"),
+        config.ftp_host,
+        config.ftp_port,
     );
-    let ftp_user = std::env::var("FTP_USER").expect("FTP_USER not set");
-    let ftp_password = std::env::var("FTP_PASSWORD").expect("FTP_PASSWORD not set");
 
     let mut stream = FtpStream::connect(ftp_url).unwrap();
-    let _ = stream.login(&ftp_user, &ftp_password).unwrap();
+    let _ = stream.login(&config.ftp_user, &config.ftp_password).unwrap();
 
     stream
 }
 
-pub fn load_movies(stream: &mut FtpStream, store: &str) -> Vec<Movie> {
-    let app_storage_path = std::env::var("APP_STORAGE_PATH").expect("APP_STORAGE_PATH not set");
+pub fn load_movies(stream: &mut FtpStream, config: Config, store: &str) -> Vec<Movie> {
+    let app_storage_path = config.app_storage_path;
 
     if let Err(e) = stream.cwd(&app_storage_path) {
         eprintln!("Error changing directory: {}", e);
@@ -41,14 +39,14 @@ pub fn load_movies(stream: &mut FtpStream, store: &str) -> Vec<Movie> {
         }
         Err(e) => {
             eprintln!("Error reading {}_store.json: {}", store, e);
-            let _ = save_file(stream, store, "[]");
+            let _ = save_file(stream, config, store, "[]");
             vec![]
         }
     }
 }
 
-pub fn load_series(stream: &mut FtpStream) -> Vec<Serie> {
-    let app_storage_path = std::env::var("APP_STORAGE_PATH").expect("APP_STORAGE_PATH not set");
+pub fn load_series(stream: &mut FtpStream, config: Config) -> Vec<Serie> {
+    let app_storage_path = config.app_storage_path;
 
     if let Err(e) = stream.cwd(&app_storage_path) {
         eprintln!("Error changing directory: {}", e);
@@ -69,14 +67,14 @@ pub fn load_series(stream: &mut FtpStream) -> Vec<Serie> {
         }
         Err(e) => {
             eprintln!("Error reading series_store.json: {}", e);
-            let _ = save_file(stream, "series", "[]");
+            let _ = save_file(stream, config, "series", "[]");
             vec![]
         }
     }
 }
 
-pub fn save_file(stream: &mut FtpStream, store: &str, content: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let app_storage_path = std::env::var("APP_STORAGE_PATH").expect("APP_STORAGE_PATH not set");
+pub fn save_file(stream: &mut FtpStream, config: Config, store: &str, content: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let app_storage_path = config.app_storage_path;
 
     let _ = stream.cwd(&app_storage_path)?;
 

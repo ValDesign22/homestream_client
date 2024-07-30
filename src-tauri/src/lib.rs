@@ -1,5 +1,4 @@
 use commands::config::{get_config, save_config};
-use dotenvy::dotenv;
 use utils::explore::{explore_movies_folder, explore_series_folder};
 use utils::ftp::{create_stream, save_file};
 use utils::types::MediaType;
@@ -17,8 +16,6 @@ struct SetupState {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    dotenv().expect("Failed to load .env file");
-
     tauri::Builder::default()
         .manage(Mutex::new(SetupState {
             frontend_task: false,
@@ -73,20 +70,21 @@ async fn setup(app: AppHandle) -> Result<(), ()> {
         .await?;
         return Ok(());
     }
+    let config = config.unwrap();
 
-    let mut stream = create_stream();
+    let mut stream = create_stream(config).await.unwrap();
 
-    let movies = explore_movies_folder(&mut stream, MediaType::Movie, None).await;
+    let movies = explore_movies_folder(&mut stream, config, MediaType::Movie, None).await;
     let movies_content = serde_json::to_string(&movies).unwrap();
-    let _ = save_file(&mut stream, "movies", &movies_content);
+    let _ = save_file(&mut stream, config, "movies", &movies_content);
 
-    let animes = explore_movies_folder(&mut stream, MediaType::Anime, None).await;
+    let animes = explore_movies_folder(&mut stream, config, MediaType::Anime, None).await;
     let animes_content = serde_json::to_string(&animes).unwrap();
-    let _ = save_file(&mut stream, "animes", &animes_content);
+    let _ = save_file(&mut stream, config, "animes", &animes_content);
 
-    let series = explore_series_folder(&mut stream, None).await;
+    let series = explore_series_folder(&mut stream, config, None).await;
     let series_content = serde_json::to_string(&series).unwrap();
-    let _ = save_file(&mut stream, "series", &series_content);
+    let _ = save_file(&mut stream, config, "series", &series_content);
 
     let _ = stream.quit();
 
