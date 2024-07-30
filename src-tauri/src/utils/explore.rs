@@ -8,13 +8,13 @@ use super::{
     types::{Config, Episode, MediaType, Movie, Season, Serie}
 };
 
-pub async fn explore_movies_folder(stream: &mut FtpStream, config: Config, media_type: MediaType, folder: Option<&str>) -> Vec<Movie> {
+pub async fn explore_movies_folder(stream: &mut FtpStream, config: &Config, media_type: MediaType, folder: Option<&str>) -> Vec<Movie> {
     let default_path = format!(
         "{}{}",
-        config.ftp_path,
+        &config.ftp_path,
         match media_type {
-            MediaType::Anime => config.animes_folder,
-            MediaType::Movie => config.movies_folder,
+            MediaType::Anime => &config.animes_folder,
+            MediaType::Movie => &config.movies_folder,
             MediaType::Serie => unreachable!(),
         },
     );
@@ -26,7 +26,7 @@ pub async fn explore_movies_folder(stream: &mut FtpStream, config: Config, media
     stack.push_back(initial_path);
 
     let mut movies: Vec<Movie> = Vec::new();
-    let existing_movies = load_movies(stream, config, match media_type {
+    let existing_movies = load_movies(stream, &config, match media_type {
         MediaType::Anime => "animes",
         MediaType::Movie => "movies",
         MediaType::Serie => unreachable!(),
@@ -72,7 +72,7 @@ pub async fn explore_movies_folder(stream: &mut FtpStream, config: Config, media
                 None => file_name.to_string(),
             };
 
-            match search_movie(config, &title, date).await {
+            match search_movie(&config, &title, date).await {
                 Ok(movie_data) => movies.push(Movie {
                     path: Some(format!("{}/{}", path, file)),
                     ..movie_data
@@ -85,11 +85,11 @@ pub async fn explore_movies_folder(stream: &mut FtpStream, config: Config, media
     movies
 }
 
-pub async fn explore_series_folder(stream: &mut FtpStream, config: Config, folder: Option<&str>) -> Vec<Serie> {
+pub async fn explore_series_folder(stream: &mut FtpStream, config: &Config, folder: Option<&str>) -> Vec<Serie> {
     let default_path = format!(
         "{}{}",
-        config.ftp_path,
-        config.series_folder,
+        &config.ftp_path,
+        &config.series_folder,
     );
     let initial_path = folder
         .map(|folder| format!("{}/{}", default_path, folder))
@@ -132,7 +132,7 @@ pub async fn explore_series_folder(stream: &mut FtpStream, config: Config, folde
                 None => file.to_string(),
             };
 
-            let serie = match search_serie(config, &title, date).await {
+            let serie = match search_serie(&config, &title, date).await {
                 Ok(serie) => Serie {
                     path: Some(format!("{}/{}", path, file)),
                     ..serie
@@ -143,7 +143,7 @@ pub async fn explore_series_folder(stream: &mut FtpStream, config: Config, folde
                 },
             };
 
-            let seasons = explore_seasons_folder(stream, config, &serie, None).await;
+            let seasons = explore_seasons_folder(stream, &config, &serie, None).await;
             series.push(Serie {
                 seasons: Some(seasons),
                 ..serie
@@ -154,7 +154,7 @@ pub async fn explore_series_folder(stream: &mut FtpStream, config: Config, folde
     series
 }
 
-pub async fn explore_seasons_folder(stream: &mut FtpStream, config: Config, serie: &Serie, folder: Option<&str>) -> Vec<Season> {
+pub async fn explore_seasons_folder(stream: &mut FtpStream, config: &Config, serie: &Serie, folder: Option<&str>) -> Vec<Season> {
     let initial_path = folder
         .map(|folder| format!("{}/{}", serie.path.as_deref().unwrap_or_default(), folder))
         .unwrap_or_else(|| serie.path.as_deref().unwrap_or_default().to_string());
@@ -192,7 +192,7 @@ pub async fn explore_seasons_folder(stream: &mut FtpStream, config: Config, seri
                 _ => continue,
             };
 
-            let season = match search_season(config, serie.id, season_number.parse().unwrap()).await {
+            let season = match search_season(&config, serie.id, season_number.parse().unwrap()).await {
                 Ok(season) => Season {
                     path: Some(format!("{}/{}", path, file)),
                     ..season
@@ -203,7 +203,7 @@ pub async fn explore_seasons_folder(stream: &mut FtpStream, config: Config, seri
                 },
             };
 
-            let episodes = explore_episodes(stream, config, serie, &season, None).await;
+            let episodes = explore_episodes(stream, &config, serie, &season, None).await;
             seasons.push(Season {
                 episodes: Some(episodes),
                 ..season
@@ -216,7 +216,7 @@ pub async fn explore_seasons_folder(stream: &mut FtpStream, config: Config, seri
 
 pub async fn explore_episodes(
     stream: &mut FtpStream,
-    config: Config,
+    config: &Config,
     serie: &Serie,
     season: &Season,
     folder: Option<&str>
@@ -229,7 +229,7 @@ pub async fn explore_episodes(
     stack.push_back(initial_path);
 
     let mut episodes: Vec<Episode> = Vec::new();
-    let existing_series = load_series(stream, config);
+    let existing_series = load_series(stream, &config);
 
     while let Some(path) = stack.pop_back() {
         if let Err(e) = stream.cwd(&path) {
@@ -275,7 +275,7 @@ pub async fn explore_episodes(
                 None => continue,
             };
 
-            match search_episode(config, serie.id, season.season_number, episode_number.parse().unwrap()).await {
+            match search_episode(&config, serie.id, season.season_number, episode_number.parse().unwrap()).await {
                 Ok(episode) => episodes.push(Episode {
                     path: Some(file_path),
                     ..episode

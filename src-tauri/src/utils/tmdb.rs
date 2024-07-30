@@ -3,8 +3,8 @@ use tauri_plugin_http::reqwest;
 
 use super::types::{Config, Episode, Genre, ImagesResponse, MediaType, Movie, Season, Serie};
 
-async fn create_request(url: &str, config: Config) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
-    let tmdb_api_key = config.tmdb_api_key;
+async fn create_request(url: &str, config: &Config) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
+    let tmdb_api_key = &config.tmdb_api_key;
 
     let client = reqwest::Client::new();
     let res = client
@@ -33,7 +33,7 @@ fn find_image_path<'a>(images: &'a [Value], language: &str) -> Option<String> {
     })
 }
 
-async fn fetch_images(id: &str, media_type: MediaType, config: Config) -> Result<ImagesResponse, Box<dyn std::error::Error>> {
+async fn fetch_images(id: &str, media_type: MediaType, config: &Config) -> Result<ImagesResponse, Box<dyn std::error::Error>> {
     let base_url = match media_type {
         MediaType::Anime => "https://api.themoviedb.org/3/movie/",
         MediaType::Movie => "https://api.themoviedb.org/3/movie/",
@@ -41,10 +41,10 @@ async fn fetch_images(id: &str, media_type: MediaType, config: Config) -> Result
     };
     let url = format!("{}{}/images", base_url, id);
 
-    let images_res = create_request(&url, config).await?;
+    let images_res = create_request(&url, &config).await?;
     let images_data: Value = images_res.json().await?;
 
-    let language = config.tmdb_language;
+    let language = &config.tmdb_language;
 
     let backdrops = images_data["backdrops"].as_array().map(Vec::as_slice).unwrap_or(&[]);
     let backdrop = find_image_path(backdrops, &language)
@@ -66,11 +66,11 @@ async fn fetch_images(id: &str, media_type: MediaType, config: Config) -> Result
 }
 
 pub async fn search_movie(
-    config: Config,
+    config: &Config,
     title: &str,
     date: Option<&str>,
 ) -> Result<Movie, Box<dyn std::error::Error>> {
-    let tmdb_language = config.tmdb_language;
+    let tmdb_language = &config.tmdb_language;
 
     let search_url = format!(
         "https://api.themoviedb.org/3/search/movie?query={}&include_adult=false&language={}{}",
@@ -82,7 +82,7 @@ pub async fn search_movie(
         }
     );
 
-    let search_res = create_request(&search_url, config).await?;
+    let search_res = create_request(&search_url, &config).await?;
     let search_data: Value = search_res.json().await?;
 
     if search_data["results"].as_array().unwrap().is_empty() {
@@ -95,7 +95,7 @@ pub async fn search_movie(
         movie_id, tmdb_language
     );
 
-    let movie_res = create_request(&movie_url, config).await?;
+    let movie_res = create_request(&movie_url, &config).await?;
     let movie_data: Value = movie_res.json().await?;
 
     let collection_id = match movie_data["belongs_to_collection"].as_object() {
@@ -118,7 +118,7 @@ pub async fn search_movie(
         None => None::<Vec<Genre>>,
     };
 
-    let images_res = fetch_images(&movie_id.to_string(), MediaType::Movie, config).await?; 
+    let images_res = fetch_images(&movie_id.to_string(), MediaType::Movie, &config).await?; 
 
     Ok(Movie {
         id: movie_data["id"].as_i64().unwrap() as i32,
@@ -137,11 +137,11 @@ pub async fn search_movie(
 }
 
 pub async fn search_serie(
-    config: Config,
+    config: &Config,
     title: &str,
     date: Option<&str>,
 ) -> Result<Serie, Box<dyn std::error::Error>> {
-    let tmdb_language = config.tmdb_language;
+    let tmdb_language = &config.tmdb_language;
 
     let search_url = format!(
         "https://api.themoviedb.org/3/search/tv?query={}&include_adult=false&language={}{}",
@@ -153,7 +153,7 @@ pub async fn search_serie(
         }
     );
 
-    let search_res = create_request(&search_url, config).await?;
+    let search_res = create_request(&search_url, &config).await?;
     let search_data: Value = search_res.json().await?;
 
     if search_data["results"].as_array().unwrap().is_empty() {
@@ -166,7 +166,7 @@ pub async fn search_serie(
         serie_id, tmdb_language
     );
 
-    let serie_res = create_request(&serie_url, config).await?;
+    let serie_res = create_request(&serie_url, &config).await?;
     let serie_data: Value = serie_res.json().await?;
 
     let genres = match serie_data["genres"].as_array() {
@@ -185,7 +185,7 @@ pub async fn search_serie(
         None => None::<Vec<Genre>>,
     };
 
-    let images_res = fetch_images(&serie_id.to_string(), MediaType::Serie, config).await?;
+    let images_res = fetch_images(&serie_id.to_string(), MediaType::Serie, &config).await?;
 
     Ok(Serie {
         id: serie_data["id"].as_i64().unwrap() as i32,
@@ -201,18 +201,18 @@ pub async fn search_serie(
 }
 
 pub async fn search_season(
-    config: Config,
+    config: &Config,
     serie_id: i32,
     season_number: i32,
 ) -> Result<Season, Box<dyn std::error::Error>> {
-    let tmdb_language = config.tmdb_language;
+    let tmdb_language = &config.tmdb_language;
 
     let season_url = format!(
         "https://api.themoviedb.org/3/tv/{}/season/{}?language={}",
         serie_id, season_number, tmdb_language
     );
 
-    let season_res = create_request(&season_url, config).await?;
+    let season_res = create_request(&season_url, &config).await?;
     let season_data: Value = season_res.json().await?;
 
     let posters_url = format!(
@@ -220,7 +220,7 @@ pub async fn search_season(
         serie_id, season_number
     );
 
-    let posters_res = create_request(&posters_url, config).await?;
+    let posters_res = create_request(&posters_url, &config).await?;
     let posters_data: Value = posters_res.json().await?;
 
     let posters = posters_data["posters"].as_array().map(Vec::as_slice).unwrap_or(&[]);
@@ -239,19 +239,19 @@ pub async fn search_season(
 }
 
 pub async fn search_episode(
-    config: Config,
+    config: &Config,
     serie_id: i32,
     season_number: i32,
     episode_number: i32,
 ) -> Result<Episode, Box<dyn std::error::Error>> {
-    let tmdb_language = config.tmdb_language;
+    let tmdb_language = &config.tmdb_language;
 
     let episode_url = format!(
         "https://api.themoviedb.org/3/tv/{}/season/{}/episode/{}?language={}",
         serie_id, season_number, episode_number, tmdb_language
     );
 
-    let episode_res = create_request(&episode_url, config).await?;
+    let episode_res = create_request(&episode_url, &config).await?;
     let episode_data: Value = episode_res.json().await?;
 
     let stills_url = format!(
@@ -259,7 +259,7 @@ pub async fn search_episode(
         serie_id, season_number, episode_number
     );
 
-    let stills_res = create_request(&stills_url, config).await?;
+    let stills_res = create_request(&stills_url, &config).await?;
     let stills_data: Value = stills_res.json().await?;
 
     let stills = stills_data["stills"].as_array().map(Vec::as_slice).unwrap_or(&[]);
