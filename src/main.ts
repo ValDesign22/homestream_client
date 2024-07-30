@@ -10,7 +10,7 @@ function sleep(seconds: number): Promise<void> {
 
 async function setup() {
     await sleep(3);
-    invoke('set_complete', {task: 'frontend'})
+    invoke('setup');
 }
 
 window.addEventListener('DOMContentLoaded', () => {

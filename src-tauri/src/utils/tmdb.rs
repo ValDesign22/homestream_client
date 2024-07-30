@@ -3,7 +3,10 @@ use tauri_plugin_http::reqwest;
 
 use super::types::{Config, Episode, Genre, ImagesResponse, MediaType, Movie, Season, Serie};
 
-async fn create_request(url: &str, config: &Config) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
+async fn create_request(
+    url: &str,
+    config: &Config,
+) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
     let tmdb_api_key = &config.tmdb_api_key;
 
     let client = reqwest::Client::new();
@@ -25,7 +28,9 @@ fn find_image_path<'a>(images: &'a [Value], language: &str) -> Option<String> {
     images.iter().find_map(|image| {
         image.get("iso_639_1").and_then(|lang| {
             if lang == language || lang == "en" {
-                image.get("file_path").and_then(|file_path| file_path.as_str().map(String::from))
+                image
+                    .get("file_path")
+                    .and_then(|file_path| file_path.as_str().map(String::from))
             } else {
                 None
             }
@@ -33,7 +38,11 @@ fn find_image_path<'a>(images: &'a [Value], language: &str) -> Option<String> {
     })
 }
 
-async fn fetch_images(id: &str, media_type: MediaType, config: &Config) -> Result<ImagesResponse, Box<dyn std::error::Error>> {
+async fn fetch_images(
+    id: &str,
+    media_type: MediaType,
+    config: &Config,
+) -> Result<ImagesResponse, Box<dyn std::error::Error>> {
     let base_url = match media_type {
         MediaType::Anime => "https://api.themoviedb.org/3/movie/",
         MediaType::Movie => "https://api.themoviedb.org/3/movie/",
@@ -46,17 +55,24 @@ async fn fetch_images(id: &str, media_type: MediaType, config: &Config) -> Resul
 
     let language = &config.tmdb_language;
 
-    let backdrops = images_data["backdrops"].as_array().map(Vec::as_slice).unwrap_or(&[]);
-    let backdrop = find_image_path(backdrops, &language)
-        .or_else(|| find_image_path(backdrops, "en"));
+    let backdrops = images_data["backdrops"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or(&[]);
+    let backdrop =
+        find_image_path(backdrops, &language).or_else(|| find_image_path(backdrops, "en"));
 
-    let logos = images_data["logos"].as_array().map(Vec::as_slice).unwrap_or(&[]);
-    let logo = find_image_path(logos, &language)
-        .or_else(|| find_image_path(logos, "en"));
+    let logos = images_data["logos"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or(&[]);
+    let logo = find_image_path(logos, &language).or_else(|| find_image_path(logos, "en"));
 
-    let posters = images_data["posters"].as_array().map(Vec::as_slice).unwrap_or(&[]);
-    let poster = find_image_path(posters, &language)
-        .or_else(|| find_image_path(posters, "en"));
+    let posters = images_data["posters"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or(&[]);
+    let poster = find_image_path(posters, &language).or_else(|| find_image_path(posters, "en"));
 
     Ok(ImagesResponse {
         backdrop,
@@ -118,7 +134,7 @@ pub async fn search_movie(
         None => None::<Vec<Genre>>,
     };
 
-    let images_res = fetch_images(&movie_id.to_string(), MediaType::Movie, &config).await?; 
+    let images_res = fetch_images(&movie_id.to_string(), MediaType::Movie, &config).await?;
 
     Ok(Movie {
         id: movie_data["id"].as_i64().unwrap() as i32,
@@ -223,9 +239,12 @@ pub async fn search_season(
     let posters_res = create_request(&posters_url, &config).await?;
     let posters_data: Value = posters_res.json().await?;
 
-    let posters = posters_data["posters"].as_array().map(Vec::as_slice).unwrap_or(&[]);
-    let poster_path = find_image_path(posters, &tmdb_language)
-        .or_else(|| find_image_path(posters, "en"));
+    let posters = posters_data["posters"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or(&[]);
+    let poster_path =
+        find_image_path(posters, &tmdb_language).or_else(|| find_image_path(posters, "en"));
 
     Ok(Season {
         id: season_data["id"].as_i64().unwrap() as i32,
@@ -262,9 +281,12 @@ pub async fn search_episode(
     let stills_res = create_request(&stills_url, &config).await?;
     let stills_data: Value = stills_res.json().await?;
 
-    let stills = stills_data["stills"].as_array().map(Vec::as_slice).unwrap_or(&[]);
-    let still_path = find_image_path(stills, &tmdb_language)
-        .or_else(|| find_image_path(stills, "en"));
+    let stills = stills_data["stills"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or(&[]);
+    let still_path =
+        find_image_path(stills, &tmdb_language).or_else(|| find_image_path(stills, "en"));
 
     Ok(Episode {
         id: episode_data["id"].as_i64().unwrap() as i32,

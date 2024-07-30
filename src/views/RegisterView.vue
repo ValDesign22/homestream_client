@@ -9,6 +9,9 @@ import { Stepper, StepperItem, StepperSeparator, StepperTitle, StepperTrigger } 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GenericObject } from 'vee-validate';
+import { create, exists, writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
+// import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
+// import { open } from '@tauri-apps/plugin-shell';
 
 const formSchema = [
   zod.object({
@@ -16,6 +19,17 @@ const formSchema = [
     port: zod.number().int().positive(),
     username: zod.string().min(3),
     password: zod.string().min(3),
+  }),
+  zod.object({
+    tmdbApiKey: zod.string().min(32),
+    tmdbLanguage: zod.string().min(2).max(2),
+  }),
+  zod.object({
+    ftpPath: zod.string().min(1),
+    moviesFolder: zod.string().min(1),
+    seriesFolder: zod.string().min(1),
+    animesFolder: zod.string().min(1),
+    appStoragePath: zod.string().min(1),
   }),
 ]
 
@@ -26,16 +40,16 @@ const steps = [{
   description: 'Connect your FTP server to import your movies and TV shows.',
 }, {
   step: 2,
-  title: 'TheMovieDB',
-  description: 'Connect your TheMovieDB account to get the latest movies and TV shows.',
+  title: 'The Movie Database',
+  description: 'Connect to The Movie Database to get metadata for your movies and TV shows.',
 }, {
   step: 3,
-  title: 'Load',
-  description: 'Load your movies and TV shows to start watching.',
+  title: 'File configuration',
+  description: 'Configure the folders where your movies and TV shows are stored.',
 }, {
   step: 4,
-  title: 'Enjoy',
-  description: 'Enjoy your movies and TV shows.',
+  title: 'Success',
+  description: 'You have successfully connected to your FTP server and The Movie Database.',
 }];
 
 const canGoNext = computed(() => stepIndex.value < steps.length);
@@ -47,13 +61,45 @@ function goBack() {
   if (get(canGoBack)) set(stepIndex, stepIndex.value - 1);
 }
 
-function onSubmit(values: GenericObject) {
-  console.log(values);
+async function onSubmit(values: GenericObject) {
+  const fileExists = await exists("config.json", { baseDir: BaseDirectory.AppConfig });
+
+  if (!fileExists) {
+    await create("config.json", { baseDir: BaseDirectory.AppConfig });
+  }
+
+  await writeTextFile("config.json", JSON.stringify({
+    ftp_host: values.host,
+    ftp_port: String(values.port),
+    ftp_user: values.username,
+    ftp_password: values.password,
+    ftp_path: values.ftpPath,
+    movies_folder: values.moviesFolder,
+    series_folder: values.seriesFolder,
+    animes_folder: values.animesFolder,
+    app_storage_path: values.appStoragePath,
+    tmdb_api_key: values.tmdbApiKey,
+    tmdb_language: values.tmdbLanguage,
+  }), { baseDir: BaseDirectory.AppConfig });
 }
+
+// const openAuthUrl = async () => {
+//   await open('https://www.themoviedb.org/auth/access');
+// }
+
+// const handleOpenUrl = async () => {
+//   await onOpenUrl((urls) => {
+//     urls.forEach((url) => {
+//       console.log(url);
+//     });
+//   });
+// }
+
+// handleOpenUrl();
 </script>
 
 <template>
-  <container class="w-full flex items-center justify-center px-12 py-6">
+  <div class="w-full flex items-center justify-center px-12 py-6">
     <Form
       v-slot="{ meta, values, validate }"
       as="" keep-values :validation-schema="toTypedSchema(formSchema[stepIndex - 1])"
@@ -106,9 +152,10 @@ function onSubmit(values: GenericObject) {
           </StepperItem>
         </Stepper>
   
-        <div class="flex flex-col gap-4 mt-4 px-96">
+        <div class="flex flex-col gap-4 mt-4 w-fit px-96">
+          <p>{{ steps[stepIndex - 1].description }}</p>
+
           <template v-if="stepIndex === 1">
-            <p>{{ steps[stepIndex - 1].description }}</p>
             <FormField v-slot="{ componentField }" name="host">
               <FormItem>
                 <FormLabel>Host</FormLabel>
@@ -149,6 +196,88 @@ function onSubmit(values: GenericObject) {
               </FormItem>
             </FormField>
           </template>
+          
+          <template v-if="stepIndex === 2">
+            <FormField v-slot="{ componentField }" name="tmdbApiKey">
+              <FormItem>
+                <FormLabel>TMDB API Key</FormLabel>
+                <FormControl>
+                  <Input type="text" v-bind="componentField" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+
+            <FormField v-slot="{ componentField }" name="tmdbLanguage">
+              <FormItem>
+                <FormLabel>TMDB Language</FormLabel>
+                <FormControl>
+                  <Input type="text" v-bind="componentField" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+          </template>
+
+          <template v-if="stepIndex === 3">
+            <FormField v-slot="{ componentField }" name="ftpPath">
+              <FormItem>
+                <FormLabel>FTP Path</FormLabel>
+                <FormControl>
+                  <Input type="text" v-bind="componentField" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+  
+            <FormField v-slot="{ componentField }" name="moviesFolder">
+              <FormItem>
+                <FormLabel>Movies Folder</FormLabel>
+                <FormControl>
+                  <Input type="text" v-bind="componentField" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+  
+            <FormField v-slot="{ componentField }" name="seriesFolder">
+              <FormItem>
+                <FormLabel>Series Folder</FormLabel>
+                <FormControl>
+                  <Input type="text" v-bind="componentField" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+  
+            <FormField v-slot="{ componentField }" name="animesFolder">
+              <FormItem>
+                <FormLabel>Animes Folder</FormLabel>
+                <FormControl>
+                  <Input type="text" v-bind="componentField" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+  
+            <FormField v-slot="{ componentField }" name="appStoragePath">
+              <FormItem>
+                <FormLabel>App Storage Path</FormLabel>
+                <FormControl>
+                  <Input type="text" v-bind="componentField" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
+          </template>
+
+          <template v-if="stepIndex === 4">
+            <div class="flex flex-col gap-4">
+              <p>
+                You have successfully connected to your FTP server and The Movie Database.
+              </p>
+            </div>
+          </template>
         </div>
   
         <div class="flex items-center justify-between mt-4 px-96">
@@ -156,11 +285,11 @@ function onSubmit(values: GenericObject) {
             Back
           </Button>
           <div class="flex items-center gap-3">
-            <Button v-if="stepIndex !== 3" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="meta.valid && goNext()">
+            <Button v-if="stepIndex !== steps.length" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="meta.valid && goNext()">
               Next
             </Button>
             <Button
-              v-if="stepIndex === 3" size="sm" type="submit"
+              v-if="stepIndex === steps.length" size="sm" type="submit"
             >
               Submit
             </Button>
@@ -168,5 +297,5 @@ function onSubmit(values: GenericObject) {
         </div>
       </form>
     </Form>
-  </container>
+  </div>
 </template>

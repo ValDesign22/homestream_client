@@ -3,8 +3,7 @@
   "identifier": "default",
   "description": "Capability for the main window",
   "windows": [
-    "main",
-    "splashscreen"
+    "main"
   ],
   "permissions": [
     "path:default",
@@ -29,11 +28,11 @@
     "fs:default",
     {
       "identifier": "fs:scope",
-      "allow": [
-        {
-          "path": "$APPDATA/*"
-        }
-      ]
-    }
+      "allow": [{
+        "path": "$APPCONFIG/*"
+      }]
+    },
+    "fs:allow-appconfig-write-recursive",
+    "deep-link:default"
   ]
 }

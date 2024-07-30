@@ -12,16 +12,9 @@
     "windows": [
       {
         "label": "main",
-        "visible": false,
         "title": "HomeStream",
         "width": 1280,
-        "height": 720,
-        "center": true
-      },
-      {
-        "label": "splashscreen",
-        "url": "/splashscreen",
-        "center": true
+        "height": 720
       }
     ],
     "security": {
@@ -42,5 +35,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "deep-link": {
+      "mobile": [],
+      "desktop": {
+        "schemes": ["homestream"]
+      }
+    }
   }
 }

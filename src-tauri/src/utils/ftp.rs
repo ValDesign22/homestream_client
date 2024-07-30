@@ -1,18 +1,16 @@
-use std::io::Write;
 use crate::utils::types::Movie;
+use std::io::Write;
 use suppaftp::FtpStream;
 
 use super::types::{Config, Serie};
 
 pub fn create_stream(config: &Config) -> FtpStream {
-    let ftp_url = format!(
-        "{}:{}",
-        config.ftp_host,
-        config.ftp_port,
-    );
+    let ftp_url = format!("{}:{}", config.ftp_host, config.ftp_port,);
 
     let mut stream = FtpStream::connect(ftp_url).unwrap();
-    let _ = stream.login(&config.ftp_user, &config.ftp_password).unwrap();
+    let _ = stream
+        .login(&config.ftp_user, &config.ftp_password)
+        .unwrap();
 
     stream
 }
@@ -69,7 +67,12 @@ pub fn load_series(stream: &mut FtpStream, config: &Config) -> Vec<Serie> {
     }
 }
 
-pub fn save_file(stream: &mut FtpStream, config: &Config, store: &str, content: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn save_file(
+    stream: &mut FtpStream,
+    config: &Config,
+    store: &str,
+    content: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     let _ = stream.cwd(&config.app_storage_path)?;
 
     let mut put_stream = stream.put_with_stream(format!("{}_store.json", store).as_str())?;
