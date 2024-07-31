@@ -27,12 +27,23 @@
     },
     "fs:default",
     {
-      "identifier": "fs:scope",
+      "identifier": "fs:allow-create",
       "allow": [{
         "path": "$APPCONFIG/*"
       }]
     },
-    "fs:allow-appconfig-write-recursive",
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [{
+        "path": "$APPCONFIG"
+      }]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{
+        "path": "$APPCONFIG/*"
+      }]
+    },
     "deep-link:default"
   ]
 }

@@ -1,4 +1,4 @@
-use std::{fs::read_to_string, path::PathBuf};
+use std::fs::read_to_string;
 
 use tauri::{AppHandle, Manager};
 
@@ -10,7 +10,7 @@ pub fn get_config(app: AppHandle) -> Option<Config> {
     if config_dir.is_err() {
         return None;
     }
-    let mut config_path = PathBuf::from(config_dir.unwrap());
+    let mut config_path = config_dir.unwrap();
     config_path.push("config.json");
 
     let config = match read_to_string(config_path) {
@@ -31,7 +31,7 @@ pub fn save_config(app: AppHandle, config: Config) -> Result<(), ()> {
     if config_dir.is_err() {
         return Err(());
     }
-    let mut config_path = PathBuf::from(config_dir.unwrap());
+    let mut config_path = config_dir.unwrap();
     config_path.push("config.json");
 
     let config = match serde_json::to_string(&config) {

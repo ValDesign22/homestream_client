@@ -3,6 +3,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { get, set } from '@vueuse/core';
 import { Check, Circle, Dot } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { toTypedSchema } from '@vee-validate/zod'
 import * as zod from 'zod';
 import { Stepper, StepperItem, StepperSeparator, StepperTitle, StepperTrigger } from '@/components/ui/stepper';
@@ -12,6 +13,8 @@ import { GenericObject } from 'vee-validate';
 import { create, exists, writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 // import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
 // import { open } from '@tauri-apps/plugin-shell';
+
+const router = useRouter();
 
 const formSchema = [
   zod.object({
@@ -81,6 +84,8 @@ async function onSubmit(values: GenericObject) {
     tmdb_api_key: values.tmdbApiKey,
     tmdb_language: values.tmdbLanguage,
   }), { baseDir: BaseDirectory.AppConfig });
+
+  router.push({ path: "/", replace: true });
 }
 
 // const openAuthUrl = async () => {
