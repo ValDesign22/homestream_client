@@ -3,7 +3,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { get, set } from '@vueuse/core';
 import { Check, Circle, Dot } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
+// import { useRouter } from 'vue-router';
 import { toTypedSchema } from '@vee-validate/zod'
 import * as zod from 'zod';
 import { Stepper, StepperItem, StepperSeparator, StepperTitle, StepperTrigger } from '@/components/ui/stepper';
@@ -11,10 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GenericObject } from 'vee-validate';
 import { create, exists, writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
+import { Folder } from '@/utils/types';
 // import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
 // import { open } from '@tauri-apps/plugin-shell';
 
-const router = useRouter();
+// const router = useRouter();
 
 const formSchema = [
   zod.object({
@@ -30,7 +31,9 @@ const formSchema = [
   zod.object({
     appStoragePath: zod.string().min(1),
   }),
-]
+];
+
+const folders = ref<Folder[]>([]);
 
 const stepIndex = ref(1);
 const steps = [{
@@ -67,18 +70,20 @@ async function onSubmit(values: GenericObject) {
     await create("config.json", { baseDir: BaseDirectory.AppConfig });
   }
 
+  console.log(values, folders.value);
+
   await writeTextFile("config.json", JSON.stringify({
     ftp_host: values.host,
     ftp_port: String(values.port),
     ftp_user: values.username,
     ftp_password: values.password,
-    folders: [],
+    folders: folders.value,
     app_storage_path: values.appStoragePath,
     tmdb_api_key: values.tmdbApiKey,
     tmdb_language: values.tmdbLanguage,
   }), { baseDir: BaseDirectory.AppConfig });
 
-  router.push({ path: "/", replace: true });
+  // router.push({ path: "/", replace: true });
 }
 
 // const openAuthUrl = async () => {
@@ -217,7 +222,7 @@ async function onSubmit(values: GenericObject) {
             </FormField>
           </template>
 
-          <template v-if="stepIndex === 3">  
+          <template v-if="stepIndex === 3">
             <FormField v-slot="{ componentField }" name="appStoragePath">
               <FormItem>
                 <FormLabel>App Storage Path</FormLabel>
