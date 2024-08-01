@@ -279,7 +279,7 @@ async function onSubmit(values: GenericObject) {
           <template v-if="stepIndex === 4">
             <div class="flex flex-col gap-4">
               <p>
-                You have successfully connected to your FTP server and The Movie Database.
+                Your configuration has been saved successfully. You can now start using the app.
               </p>
             </div>
           </template>

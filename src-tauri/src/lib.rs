@@ -3,6 +3,7 @@ use std::{fs::create_dir_all, path::Path};
 use commands::config::{get_config, save_config};
 use commands::setup::setup;
 use tauri::{Listener, Manager};
+use tauri_plugin_window_state::{AppHandleExt, StateFlags, WindowExt};
 
 pub mod commands;
 pub mod utils;
@@ -14,6 +15,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             get_config,
             save_config,
@@ -35,7 +37,19 @@ pub fn run() {
                 }
             }
 
+            tauri::async_runtime::block_on(async {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.restore_state(StateFlags::all());
+                }
+            });
+
             Ok(())
+        })
+        .on_window_event(|app, event| match event {
+            tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed => {
+                let _ = AppHandleExt::save_window_state(app.app_handle(), StateFlags::all());
+            }
+            _ => {}
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

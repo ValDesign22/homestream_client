@@ -2,7 +2,7 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "@/router";
 import "./assets/index.css";
-import { invoke } from "@tauri-apps/api/core";
+// import { invoke } from "@tauri-apps/api/core";
 
 function sleep(seconds: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
@@ -10,7 +10,7 @@ function sleep(seconds: number): Promise<void> {
 
 async function setup() {
     await sleep(3);
-    invoke('setup');
+    // invoke('setup');
 }
 
 window.addEventListener('DOMContentLoaded', () => {
