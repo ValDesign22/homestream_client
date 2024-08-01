@@ -15,7 +15,7 @@ pub fn create_stream(config: &Config) -> FtpStream {
     stream
 }
 
-pub fn load_movies(stream: &mut FtpStream, config: &Config, store: &str) -> Vec<Movie> {
+pub fn load_movies(stream: &mut FtpStream, config: &Config, store: String) -> Vec<Movie> {
     if let Err(e) = stream.cwd(&config.app_storage_path) {
         eprintln!("Error changing directory: {}", e);
         return vec![];
@@ -41,13 +41,13 @@ pub fn load_movies(stream: &mut FtpStream, config: &Config, store: &str) -> Vec<
     }
 }
 
-pub fn load_series(stream: &mut FtpStream, config: &Config) -> Vec<Serie> {
+pub fn load_series(stream: &mut FtpStream, config: &Config, store: String) -> Vec<Serie> {
     if let Err(e) = stream.cwd(&config.app_storage_path) {
         eprintln!("Error changing directory: {}", e);
         return vec![];
     }
 
-    match stream.retr_as_buffer("series_store.json") {
+    match stream.retr_as_buffer(format!("{}_store.json", store).as_str()) {
         Ok(buffer) => {
             let content = String::from_utf8(buffer.into_inner()).unwrap();
             let json_data: Vec<Serie> = match serde_json::from_str(&content.trim()) {
@@ -60,8 +60,8 @@ pub fn load_series(stream: &mut FtpStream, config: &Config) -> Vec<Serie> {
             json_data
         }
         Err(e) => {
-            eprintln!("Error reading series_store.json: {}", e);
-            let _ = save_file(stream, &config, "series", "[]");
+            eprintln!("Error reading {}_store.json: {}", store, e);
+            let _ = save_file(stream, &config, store, "[]");
             vec![]
         }
     }
@@ -70,7 +70,7 @@ pub fn load_series(stream: &mut FtpStream, config: &Config) -> Vec<Serie> {
 pub fn save_file(
     stream: &mut FtpStream,
     config: &Config,
-    store: &str,
+    store: String,
     content: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let _ = stream.cwd(&config.app_storage_path)?;

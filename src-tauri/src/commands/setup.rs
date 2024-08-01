@@ -15,17 +15,20 @@ pub async fn setup(app: AppHandle) -> Result<(), ()> {
 
     let mut stream = create_stream(&config);
 
-    let movies = explore_movies_folder(&mut stream, &config, MediaType::Movie, None).await;
-    let movies_content = serde_json::to_string(&movies).unwrap();
-    let _ = save_file(&mut stream, &config, "movies", &movies_content);
-
-    let animes = explore_movies_folder(&mut stream, &config, MediaType::Anime, None).await;
-    let animes_content = serde_json::to_string(&animes).unwrap();
-    let _ = save_file(&mut stream, &config, "animes", &animes_content);
-
-    let series = explore_series_folder(&mut stream, &config, None).await;
-    let series_content = serde_json::to_string(&series).unwrap();
-    let _ = save_file(&mut stream, &config, "series", &series_content);
+    for folder in &config.folders {
+        match folder.media_type {
+            MediaType::Movie => {
+                let movies = explore_movies_folder(&mut stream, &config, folder).await;
+                let movies_content = serde_json::to_string(&movies).unwrap();
+                let _ = save_file(&mut stream, &config, folder.id.to_string(), &movies_content);
+            }
+            MediaType::Serie => {
+                let series = explore_series_folder(&mut stream, &config, folder).await;
+                let series_content = serde_json::to_string(&series).unwrap();
+                let _ = save_file(&mut stream, &config, folder.id.to_string(), &series_content);
+            }
+        }
+    }
 
     let _ = stream.quit();
 

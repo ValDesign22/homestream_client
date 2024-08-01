@@ -5,41 +5,19 @@ use suppaftp::FtpStream;
 use super::{
     ftp::{load_movies, load_series},
     tmdb::{search_episode, search_movie, search_season, search_serie},
-    types::{Config, Episode, MediaType, Movie, Season, Serie},
+    types::{Config, Episode, Folder, Movie, Season, Serie},
 };
 
 pub async fn explore_movies_folder(
     stream: &mut FtpStream,
     config: &Config,
-    media_type: MediaType,
-    folder: Option<&str>,
+    folder: &Folder,
 ) -> Vec<Movie> {
-    let default_path = format!(
-        "{}{}",
-        &config.ftp_path,
-        match media_type {
-            MediaType::Anime => &config.animes_folder,
-            MediaType::Movie => &config.movies_folder,
-            MediaType::Serie => unreachable!(),
-        },
-    );
-    let initial_path = folder
-        .map(|folder| format!("{}/{}", default_path, folder))
-        .unwrap_or_else(|| default_path.clone());
-
     let mut stack = VecDeque::new();
-    stack.push_back(initial_path);
+    stack.push_back(folder.path.clone());
 
     let mut movies: Vec<Movie> = Vec::new();
-    let existing_movies = load_movies(
-        stream,
-        &config,
-        match media_type {
-            MediaType::Anime => "animes",
-            MediaType::Movie => "movies",
-            MediaType::Serie => unreachable!(),
-        },
-    );
+    let existing_movies = load_movies(stream, &config, folder.id.to_string());
 
     while let Some(path) = stack.pop_back() {
         if let Err(e) = stream.cwd(&path) {
@@ -109,15 +87,9 @@ pub async fn explore_movies_folder(
 pub async fn explore_series_folder(
     stream: &mut FtpStream,
     config: &Config,
-    folder: Option<&str>,
-) -> Vec<Serie> {
-    let default_path = format!("{}{}", &config.ftp_path, &config.series_folder,);
-    let initial_path = folder
-        .map(|folder| format!("{}/{}", default_path, folder))
-        .unwrap_or_else(|| default_path.clone());
-
-    let mut stack = VecDeque::new();
-    stack.push_back(initial_path);
+    folder: &Folder,
+) -> Vec<Serie> {let mut stack = VecDeque::new();
+    stack.push_back(folder.path.clone());
 
     let mut series: Vec<Serie> = Vec::new();
 
@@ -174,7 +146,7 @@ pub async fn explore_series_folder(
                 }
             };
 
-            let seasons = explore_seasons_folder(stream, &config, &serie, None).await;
+            let seasons = explore_seasons_folder(stream, &config, &serie, None, folder.id.to_string()).await;
             series.push(Serie {
                 seasons: Some(seasons),
                 ..serie
@@ -190,6 +162,7 @@ pub async fn explore_seasons_folder(
     config: &Config,
     serie: &Serie,
     folder: Option<&str>,
+    store: String,
 ) -> Vec<Season> {
     let initial_path = folder
         .map(|folder| format!("{}/{}", serie.path.as_deref().unwrap_or_default(), folder))
@@ -245,7 +218,7 @@ pub async fn explore_seasons_folder(
                     }
                 };
 
-            let episodes = explore_episodes(stream, &config, serie, &season, None).await;
+            let episodes = explore_episodes(stream, &config, serie, &season, None, store.clone()).await;
             seasons.push(Season {
                 episodes: Some(episodes),
                 ..season
@@ -262,6 +235,7 @@ pub async fn explore_episodes(
     serie: &Serie,
     season: &Season,
     folder: Option<&str>,
+    store: String,
 ) -> Vec<Episode> {
     let initial_path = folder
         .map(|folder| format!("{}/{}", season.path.as_deref().unwrap_or_default(), folder))
@@ -271,7 +245,7 @@ pub async fn explore_episodes(
     stack.push_back(initial_path);
 
     let mut episodes: Vec<Episode> = Vec::new();
-    let existing_series = load_series(stream, &config);
+    let existing_series = load_series(stream, &config, store);
 
     while let Some(path) = stack.pop_back() {
         if let Err(e) = stream.cwd(&path) {

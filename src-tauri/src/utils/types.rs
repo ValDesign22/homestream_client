@@ -6,13 +6,18 @@ pub struct Config {
     pub ftp_port: String,
     pub ftp_user: String,
     pub ftp_password: String,
-    pub ftp_path: String,
-    pub movies_folder: String,
-    pub series_folder: String,
-    pub animes_folder: String,
+    pub folders: Vec<Folder>,
     pub app_storage_path: String,
     pub tmdb_api_key: String,
     pub tmdb_language: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Folder {
+    pub id: i32,
+    pub name: String,
+    pub path: String,
+    pub media_type: MediaType,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -78,8 +83,8 @@ pub struct ImagesResponse {
     pub poster: Option<String>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum MediaType {
-    Anime,
     Movie,
     Serie,
 }
