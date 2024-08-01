@@ -28,10 +28,6 @@ const formSchema = [
     tmdbLanguage: zod.string().min(2).max(2),
   }),
   zod.object({
-    ftpPath: zod.string().min(1),
-    moviesFolder: zod.string().min(1),
-    seriesFolder: zod.string().min(1),
-    animesFolder: zod.string().min(1),
     appStoragePath: zod.string().min(1),
   }),
 ]
@@ -76,10 +72,7 @@ async function onSubmit(values: GenericObject) {
     ftp_port: String(values.port),
     ftp_user: values.username,
     ftp_password: values.password,
-    ftp_path: values.ftpPath,
-    movies_folder: values.moviesFolder,
-    series_folder: values.seriesFolder,
-    animes_folder: values.animesFolder,
+    folders: [],
     app_storage_path: values.appStoragePath,
     tmdb_api_key: values.tmdbApiKey,
     tmdb_language: values.tmdbLanguage,
@@ -224,47 +217,7 @@ async function onSubmit(values: GenericObject) {
             </FormField>
           </template>
 
-          <template v-if="stepIndex === 3">
-            <FormField v-slot="{ componentField }" name="ftpPath">
-              <FormItem>
-                <FormLabel>FTP Path</FormLabel>
-                <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-  
-            <FormField v-slot="{ componentField }" name="moviesFolder">
-              <FormItem>
-                <FormLabel>Movies Folder</FormLabel>
-                <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-  
-            <FormField v-slot="{ componentField }" name="seriesFolder">
-              <FormItem>
-                <FormLabel>Series Folder</FormLabel>
-                <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-  
-            <FormField v-slot="{ componentField }" name="animesFolder">
-              <FormItem>
-                <FormLabel>Animes Folder</FormLabel>
-                <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-  
+          <template v-if="stepIndex === 3">  
             <FormField v-slot="{ componentField }" name="appStoragePath">
               <FormItem>
                 <FormLabel>App Storage Path</FormLabel>
