@@ -21,6 +21,12 @@ pub struct Folder {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum MediaType {
+    Movie,
+    TvShow,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Movie {
     pub id: i32,
     pub collection_id: Option<i32>,
@@ -40,6 +46,7 @@ pub struct Movie {
 pub struct TvShow {
     pub id: i32,
     pub title: String,
+    pub original_title: String,
     pub overview: String,
     pub poster_path: Option<String>,
     pub backdrop_path: Option<String>,
@@ -81,10 +88,4 @@ pub struct ImagesResponse {
     pub backdrop: Option<String>,
     pub logo: Option<String>,
     pub poster: Option<String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum MediaType {
-    Movie,
-    TvShow,
 }

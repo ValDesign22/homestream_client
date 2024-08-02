@@ -205,6 +205,7 @@ pub async fn search_tv_show(
     Ok(TvShow {
         id: tv_show_data["id"].as_i64().unwrap() as i32,
         title: tv_show_data["name"].as_str().unwrap().to_string(),
+        originial_title: tv_show_data["original_name"].as_str().unwrap().to_string(),
         overview: tv_show_data["overview"].as_str().unwrap().to_string(),
         poster_path: images_res.poster,
         backdrop_path: images_res.backdrop,
