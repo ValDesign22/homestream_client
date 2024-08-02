@@ -273,7 +273,7 @@ pub async fn explore_episodes(
                 continue;
             }
 
-            if let Some(existing_tv_show) = existing_tv_show
+            if let Some(existing_tv_show) = existing_tv_shows
                 .iter()
                 .find(|e_tv_show| e_tv_show.path.as_deref() == tv_show.path.as_deref())
             {

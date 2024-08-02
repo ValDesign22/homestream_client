@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { get, set } from '@vueuse/core';
-import { Check, Circle, Dot } from 'lucide-vue-next';
+import { Check, Circle, Dot, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 // import { useRouter } from 'vue-router';
 import { toTypedSchema } from '@vee-validate/zod'
@@ -223,6 +223,29 @@ async function onSubmit(values: GenericObject) {
           </template>
 
           <template v-if="stepIndex === 3">
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-4">
+                <div v-for="(folder, index) in folders" :key="index" class="flex items-center gap-4">
+                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].path'">
+                    <FormItem>
+                      <FormControl>
+                        <Input type="text" v-bind="componentField" onchange="folders[index].path = $event.target.value" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  </FormField>
+                  <Button variant="destructive" @click="folders = folders.filter((_, i) => i !== index)">
+                    <Trash2 />
+                  </Button>
+                </div>
+                <div class="flex items center gap-4">
+                  <Button @click="folders = [...folders, { id: folders.length, name: '', path: '', media_type: 0 }]">
+                    Add Folder
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <FormField v-slot="{ componentField }" name="appStoragePath">
               <FormItem>
                 <FormLabel>App Storage Path</FormLabel>
