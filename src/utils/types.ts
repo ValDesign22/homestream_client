@@ -18,5 +18,5 @@ export interface Folder {
 
 export enum MediaType {
   Movie,
-  Serie,
+  TvShow,
 }

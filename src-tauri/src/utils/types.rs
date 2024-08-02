@@ -37,7 +37,7 @@ pub struct Movie {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Serie {
+pub struct TvShow {
     pub id: i32,
     pub title: String,
     pub overview: String,
@@ -86,5 +86,5 @@ pub struct ImagesResponse {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum MediaType {
     Movie,
-    Serie,
+    TvShow,
 }

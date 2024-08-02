@@ -3,9 +3,9 @@ use std::collections::VecDeque;
 use suppaftp::FtpStream;
 
 use super::{
-    ftp::{load_movies, load_series},
-    tmdb::{search_episode, search_movie, search_season, search_serie},
-    types::{Config, Episode, Folder, Movie, Season, Serie},
+    ftp::{load_movies, load_tv_shows},
+    tmdb::{search_episode, search_movie, search_season, search_tv_show},
+    types::{Config, Episode, Folder, Movie, Season, TvShow},
 };
 
 pub async fn explore_movies_folder(
@@ -84,14 +84,14 @@ pub async fn explore_movies_folder(
     movies
 }
 
-pub async fn explore_series_folder(
+pub async fn explore_tv_shows_folder(
     stream: &mut FtpStream,
     config: &Config,
     folder: &Folder,
-) -> Vec<Serie> {let mut stack = VecDeque::new();
+) -> Vec<TvShow> {let mut stack = VecDeque::new();
     stack.push_back(folder.path.clone());
 
-    let mut series: Vec<Serie> = Vec::new();
+    let mut tv_shows: Vec<TvShow> = Vec::new();
 
     while let Some(path) = stack.pop_back() {
         if let Err(e) = stream.cwd(&path) {
@@ -135,38 +135,38 @@ pub async fn explore_series_folder(
                 None => file.to_string(),
             };
 
-            let serie = match search_serie(&config, &title, date).await {
-                Ok(serie) => Serie {
+            let tv_show = match search_tv_show(&config, &title, date).await {
+                Ok(tv_show) => TvShow {
                     path: Some(format!("{}/{}", path, file)),
-                    ..serie
+                    ..tv_show
                 },
                 Err(e) => {
-                    eprintln!("Error searching serie: {}", e);
+                    eprintln!("Error searching tv_show: {}", e);
                     continue;
                 }
             };
 
-            let seasons = explore_seasons_folder(stream, &config, &serie, None, folder.id.to_string()).await;
-            series.push(Serie {
+            let seasons = explore_seasons_folder(stream, &config, &tv_show, None, folder.id.to_string()).await;
+            tv_shows.push(TvShow {
                 seasons: Some(seasons),
-                ..serie
+                ..tv_show
             });
         }
     }
 
-    series
+    tv_shows
 }
 
 pub async fn explore_seasons_folder(
     stream: &mut FtpStream,
     config: &Config,
-    serie: &Serie,
+    tv_show: &TvShow,
     folder: Option<&str>,
     store: String,
 ) -> Vec<Season> {
     let initial_path = folder
-        .map(|folder| format!("{}/{}", serie.path.as_deref().unwrap_or_default(), folder))
-        .unwrap_or_else(|| serie.path.as_deref().unwrap_or_default().to_string());
+        .map(|folder| format!("{}/{}", tv_show.path.as_deref().unwrap_or_default(), folder))
+        .unwrap_or_else(|| tv_show.path.as_deref().unwrap_or_default().to_string());
 
     let mut stack = VecDeque::new();
     stack.push_back(initial_path);
@@ -207,7 +207,7 @@ pub async fn explore_seasons_folder(
             };
 
             let season =
-                match search_season(&config, serie.id, season_number.parse().unwrap()).await {
+                match search_season(&config, tv_show.id, season_number.parse().unwrap()).await {
                     Ok(season) => Season {
                         path: Some(format!("{}/{}", path, file)),
                         ..season
@@ -218,7 +218,7 @@ pub async fn explore_seasons_folder(
                     }
                 };
 
-            let episodes = explore_episodes(stream, &config, serie, &season, None, store.clone()).await;
+            let episodes = explore_episodes(stream, &config, tv_show, &season, None, store.clone()).await;
             seasons.push(Season {
                 episodes: Some(episodes),
                 ..season
@@ -232,7 +232,7 @@ pub async fn explore_seasons_folder(
 pub async fn explore_episodes(
     stream: &mut FtpStream,
     config: &Config,
-    serie: &Serie,
+    tv_show: &TvShow,
     season: &Season,
     folder: Option<&str>,
     store: String,
@@ -245,7 +245,7 @@ pub async fn explore_episodes(
     stack.push_back(initial_path);
 
     let mut episodes: Vec<Episode> = Vec::new();
-    let existing_series = load_series(stream, &config, store);
+    let existing_tv_shows = load_tv_shows(stream, &config, store);
 
     while let Some(path) = stack.pop_back() {
         if let Err(e) = stream.cwd(&path) {
@@ -273,11 +273,11 @@ pub async fn explore_episodes(
                 continue;
             }
 
-            if let Some(existing_serie) = existing_series
+            if let Some(existing_tv_show) = existing_tv_show
                 .iter()
-                .find(|e_serie| e_serie.path.as_deref() == serie.path.as_deref())
+                .find(|e_tv_show| e_tv_show.path.as_deref() == tv_show.path.as_deref())
             {
-                if let Some(existing_season) = existing_serie.seasons.as_ref().and_then(|seasons| {
+                if let Some(existing_season) = existing_tv_show.seasons.as_ref().and_then(|seasons| {
                     seasons
                         .iter()
                         .find(|e_season| e_season.path.as_deref() == season.path.as_deref())
@@ -308,7 +308,7 @@ pub async fn explore_episodes(
 
             match search_episode(
                 &config,
-                serie.id,
+                tv_show.id,
                 season.season_number,
                 episode_number.parse().unwrap(),
             )

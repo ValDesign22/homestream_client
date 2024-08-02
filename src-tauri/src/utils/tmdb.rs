@@ -1,7 +1,7 @@
 use serde_json::Value;
 use tauri_plugin_http::reqwest;
 
-use super::types::{Config, Episode, Genre, ImagesResponse, MediaType, Movie, Season, Serie};
+use super::types::{Config, Episode, Genre, ImagesResponse, MediaType, Movie, Season, TvShow};
 
 async fn create_request(
     url: &str,
@@ -45,7 +45,7 @@ async fn fetch_images(
 ) -> Result<ImagesResponse, Box<dyn std::error::Error>> {
     let base_url = match media_type {
         MediaType::Movie => "https://api.themoviedb.org/3/movie/",
-        MediaType::Serie => "https://api.themoviedb.org/3/tv/",
+        MediaType::TvShow => "https://api.themoviedb.org/3/tv/",
     };
     let url = format!("{}{}/images", base_url, id);
 
@@ -151,11 +151,11 @@ pub async fn search_movie(
     })
 }
 
-pub async fn search_serie(
+pub async fn search_tv_show(
     config: &Config,
     title: &str,
     date: Option<&str>,
-) -> Result<Serie, Box<dyn std::error::Error>> {
+) -> Result<TvShow, Box<dyn std::error::Error>> {
     let tmdb_language = &config.tmdb_language;
 
     let search_url = format!(
@@ -175,16 +175,16 @@ pub async fn search_serie(
         return Err("No results found".into());
     }
 
-    let serie_id = search_data["results"][0]["id"].as_i64().unwrap();
-    let serie_url = format!(
+    let tv_show_id = search_data["results"][0]["id"].as_i64().unwrap();
+    let tv_show_url = format!(
         "https://api.themoviedb.org/3/tv/{}?language={}",
-        serie_id, tmdb_language
+        tv_show_id, tmdb_language
     );
 
-    let serie_res = create_request(&serie_url, &config).await?;
-    let serie_data: Value = serie_res.json().await?;
+    let tv_show_res = create_request(&tv_show_url, &config).await?;
+    let tv_show_data: Value = tv_show_res.json().await?;
 
-    let genres = match serie_data["genres"].as_array() {
+    let genres = match tv_show_data["genres"].as_array() {
         Some(genres) => Some(
             genres
                 .iter()
@@ -200,12 +200,12 @@ pub async fn search_serie(
         None => None::<Vec<Genre>>,
     };
 
-    let images_res = fetch_images(&serie_id.to_string(), MediaType::Serie, &config).await?;
+    let images_res = fetch_images(&tv_show_id.to_string(), MediaType::TvShow, &config).await?;
 
-    Ok(Serie {
-        id: serie_data["id"].as_i64().unwrap() as i32,
-        title: serie_data["name"].as_str().unwrap().to_string(),
-        overview: serie_data["overview"].as_str().unwrap().to_string(),
+    Ok(TvShow {
+        id: tv_show_data["id"].as_i64().unwrap() as i32,
+        title: tv_show_data["name"].as_str().unwrap().to_string(),
+        overview: tv_show_data["overview"].as_str().unwrap().to_string(),
         poster_path: images_res.poster,
         backdrop_path: images_res.backdrop,
         logo_path: images_res.logo,
@@ -217,14 +217,14 @@ pub async fn search_serie(
 
 pub async fn search_season(
     config: &Config,
-    serie_id: i32,
+    tv_show_id: i32,
     season_number: i32,
 ) -> Result<Season, Box<dyn std::error::Error>> {
     let tmdb_language = &config.tmdb_language;
 
     let season_url = format!(
         "https://api.themoviedb.org/3/tv/{}/season/{}?language={}",
-        serie_id, season_number, tmdb_language
+        tv_show_id, season_number, tmdb_language
     );
 
     let season_res = create_request(&season_url, &config).await?;
@@ -232,7 +232,7 @@ pub async fn search_season(
 
     let posters_url = format!(
         "https://api.themoviedb.org/3/tv/{}/season/{}/images",
-        serie_id, season_number
+        tv_show_id, season_number
     );
 
     let posters_res = create_request(&posters_url, &config).await?;
@@ -258,7 +258,7 @@ pub async fn search_season(
 
 pub async fn search_episode(
     config: &Config,
-    serie_id: i32,
+    tv_show_id: i32,
     season_number: i32,
     episode_number: i32,
 ) -> Result<Episode, Box<dyn std::error::Error>> {
@@ -266,7 +266,7 @@ pub async fn search_episode(
 
     let episode_url = format!(
         "https://api.themoviedb.org/3/tv/{}/season/{}/episode/{}?language={}",
-        serie_id, season_number, episode_number, tmdb_language
+        tv_show_id, season_number, episode_number, tmdb_language
     );
 
     let episode_res = create_request(&episode_url, &config).await?;
@@ -274,7 +274,7 @@ pub async fn search_episode(
 
     let stills_url = format!(
         "https://api.themoviedb.org/3/tv/{}/season/{}/episode/{}/images",
-        serie_id, season_number, episode_number
+        tv_show_id, season_number, episode_number
     );
 
     let stills_res = create_request(&stills_url, &config).await?;

@@ -1,5 +1,5 @@
 use tauri::AppHandle;
-use crate::utils::explore::{explore_movies_folder, explore_series_folder};
+use crate::utils::explore::{explore_movies_folder, explore_tv_shows_folder};
 use crate::utils::ftp::{create_stream, save_file};
 use crate::utils::types::MediaType;
 
@@ -22,10 +22,10 @@ pub async fn setup(app: AppHandle) -> Result<(), ()> {
                 let movies_content = serde_json::to_string(&movies).unwrap();
                 let _ = save_file(&mut stream, &config, folder.id.to_string(), &movies_content);
             }
-            MediaType::Serie => {
-                let series = explore_series_folder(&mut stream, &config, folder).await;
-                let series_content = serde_json::to_string(&series).unwrap();
-                let _ = save_file(&mut stream, &config, folder.id.to_string(), &series_content);
+            MediaType::TvShow => {
+                let tv_shows = explore_tv_shows_folder(&mut stream, &config, folder).await;
+                let tv_shows_content = serde_json::to_string(&tv_shows).unwrap();
+                let _ = save_file(&mut stream, &config, folder.id.to_string(), &tv_shows_content);
             }
         }
     }

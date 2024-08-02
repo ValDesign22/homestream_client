@@ -2,7 +2,7 @@ use crate::utils::types::Movie;
 use std::io::Write;
 use suppaftp::FtpStream;
 
-use super::types::{Config, Serie};
+use super::types::{Config, TvShow};
 
 pub fn create_stream(config: &Config) -> FtpStream {
     let ftp_url = format!("{}:{}", config.ftp_host, config.ftp_port,);
@@ -41,7 +41,7 @@ pub fn load_movies(stream: &mut FtpStream, config: &Config, store: String) -> Ve
     }
 }
 
-pub fn load_series(stream: &mut FtpStream, config: &Config, store: String) -> Vec<Serie> {
+pub fn load_tv_shows(stream: &mut FtpStream, config: &Config, store: String) -> Vec<TvShow> {
     if let Err(e) = stream.cwd(&config.app_storage_path) {
         eprintln!("Error changing directory: {}", e);
         return vec![];
@@ -50,10 +50,10 @@ pub fn load_series(stream: &mut FtpStream, config: &Config, store: String) -> Ve
     match stream.retr_as_buffer(format!("{}_store.json", store).as_str()) {
         Ok(buffer) => {
             let content = String::from_utf8(buffer.into_inner()).unwrap();
-            let json_data: Vec<Serie> = match serde_json::from_str(&content.trim()) {
+            let json_data: Vec<TvShow> = match serde_json::from_str(&content.trim()) {
                 Ok(json_data) => json_data,
                 Err(e) => {
-                    eprintln!("Error parsing series_store.json: {}", e);
+                    eprintln!("Error parsing {}_store.json: {}", store, e);
                     vec![]
                 }
             };
