@@ -12,19 +12,20 @@ name = "homestream_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-beta", features = [] }
+tauri-build = { version = "2.0.0-rc", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0-beta", features = ["devtools"] }
-tauri-plugin-shell = "2.0.0-beta"
+tauri = { version = "2.0.0-rc", features = [] }
+tauri-plugin-shell = "2.0.0-rc"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tauri-plugin-http = "2.0.0-beta"
-tokio = "1.39.1"
+tauri-plugin-http = "2.0.0-rc"
+tokio = "1.39.2"
 suppaftp = { version = "6.0.1", features = ["native-tls"] }
-tauri-plugin-fs = "2.0.0-beta"
-tauri-plugin-deep-link = "2.0.0-beta"
-tauri-plugin-window-state = "2.0.0-beta"
+tauri-plugin-fs = "2.0.0-rc"
+tauri-plugin-deep-link = "2.0.0-rc"
+tauri-plugin-window-state = "2.0.0-rc"
+strsim = "0.11.1"
 
 [profile.dev]
 incremental = true

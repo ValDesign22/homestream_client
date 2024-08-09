@@ -1,16 +1,11 @@
 import { createApp } from "vue";
-import App from "./App.vue";
+import App from "@/App.vue";
 import router from "@/router";
-import "./assets/index.css";
-// import { invoke } from "@tauri-apps/api/core";
-
-function sleep(seconds: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, seconds * 1000));
-}
+import "@/assets/index.css";
+import { invoke } from "@tauri-apps/api/core";
 
 async function setup() {
-    await sleep(3);
-    // invoke('setup');
+    await invoke('setup');
 }
 
 window.addEventListener('DOMContentLoaded', () => {

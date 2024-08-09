@@ -8,10 +8,8 @@ const router = useRouter();
 
 onBeforeMount(async () => {
   const config = await invoke<Config | null>("get_config");
-  console.log(config);
-  // if (config === null) {
-  router.push({ path: "/register", replace: true });
-  // }
+  if (config === null) router.push({ path: "/register", replace: true });
+  else router.push({ path: "/browse", replace: true });
 });
 </script>
 

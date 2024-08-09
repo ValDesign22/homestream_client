@@ -9,6 +9,9 @@ const router = createRouter({
     }, {
       path: '/register',
       component: () => import('@/views/RegisterView.vue')
+    }, {
+      path: '/browse',
+      component: () => import('@/views/BrowseView.vue')
     }
   ]
 });

@@ -40,6 +40,11 @@ pub fn run() {
             tauri::async_runtime::block_on(async {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.restore_state(StateFlags::all());
+
+                    #[cfg(debug_assertions)]
+                    {
+                        let _ = window.open_devtools();
+                    }
                 }
             });
 

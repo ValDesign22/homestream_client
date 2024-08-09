@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
+    pub http_server: String,
     pub ftp_host: String,
     pub ftp_port: String,
     pub ftp_user: String,

@@ -1,4 +1,5 @@
 use serde_json::Value;
+use strsim::levenshtein;
 use tauri_plugin_http::reqwest;
 
 use super::types::{Config, Episode, Genre, ImagesResponse, MediaType, Movie, Season, TvShow};
@@ -100,11 +101,24 @@ pub async fn search_movie(
     let search_res = create_request(&search_url, &config).await?;
     let search_data: Value = search_res.json().await?;
 
-    if search_data["results"].as_array().unwrap().is_empty() {
+    let results = search_data["results"].as_array().unwrap();
+    if results.is_empty() {
         return Err("No results found".into());
     }
 
-    let movie_id = search_data["results"][0]["id"].as_i64().unwrap();
+    let mut best_match = None;
+    let mut lowest_distance = usize::MAX;
+
+    for result in results {
+        let result_title = result["title"].as_str().unwrap();
+        let distance = levenshtein(title, result_title);
+        if distance < lowest_distance {
+            lowest_distance = distance;
+            best_match = Some(result);
+        }
+    }
+
+    let movie_id = best_match.unwrap()["id"].as_i64().unwrap();
     let movie_url = format!(
         "https://api.themoviedb.org/3/movie/{}?language={}&append_to_response=release_dates",
         movie_id, tmdb_language
@@ -171,11 +185,24 @@ pub async fn search_tv_show(
     let search_res = create_request(&search_url, &config).await?;
     let search_data: Value = search_res.json().await?;
 
-    if search_data["results"].as_array().unwrap().is_empty() {
+    let results = search_data["results"].as_array().unwrap();
+    if results.is_empty() {
         return Err("No results found".into());
     }
 
-    let tv_show_id = search_data["results"][0]["id"].as_i64().unwrap();
+    let mut best_match = None;
+    let mut lowest_distance = usize::MAX;
+
+    for result in results {
+        let result_title = result["name"].as_str().unwrap();
+        let distance = levenshtein(title, result_title);
+        if distance < lowest_distance {
+            lowest_distance = distance;
+            best_match = Some(result);
+        }
+    }
+
+    let tv_show_id = best_match.unwrap()["id"].as_i64().unwrap();
     let tv_show_url = format!(
         "https://api.themoviedb.org/3/tv/{}?language={}",
         tv_show_id, tmdb_language

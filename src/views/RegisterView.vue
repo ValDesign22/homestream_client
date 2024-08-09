@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { get, set } from '@vueuse/core';
-import { Check, Circle, Dot, Trash2 } from 'lucide-vue-next';
+import { Check, Circle, Dot /*, Trash2 */ } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 // import { useRouter } from 'vue-router';
 import { toTypedSchema } from '@vee-validate/zod'
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GenericObject } from 'vee-validate';
 import { create, exists, writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
-import { Folder } from '@/utils/types';
+// import { Folder } from '@/utils/types';
 // import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
 // import { open } from '@tauri-apps/plugin-shell';
 
@@ -29,11 +29,12 @@ const formSchema = [
     tmdbLanguage: zod.string().min(2).max(2),
   }),
   zod.object({
+    httpServer: zod.string().min(1),
     appStoragePath: zod.string().min(1),
   }),
 ];
 
-const folders = ref<Folder[]>([]);
+// const folders = ref<Folder[]>([]);
 
 const stepIndex = ref(1);
 const steps = [{
@@ -70,14 +71,13 @@ async function onSubmit(values: GenericObject) {
     await create("config.json", { baseDir: BaseDirectory.AppConfig });
   }
 
-  console.log(values, folders.value);
-
   await writeTextFile("config.json", JSON.stringify({
+    http_server: values.httpServer,
     ftp_host: values.host,
     ftp_port: String(values.port),
     ftp_user: values.username,
     ftp_password: values.password,
-    folders: folders.value,
+    folders: [],
     app_storage_path: values.appStoragePath,
     tmdb_api_key: values.tmdbApiKey,
     tmdb_language: values.tmdbLanguage,
@@ -223,7 +223,7 @@ async function onSubmit(values: GenericObject) {
           </template>
 
           <template v-if="stepIndex === 3">
-            <div class="flex flex-col gap-4">
+            <!-- <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-4">
                 <div v-for="(folder, index) in folders" :key="index" class="flex items-center gap-4">
                   <FormField v-slot="{ componentField }" :name="'folders[' + index + '].path'">
@@ -244,7 +244,17 @@ async function onSubmit(values: GenericObject) {
                   </Button>
                 </div>
               </div>
-            </div>
+            </div> -->
+
+            <FormField v-slot="{ componentField }" name="httpServer">
+              <FormItem>
+                <FormLabel>HTTP Server</FormLabel>
+                <FormControl>
+                  <Input type="text" v-bind="componentField" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
 
             <FormField v-slot="{ componentField }" name="appStoragePath">
               <FormItem>

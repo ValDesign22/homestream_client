@@ -1,4 +1,5 @@
 export interface Config {
+  http_server: string,
   ftp_host: string,
   ftp_port: number,
   ftp_user: string,
