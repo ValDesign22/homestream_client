@@ -1,7 +1,5 @@
 use tauri::AppHandle;
-use crate::utils::explore::{explore_movies_folder, explore_tv_shows_folder};
-use crate::utils::ftp::{create_stream, save_file};
-use crate::utils::types::MediaType;
+use tauri_plugin_http::reqwest;
 
 use super::config::get_config;
 
@@ -13,24 +11,11 @@ pub async fn setup(app: AppHandle) -> Result<(), ()> {
     }
     let config = config.unwrap();
 
-    let mut stream = create_stream(&config);
-
-    for folder in &config.folders {
-        match folder.media_type {
-            MediaType::Movie => {
-                let movies = explore_movies_folder(&mut stream, &config, folder).await;
-                let movies_content = serde_json::to_string(&movies).unwrap();
-                let _ = save_file(&mut stream, &config, folder.id.to_string(), &movies_content);
-            }
-            MediaType::TvShow => {
-                let tv_shows = explore_tv_shows_folder(&mut stream, &config, folder).await;
-                let tv_shows_content = serde_json::to_string(&tv_shows).unwrap();
-                let _ = save_file(&mut stream, &config, folder.id.to_string(), &tv_shows_content);
-            }
-        }
+    let res = reqwest::get(format!("{}/setup", config.http_server).as_str()).await;
+    if res.is_err() {
+        println!("{:?}", res.err());
+        return Err(());
     }
-
-    let _ = stream.quit();
 
     Ok(())
 }

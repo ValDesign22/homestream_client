@@ -1,13 +1,12 @@
 export interface Config {
   http_server: string,
-  ftp_host: string,
-  ftp_port: number,
-  ftp_user: string,
-  ftp_password: string,
-  folders: Folder[],
-  app_storage_path: string,
-  tmdb_api_key: string,
-  tmdb_language: string,
+}
+
+export interface RemoteFolder {
+  id: number,
+  name: string,
+  path: string,
+  children?: RemoteFolder[],
 }
 
 export interface Folder {
@@ -57,7 +56,7 @@ export interface Season {
   overview: string,
   episodes: Episode[],
   poster_path?: string,
-  backdrop_path?: string,
+  path: string,
 }
 
 export interface Episode {

@@ -3,14 +3,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub http_server: String,
-    pub ftp_host: String,
-    pub ftp_port: String,
-    pub ftp_user: String,
-    pub ftp_password: String,
-    pub folders: Vec<Folder>,
-    pub app_storage_path: String,
-    pub tmdb_api_key: String,
-    pub tmdb_language: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

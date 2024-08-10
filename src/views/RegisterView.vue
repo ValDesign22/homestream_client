@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { get, set } from '@vueuse/core';
-import { Check, Circle, Dot /*, Trash2 */ } from 'lucide-vue-next';
+import { Check, Circle, Dot, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 // import { useRouter } from 'vue-router';
 import { toTypedSchema } from '@vee-validate/zod'
@@ -11,40 +11,37 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GenericObject } from 'vee-validate';
 import { create, exists, writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
-// import { Folder } from '@/utils/types';
-// import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
-// import { open } from '@tauri-apps/plugin-shell';
+import { Folder, RemoteFolder } from '@/utils/types';
+import { fetch } from '@tauri-apps/plugin-http';
+import { Select, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // const router = useRouter();
 
 const formSchema = [
   zod.object({
-    host: zod.string().min(7).max(15),
-    port: zod.number().int().positive(),
-    username: zod.string().min(3),
-    password: zod.string().min(3),
+    httpServer: zod.string().min(1),
   }),
   zod.object({
-    tmdbApiKey: zod.string().min(32),
     tmdbLanguage: zod.string().min(2).max(2),
   }),
   zod.object({
-    httpServer: zod.string().min(1),
-    appStoragePath: zod.string().min(1),
+    folders: zod.array(zod.object({ media_type: zod.string().max(1), path: zod.string().min(1) })),
   }),
 ];
 
-// const folders = ref<Folder[]>([]);
+const remoteFolders = ref<RemoteFolder[]>([]);
+const folders = ref<Folder[]>([]);
+const httpServer = ref('');
 
 const stepIndex = ref(1);
 const steps = [{
   step: 1,
-  title: 'FTP Server',
-  description: 'Connect your FTP server to import your movies and TV shows.',
+  title: 'Server Configuration',
+  description: 'Connect your HomeStream server to the app.',
 }, {
   step: 2,
   title: 'The Movie Database',
-  description: 'Connect to The Movie Database to get metadata for your movies and TV shows.',
+  description: 'Configure your app language',
 }, {
   step: 3,
   title: 'File configuration',
@@ -64,41 +61,44 @@ function goBack() {
   if (get(canGoBack)) set(stepIndex, stepIndex.value - 1);
 }
 
+async function fetchFolders() {
+  console.log(httpServer.value);
+  if (!httpServer.value) return;
+
+  const response = await fetch(httpServer.value + '/folders', {
+    method: 'GET',
+  });
+
+  if (!response.ok) console.error('An error occurred while fetching the folders');
+  else remoteFolders.value = await response.json();
+
+  console.log(remoteFolders.value);
+}
+
 async function onSubmit(values: GenericObject) {
   const fileExists = await exists("config.json", { baseDir: BaseDirectory.AppConfig });
 
-  if (!fileExists) {
-    await create("config.json", { baseDir: BaseDirectory.AppConfig });
-  }
+  if (!fileExists) await create("config.json", { baseDir: BaseDirectory.AppConfig });
 
   await writeTextFile("config.json", JSON.stringify({
     http_server: values.httpServer,
-    ftp_host: values.host,
-    ftp_port: String(values.port),
-    ftp_user: values.username,
-    ftp_password: values.password,
-    folders: [],
-    app_storage_path: values.appStoragePath,
-    tmdb_api_key: values.tmdbApiKey,
-    tmdb_language: values.tmdbLanguage,
   }), { baseDir: BaseDirectory.AppConfig });
+
+  const response = await fetch(httpServer.value + '/config', {
+    method: 'PATCH',
+    body: JSON.stringify({
+      folders: folders.value,
+      tmdb_language: values.tmdbLanguage,
+    }),
+  });
+
+  fetchFolders();
+
+  if (response.ok) console.log('Configuration saved successfully');
+  else console.error('An error occurred while saving the configuration');
 
   // router.push({ path: "/", replace: true });
 }
-
-// const openAuthUrl = async () => {
-//   await open('https://www.themoviedb.org/auth/access');
-// }
-
-// const handleOpenUrl = async () => {
-//   await onOpenUrl((urls) => {
-//     urls.forEach((url) => {
-//       console.log(url);
-//     });
-//   });
-// }
-
-// handleOpenUrl();
 </script>
 
 <template>
@@ -159,41 +159,11 @@ async function onSubmit(values: GenericObject) {
           <p>{{ steps[stepIndex - 1].description }}</p>
 
           <template v-if="stepIndex === 1">
-            <FormField v-slot="{ componentField }" name="host">
+            <FormField v-slot="{ componentField }" name="httpServer">
               <FormItem>
-                <FormLabel>Host</FormLabel>
+                <FormLabel>HomeStream Server Address</FormLabel>
                 <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-  
-            <FormField v-slot="{ componentField }" name="port">
-              <FormItem>
-                <FormLabel>Port</FormLabel>
-                <FormControl>
-                  <Input type="number" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-  
-            <FormField v-slot="{ componentField }" name="username">
-              <FormItem>
-                <FormLabel>Username</FormLabel>
-                <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-  
-            <FormField v-slot="{ componentField }" name="password">
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" v-bind="componentField" />
+                  <Input type="text" v-bind="componentField" v-model="httpServer" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -201,16 +171,6 @@ async function onSubmit(values: GenericObject) {
           </template>
           
           <template v-if="stepIndex === 2">
-            <FormField v-slot="{ componentField }" name="tmdbApiKey">
-              <FormItem>
-                <FormLabel>TMDB API Key</FormLabel>
-                <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-
             <FormField v-slot="{ componentField }" name="tmdbLanguage">
               <FormItem>
                 <FormLabel>TMDB Language</FormLabel>
@@ -223,20 +183,43 @@ async function onSubmit(values: GenericObject) {
           </template>
 
           <template v-if="stepIndex === 3">
-            <!-- <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-4">
-                <div v-for="(folder, index) in folders" :key="index" class="flex items-center gap-4">
-                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].path'">
+                <div v-for="(_, index) in folders" :key="index" class="flex items-center gap-4">
+                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].media_type'">
                     <FormItem>
+                      <FormLabel>Media Type</FormLabel>
                       <FormControl>
-                        <Input type="text" v-bind="componentField" onchange="folders[index].path = $event.target.value" />
+                        <!-- <Input type="number" v-bind="componentField" onchange="folders[index].media_type = $event.target.value" /> -->
+                         <Select v-bind="componentField">
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a media type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>Media Type</SelectLabel>
+                              <SelectItem value="0">Movies</SelectItem>
+                              <SelectItem value="1">TV Shows</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                         </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   </FormField>
-                  <Button variant="destructive" @click="folders = folders.filter((_, i) => i !== index)">
-                    <Trash2 />
-                  </Button>
+                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].path'">
+                    <FormItem>
+                      <FormControl>
+                        <div class="flex w-full max-w-sm items-center gap-1.5">
+                          <Input type="text" v-bind="componentField" onchange="folders[index].path = $event.target.value" />
+                          <Button variant="destructive" @click="folders = folders.filter((_, i) => i !== index)">
+                            <Trash2 />
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  </FormField>
                 </div>
                 <div class="flex items center gap-4">
                   <Button @click="folders = [...folders, { id: folders.length, name: '', path: '', media_type: 0 }]">
@@ -244,27 +227,7 @@ async function onSubmit(values: GenericObject) {
                   </Button>
                 </div>
               </div>
-            </div> -->
-
-            <FormField v-slot="{ componentField }" name="httpServer">
-              <FormItem>
-                <FormLabel>HTTP Server</FormLabel>
-                <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-
-            <FormField v-slot="{ componentField }" name="appStoragePath">
-              <FormItem>
-                <FormLabel>App Storage Path</FormLabel>
-                <FormControl>
-                  <Input type="text" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
+            </div>
           </template>
 
           <template v-if="stepIndex === 4">

@@ -15,12 +15,14 @@
     "core:menu:default",
     "core:tray:default",
     "shell:allow-open",
-    "http:default",
     {
       "identifier": "http:default",
       "allow": [
         {
-          "url": "https://*.themoviedb.org/*"
+          "url": "https://*/**"
+        },
+        {
+          "url": "http://*:*/**"
         }
       ],
       "deny": []
