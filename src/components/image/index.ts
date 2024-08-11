@@ -1,0 +1,1 @@
+export { default as TMDBImage } from './TMDBImage.vue';

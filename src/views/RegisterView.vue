@@ -3,7 +3,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { get, set } from '@vueuse/core';
 import { Check, Circle, Dot, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-// import { useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { toTypedSchema } from '@vee-validate/zod'
 import * as zod from 'zod';
 import { Stepper, StepperItem, StepperSeparator, StepperTitle, StepperTrigger } from '@/components/ui/stepper';
@@ -13,9 +13,10 @@ import { GenericObject } from 'vee-validate';
 import { create, exists, writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 import { Folder, RemoteFolder } from '@/utils/types';
 import { fetch } from '@tauri-apps/plugin-http';
-import { Select, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TreeSelector } from '@/components/tree';
 
-// const router = useRouter();
+const router = useRouter();
 
 const formSchema = [
   zod.object({
@@ -25,13 +26,28 @@ const formSchema = [
     tmdbLanguage: zod.string().min(2).max(2),
   }),
   zod.object({
-    folders: zod.array(zod.object({ media_type: zod.string().max(1), path: zod.string().min(1) })),
+    folders: zod.array(zod.object({
+      media_type: zod.string().transform(Number),
+      path: zod.string(),
+    })).optional(),
   }),
 ];
 
+const httpServer = ref('');
 const remoteFolders = ref<RemoteFolder[]>([]);
 const folders = ref<Folder[]>([]);
-const httpServer = ref('');
+const selectedItem = ref<RemoteFolder | null>(null);
+const selectors = ref<boolean[]>([]);
+
+const selectItem = (item: RemoteFolder | null, index: number) => {
+  selectedItem.value = item;
+  folders.value[index].path = item ? item.path : '';
+};
+
+const toggleSelector = (index: number) => {
+  fetchFolders();
+  selectors.value = selectors.value.map((_, i) => i === index ? !selectors.value[i] : false);
+};
 
 const stepIndex = ref(1);
 const steps = [{
@@ -81,20 +97,26 @@ async function onSubmit(values: GenericObject) {
     http_server: values.httpServer,
   }), { baseDir: BaseDirectory.AppConfig });
 
+  const foldersToSend: Folder[] = values.folders ? values.folders.map((folder: { media_type: string, path: string }, index: number) => ({
+    id: index,
+    name: folder.path.split('/').pop() || '',
+    media_type: parseInt(folder.media_type),
+    path: folder.path,
+  })) : [];
+
   const response = await fetch(httpServer.value + '/config', {
     method: 'PATCH',
     body: JSON.stringify({
-      folders: folders.value,
+      folders: foldersToSend,
       tmdb_language: values.tmdbLanguage,
     }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 
-  fetchFolders();
-
-  if (response.ok) console.log('Configuration saved successfully');
-  else console.error('An error occurred while saving the configuration');
-
-  // router.push({ path: "/", replace: true });
+  if (response.ok) router.push({ path: "/browse", replace: true });
+  else console.error('An error occurred while saving the configuration', await response.text());
 }
 </script>
 
@@ -180,48 +202,60 @@ async function onSubmit(values: GenericObject) {
           </template>
 
           <template v-if="stepIndex === 3">
-            <div class="flex flex-col gap-4">
-              <div class="flex flex-col gap-4">
-                <div v-for="(_, index) in folders" :key="index" class="flex items-center gap-4">
-                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].media_type'">
-                    <FormItem>
-                      <FormLabel>Media Type</FormLabel>
+            <div class="flex flex-col gap-4 w-full max-w-[460px] p-4 border rounded-md">
+              <div v-if="!folders.length" class="flex items-center gap-4">
+                <span class="text-md font-bold">No folders added</span>
+              </div>
+              <div v-for="(folder, index) in folders" :key="index" class="flex items-center gap-4">
+                <FormField v-slot="{ componentField }" :name="'folders[' + index + '].media_type'">
+                  <FormItem>
+                    <Select v-bind="componentField">
                       <FormControl>
-                         <Select v-bind="componentField">
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a media type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel>Media Type</SelectLabel>
-                              <SelectItem value="0">Movies</SelectItem>
-                              <SelectItem value="1">TV Shows</SelectItem>
-                            </SelectGroup>
-                          </SelectContent>
-                         </Select>
+                        <SelectTrigger class="w-auto">
+                          <SelectValue placeholder="Select a media type" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].path'">
-                    <FormItem>
-                      <FormControl>
-                        <div class="flex w-full max-w-sm items-center gap-1.5">
-                          <Input type="text" v-bind="componentField" onchange="folders[index].path = $event.target.value" />
-                          <Button variant="destructive" @click="folders = folders.filter((_, i) => i !== index)">
-                            <Trash2 />
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  </FormField>
-                </div>
-                <div class="flex items-center gap-4">
-                  <Button @click="folders = [...folders, { id: folders.length, name: '', path: '', media_type: 0 }]">
-                    Add Folder
-                  </Button>
-                </div>
+                      <SelectContent class="w-auto">
+                        <SelectGroup class="w-auto">
+                          <SelectLabel>Media Type</SelectLabel>
+                          <SelectItem value="0">Movies</SelectItem>
+                          <SelectItem value="1">TV Shows</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                </FormField>
+                <FormField v-slot="{ componentField }" :name="'folders[' + index + '].path'">
+                  <FormItem>
+                    <FormControl>
+                      <Input type="text" v-bind="componentField" @click="() => toggleSelector(index)" :value="folder.path.length ? folder.path : 'Select a folder'" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </FormField>
+                <Button variant="destructive" @click="() => {
+                  folders = folders.filter((_, i) => i !== index)
+                  selectors = selectors.filter((_, i) => i !== index)
+                }">
+                  <Trash2 />
+                </Button>
+
+                <TreeSelector
+                  :open="selectors[index]"
+                  :index="index"
+                  :data="remoteFolders"
+                  :selectedItem="selectedItem"
+                  :selectItem="selectItem"
+                  :toggle="(index) => toggleSelector(index)"
+                />
+              </div>
+              <div class="flex items-center gap-4">
+                <Button @click="() => {
+                  folders = [...folders, { id: folders.length, name: '', path: '', media_type: 0 }]
+                  selectors = [...selectors, false]
+                }">
+                  Add Folder
+                </Button>
               </div>
             </div>
           </template>
