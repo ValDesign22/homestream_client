@@ -5,7 +5,7 @@ import { HTMLAttributes } from 'vue';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import TreeLeaf from './TreeLeaf.vue';
 
-interface TreeItemProps {
+interface TreeNodeProps {
   data: RemoteFolder[] | RemoteFolder;
   opened_ids: string[];
   selectedItem: RemoteFolder | null;
@@ -13,7 +13,7 @@ interface TreeItemProps {
   selectItem: (item: RemoteFolder | null) => void;
 }
 
-const props = defineProps<TreeItemProps & { class?: HTMLAttributes['class'] }>();
+const props = defineProps<TreeNodeProps & { class?: HTMLAttributes['class'] }>();
 </script>
 
 <template>
@@ -37,7 +37,7 @@ const props = defineProps<TreeItemProps & { class?: HTMLAttributes['class'] }>()
               </span>
             </AccordionTrigger>
             <AccordionContent class="pl-6">
-              <TreeItem
+              <TreeNode
                 :data="item.children"
                 :opened_ids="opened_ids"
                 :selectedItem="props.selectedItem"

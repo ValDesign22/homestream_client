@@ -220,7 +220,7 @@ async function onSubmit(values: GenericObject) {
                     </FormItem>
                   </FormField>
                 </div>
-                <div class="flex items center gap-4">
+                <div class="flex items-center gap-4">
                   <Button @click="folders = [...folders, { id: folders.length, name: '', path: '', media_type: 0 }]">
                     Add Folder
                   </Button>

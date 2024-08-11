@@ -7,10 +7,11 @@ import TreeViewer from './TreeViewer.vue';
 
 interface TreeSelectorProps {
   open: boolean;
+  index: number;
   data: RemoteFolder[];
   selectedItem: RemoteFolder | null;
-  selectItem: (item: RemoteFolder | null) => void;
-  toggle: () => void;
+  selectItem: (item: RemoteFolder | null, index: number) => void;
+  toggle: (index: number) => void;
 }
 
 const props = defineProps<TreeSelectorProps & { class?: HTMLAttributes['class'] }>();
@@ -32,7 +33,8 @@ const searchByPath = (data: RemoteFolder[], path: string): RemoteFolder | null =
 };
 
 const selectItem = (item: RemoteFolder | null) => {
-  props.selectItem(item);
+  console.log(item, props.index);
+  props.selectItem(item, props.index);
   input.value = item ? item.path : '';
 };
 
@@ -41,7 +43,7 @@ const searchItem = (event: InputEvent) => {
   if (!value) return;
 
   const item = searchByPath(props.data, value);
-  props.selectItem(item);
+  props.selectItem(item, props.index);
 };
 </script>
 
