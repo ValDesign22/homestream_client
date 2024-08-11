@@ -6,9 +6,11 @@ import { RemoteFolder } from '@/utils/types';
 import TreeViewer from './TreeViewer.vue';
 
 interface TreeSelectorProps {
+  open: boolean;
   data: RemoteFolder[];
   selectedItem: RemoteFolder | null;
   selectItem: (item: RemoteFolder | null) => void;
+  toggle: () => void;
 }
 
 const props = defineProps<TreeSelectorProps & { class?: HTMLAttributes['class'] }>();
@@ -44,7 +46,10 @@ const searchItem = (event: InputEvent) => {
 </script>
 
 <template>
-  <div class="flex flex-col justify-center gap-4">
+  <div
+    class="flex flex-col justify-center p-4 gap-4 border rounded-md fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-background dark:bg-background-dark"
+    :class="{ hidden: !props.open }"
+  >
     <h1 class="text-lg font-bold">
       Select a folder
     </h1>
@@ -58,7 +63,7 @@ const searchItem = (event: InputEvent) => {
         v-model="input"
         @input="searchItem"
         />
-      <Button @click="() => console.log(selectedItem)">Select</Button>
+      <Button @click="props.toggle">Select</Button>
     </div>
   </div>
 </template>

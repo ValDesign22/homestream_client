@@ -190,7 +190,6 @@ async function onSubmit(values: GenericObject) {
                     <FormItem>
                       <FormLabel>Media Type</FormLabel>
                       <FormControl>
-                        <!-- <Input type="number" v-bind="componentField" onchange="folders[index].media_type = $event.target.value" /> -->
                          <Select v-bind="componentField">
                           <SelectTrigger>
                             <SelectValue placeholder="Select a media type" />
