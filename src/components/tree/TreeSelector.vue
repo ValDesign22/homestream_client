@@ -33,7 +33,6 @@ const searchByPath = (data: RemoteFolder[], path: string): RemoteFolder | null =
 };
 
 const selectItem = (item: RemoteFolder | null) => {
-  console.log(item, props.index);
   props.selectItem(item, props.index);
   input.value = item ? item.path : '';
 };
@@ -49,8 +48,10 @@ const searchItem = (event: InputEvent) => {
 
 <template>
   <div
-    class="flex flex-col justify-center p-4 gap-4 border rounded-md fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-background dark:bg-background-dark"
-    :class="{ hidden: !props.open }"
+    class="flex flex-col justify-center p-4 gap-4 border rounded-md fixed top-1/2 left-1/2 transform -translate-x-1/2 bg-background dark:bg-background-dark shadow-lg duration-300 transition-all"
+    :class="props.open ?
+      'visible z-10 opacity-100 -translate-y-1/2' :
+      'invisible z-[-1] opacity-0 -translate-y-1/3 pointer-events-none'"
   >
     <h1 class="text-lg font-bold">
       Select a folder

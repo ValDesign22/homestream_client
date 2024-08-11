@@ -62,7 +62,6 @@ function goBack() {
 }
 
 async function fetchFolders() {
-  console.log(httpServer.value);
   if (!httpServer.value) return;
 
   const response = await fetch(httpServer.value + '/folders', {
@@ -71,8 +70,6 @@ async function fetchFolders() {
 
   if (!response.ok) console.error('An error occurred while fetching the folders');
   else remoteFolders.value = await response.json();
-
-  console.log(remoteFolders.value);
 }
 
 async function onSubmit(values: GenericObject) {

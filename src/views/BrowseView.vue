@@ -21,7 +21,6 @@ const selectItem = (item: RemoteFolder | null, index: number) => {
 };
 
 const toggleSelector = (index: number) => {
-  // selectorOpened.value = !selectorOpened.value;
   selectors.value = selectors.value.map((_, i) => i === index ? !selectors.value[i] : false);
 };
 
