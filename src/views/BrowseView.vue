@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TreeViewer } from '@/components/tree';
+import { TreeSelector } from '@/components/tree';
 import { Config, RemoteFolder } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
@@ -7,6 +7,11 @@ import { ref } from 'vue';
 import { onBeforeMount } from 'vue';
 
 const folders = ref<RemoteFolder[]>([]);
+const selectedItem = ref<RemoteFolder | null>(null);
+
+const selectItem = (item: RemoteFolder | null) => {
+  selectedItem.value = item;
+};
 
 async function fetchFolders(http_server: string) {
   if (!http_server) return;
@@ -31,6 +36,10 @@ onBeforeMount(async () => {
       Browse View
     </h1>
 
-    <TreeViewer :data="folders" />
+    <TreeSelector
+      :data="folders"
+      :selectedItem="selectedItem"
+      :selectItem="selectItem"
+      />
   </div>
 </template>

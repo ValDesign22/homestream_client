@@ -8,9 +8,9 @@ import TreeLeaf from './TreeLeaf.vue';
 interface TreeItemProps {
   data: RemoteFolder[] | RemoteFolder;
   opened_ids: string[];
-  selectedItem: string | null;
+  selectedItem: RemoteFolder | null;
   toggleFolder: (id: string) => void;
-  selectItem: (id: string) => void;
+  selectItem: (item: RemoteFolder) => void;
 }
 
 const props = defineProps<TreeItemProps & { class?: HTMLAttributes['class'] }>();
@@ -25,10 +25,10 @@ const props = defineProps<TreeItemProps & { class?: HTMLAttributes['class'] }>()
           <AccordionItem :value="String(item.id)">
             <AccordionTrigger
               class="px-2 hover:before:opacity-100 before:absolute before:left-0 before:w-full before:opacity-0 before:bg-muted/80 before:h-[1.75rem] before:-z-10"
-              :class="{ 'before:opacity-100 before:bg-accent text-accent-foreground before:border-l-2 before:border-l-accent-foreground/50 dark:before:border-0': props.selectedItem === String(item.id) }"
+              :class="{ 'before:opacity-100 before:bg-accent text-accent-foreground before:border-l-2 before:border-l-accent-foreground/50 dark:before:border-0': props.selectedItem && props.selectedItem.id === item.id }"
               :onClick="() => {
                 props.toggleFolder(String(item.id))
-                props.selectItem(String(item.id))
+                props.selectItem(item)
               }"
             >
               <span class="text-sm truncate">
