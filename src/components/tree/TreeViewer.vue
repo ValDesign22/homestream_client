@@ -7,7 +7,7 @@ import TreeItem from './TreeItem.vue';
 interface TreeViewerProps {
   data: RemoteFolder[];
   selectedItem: RemoteFolder | null;
-  selectItem: (item: RemoteFolder) => void;
+  selectItem: (item: RemoteFolder | null) => void;
 }
 
 const props = defineProps<TreeViewerProps & { class?: HTMLAttributes['class'] }>();

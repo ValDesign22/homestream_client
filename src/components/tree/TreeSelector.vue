@@ -29,6 +29,11 @@ const searchByPath = (data: RemoteFolder[], path: string): RemoteFolder | null =
   return null;
 };
 
+const selectItem = (item: RemoteFolder | null) => {
+  props.selectItem(item);
+  input.value = item ? item.path : '';
+};
+
 const searchItem = (event: InputEvent) => {
   const value = (event.target as HTMLInputElement).value;
   if (!value) return;
@@ -46,7 +51,7 @@ const searchItem = (event: InputEvent) => {
     <TreeViewer
       :data="props.data"
       :selectedItem="props.selectedItem"
-      :selectItem="props.selectItem"
+      :selectItem="selectItem"
     />
     <div class="flex items-center gap-2">
       <Input

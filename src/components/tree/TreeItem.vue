@@ -10,7 +10,7 @@ interface TreeItemProps {
   opened_ids: string[];
   selectedItem: RemoteFolder | null;
   toggleFolder: (id: string) => void;
-  selectItem: (item: RemoteFolder) => void;
+  selectItem: (item: RemoteFolder | null) => void;
 }
 
 const props = defineProps<TreeItemProps & { class?: HTMLAttributes['class'] }>();
