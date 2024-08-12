@@ -6,7 +6,7 @@ const { y } = useWindowScroll({ behavior: 'smooth' });
 
 <template>
   <nav
-    class="flex justify-between items-center p-4 fixed top-0 left-0 w-full z-10 text-white transition-all duration-300"
+    class="flex justify-between items-center p-4 fixed top-0 left-0 w-full z-20 text-white transition-all duration-300"
     :class="{
       'bg-gradient-to-b from-black from-5% to-transparent': y === 0,
       'bg-gradient-to-b from-black to-transparent backdrop-blur': y > 0 }"
