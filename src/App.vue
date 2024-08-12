@@ -10,7 +10,6 @@ onBeforeMount(async () => {
   const config = await invoke<Config | null>("get_config");
   if (config === null) router.push({ path: "/register", replace: true });
   else router.push({ path: "/browse", replace: true });
-  // router.push({ path: "/register", replace: true });
 });
 </script>
 

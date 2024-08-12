@@ -14,14 +14,12 @@ async function setup() {
   // }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  setup().then(() => {
-    const app = createApp(App);
+setup().then(() => {
+  const app = createApp(App);
 
-    app.use(router);
+  app.use(router);
 
-    app.mount("#app");
-  }).catch((error) => {
-    console.error('Error setting up frontend:', error);
-  });
+  app.mount("#app");
+}).catch((error) => {
+  console.error('Error setting up frontend:', error);
 });

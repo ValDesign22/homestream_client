@@ -1,23 +1,35 @@
 <script setup lang="ts">
 import { HTMLAttributes } from 'vue';
 
-interface TypeToValueMap {
-  backdrop: "w300" | "w780" | "w1280" | "original";
-  logo: "w45" | "w92" | "w154" | "w185" | "w300" | "w500" | "original";
-  poster: "w92" | "w154" | "w185" | "w342" | "w500" | "w780" | "original";
-  profile: "w45" | "w185" | "h632" | "original";
-  still: "w92" | "w185" | "w300" | "original";
+interface BackdropProps {
+  type: "backdrop";
+  size:  "w300" | "w780" | "w1280" | "original";
 }
 
-type TMDBImageProps = {
-  [T in keyof TypeToValueMap]: {
-    type: T;
-    size: TypeToValueMap[T];
-  };
-}[keyof TypeToValueMap] & {
+interface LogoProps {
+  type: "logo";
+  size: "w45" | "w92" | "w154" | "w185" | "w300" | "w500" | "original";
+}
+
+interface PosterProps {
+  type: "poster";
+  size: "w92" | "w154" | "w185" | "w342" | "w500" | "w780" | "original";
+}
+
+interface ProfileProps {
+  type: "profile";
+  size: "w45" | "w185" | "h632" | "original";
+}
+
+interface StillProps {
+  type: "still";
+  size: "w92" | "w185" | "w300" | "original";
+}
+
+type TMDBImageProps = (BackdropProps | LogoProps | PosterProps | ProfileProps | StillProps) & {
   image: string;
   alt: string;
-}
+};
 
 const props = defineProps<TMDBImageProps & { class?: HTMLAttributes['class'] }>();
 </script>
