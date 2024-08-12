@@ -19,6 +19,7 @@
     "@vueuse/core": "^10.11.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "embla-carousel-vue": "^8.1.8",
     "lucide-vue-next": "0.427.0",
     "radix-vue": "^1.9.3",
     "tailwind-merge": "^2.4.0",

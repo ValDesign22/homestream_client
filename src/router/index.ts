@@ -12,6 +12,12 @@ const router = createRouter({
     }, {
       path: '/browse',
       component: () => import('@/views/BrowseView.vue')
+    }, {
+      path: '/details/:id',
+      component: () => import('@/views/BrowseView.vue')
+    }, {
+      path: '/watch/:id',
+      component: () => import('@/views/BrowseView.vue')
     }
   ]
 });
