@@ -62,7 +62,7 @@ export interface Season {
 export interface Episode {
   id: number,
   episode_number: number,
-  name: string,
+  title: string,
   overview: string,
   air_date: string,
   still_path: string,
@@ -72,4 +72,23 @@ export interface Episode {
 export interface Genre {
   id: number,
   name: string,
+}
+
+export interface AudioTrack {
+  index: number;
+  codec_name: string;
+  codec_type: string;
+  channel_layout: string;
+  language: string;
+  handler_name: string;
+  enabled: boolean;
+}
+
+export interface SubtitleTrack {
+  index: number;
+  codec_name: string;
+  codec_type: string;
+  language: string;
+  handler_name: string;
+  enabled: boolean;
 }

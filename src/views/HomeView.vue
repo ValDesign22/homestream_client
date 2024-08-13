@@ -15,6 +15,8 @@
     </div>
 
     <p>Click on the Tauri, Vite, and Vue logos to learn more.</p>
+
+    <Button @click="() => $router.push({ path: '/browse' })">Browse</Button>
   </div>
 </template>
 

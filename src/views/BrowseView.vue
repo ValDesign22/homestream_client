@@ -199,6 +199,7 @@ onUnmounted(() => clearInterval(interval));
                 v-for="item in store.slice(0, 25)"
                 :key="item.id"
                 class="flex-grow p-1 basis-auto"
+                @click="() => $router.push({ path: `/details/${item.id}` })"
               >
                 <div class="p-1">
                   <TMDBImage
