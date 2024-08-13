@@ -220,10 +220,9 @@ onUnmounted(() => {
           :alt="videoItem.title"
           type="logo"
           size="original"
-          class="w-[20vw] h-auto object-cover"
+          class="w-[30vw] h-auto object-cover"
         />
         <h1 v-else class="text-white text-4xl">{{ videoItem.title }}</h1>
-        <p class="text-white max-w-lg">{{ videoItem.overview }}</p>
       </div>
       <div v-if="showControls" ref="controlsBox" class="flex flex-col gap-4">
         <Slider
