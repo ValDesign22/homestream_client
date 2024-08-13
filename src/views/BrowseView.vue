@@ -13,7 +13,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onUnmounted } from 'vue';
 import { vIntersectionObserver } from '@vueuse/components'
 import { useImage } from '@vueuse/core';
-import { PlayerEvent, PlayerState, PlayerStateChangeEvent, YoutubeIframe } from '@vue-youtube/component';
+import { PlayerState, usePlayer } from '@vue-youtube/core';
 
 const stores = ref<Record<string, Movie[] | TvShow[]>>({});
 const randomSelected = ref<Movie | TvShow | null>(null);
@@ -21,24 +21,49 @@ const randomSelected = ref<Movie | TvShow | null>(null);
 const { isLoading } = useImage({ src: randomSelected?.value?.backdrop_path ?? '' });
 
 const videoKey = ref<string>('');
-const videoPlaying = ref(false);
 const videoPlayer = ref();
+
+const videoPlaying = ref(true);
+const videoError = ref(false);
 const windowFocused = ref(true);
 const headerVisible = ref(true);
 
-function videoReady(event: PlayerEvent) {
-  if (event.target) {
-    event.target.playVideo();
-    videoPlaying.value = true;
+const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
+  playerVars: {
+    autoplay: 1,
+    controls: 0,
+    iv_load_policy: 3,
+    rel: 0,
+    showinfo: 0,
+    modestbranding: 1,
+    loop: 0,
   }
-}
+});
 
-function videoStateChange(event: PlayerStateChangeEvent) {
+onError((event) => {
+  console.error('An error occurred while playing the video', event.data)
+  videoPlaying.value = false;
+  videoError.value = true;
+});
+
+onStateChange((event) => {
+  if (videoKey.value === '') return;
+  if (videoError.value) return;
+  if (event.data === PlayerState.PLAYING) videoPlaying.value = true;
   if (event.data === PlayerState.ENDED) {
-    console.log('Video ended');
-    videoPlaying.value = false;
+    videoPlaying.value = false
+    videoKey.value = '';
   };
-}
+  if (event.data === PlayerState.UNSTARTED) videoPlaying.value = false;
+});
+
+onReady((event) => {
+  if (!event.target) return;
+  if (videoKey.value === '') return;
+  if (videoError.value) return;
+  event.target.playVideo();
+  videoPlaying.value = true;
+});
 
 function onIntersectionObserver([{ isIntersecting }]: IntersectionObserverEntry[]) {
   headerVisible.value = isIntersecting
@@ -69,7 +94,7 @@ async function selectRandomTopRated(store: Record<string, Movie[] | TvShow[]>, h
   });
   if (previewVideoKey.ok) {
     const response = await previewVideoKey.text();
-    videoKey.value = response;
+    videoKey.value = response || '';
   }
 
   return randomItem;
@@ -77,8 +102,14 @@ async function selectRandomTopRated(store: Record<string, Movie[] | TvShow[]>, h
 
 const interval = setInterval(async () => {
   windowFocused.value = await getCurrentWindow().isFocused();
-  if (windowFocused.value) {
-    // videoPlayer.value.togglePlay();
+  if (videoKey.value === '' || videoError.value || !instance.value) return videoPlaying.value = false;
+  if (!instance.value?.getDuration) return videoPlaying.value = false;
+  if (!windowFocused.value || !headerVisible.value) {
+    instance.value.pauseVideo();
+    videoPlaying.value = false;
+  } else {
+    instance.value.playVideo();
+    videoPlaying.value = true;
   }
 }, 1000);
 
@@ -92,6 +123,11 @@ onUnmounted(() => clearInterval(interval));
 
 <template class="w-full h-screen flex flex-col justify-center items-center">
   <NavBar />
+  <div
+    ref="videoPlayer"
+    class="w-full h-screen object-cover absolute top-0 left-0"
+    :class="{ 'z-10': videoPlaying && !videoError, 'z-0': !videoPlaying || videoError }"
+  />
   <div class="flex flex-col justify-center">
     <div v-if="Object.keys(stores).length === 0" class="w-full h-auto">
       <div v-for="(_, index) in 10" :key="index" class="w-full relative">
@@ -111,8 +147,8 @@ onUnmounted(() => clearInterval(interval));
       </div>
     </div>
     <div v-else class="w-full h-auto">
-      <div v-if="randomSelected" class="w-full relative" v-intersection-observer="onIntersectionObserver">
-        <Skeleton v-if="isLoading" class="w-full h-screen" />
+      <div v-if="randomSelected" class="w-full h-screen relative" v-intersection-observer="onIntersectionObserver">
+        <Skeleton v-if="isLoading" class="w-full h-full" />
         <TMDBImage
           v-if="!isLoading"
           :image="randomSelected.backdrop_path"
@@ -122,33 +158,16 @@ onUnmounted(() => clearInterval(interval));
           class="w-full h-full object-cover relative z-0"
           :class="{ 'z-[11]': !videoPlaying }"
         />
-        <youtube-iframe
-          v-if="videoKey && !isLoading"
-          :video-id="videoKey"
-          ref="videoPlayer"
-          class="w-full h-screen object-cover absolute top-0 left-0"
-          :class="{ 'z-10': !videoPlaying, 'z-[-1]': videoPlaying }"
-          :player-vars="{
-            autoplay: 1,
-            controls: 0,
-            iv_load_policy: 3,
-            modestbranding: 1,
-            rel: 0,
-            showinfo: 0,
-          }"
-          @ready="videoReady"
-          @state-change="videoStateChange"
-        />
-        <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 bg-gradient-to-t from-black from-10% to-transparent gap-4">
+        <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
           <TMDBImage
             v-if="randomSelected.logo_path"
             :image="randomSelected.logo_path"
             :alt="randomSelected.id.toString()"
             type="logo"
             size="original"
-            class="w-96 h-auto object-cover"
+            class="w-[30vw] h-auto object-cover"
           />
-          <h2 v-else class="text-2xl font-bold text-white">{{ randomSelected.title }}</h2>
+          <h2 v-else class="text-4xl font-bold sm:text-3xl text-white">{{ randomSelected.title }}</h2>
           <p class="text-white max-w-2xl">{{ randomSelected.overview.split(' ').slice(0, 20).join(' ') }}...</p>
           <div class="flex gap-4">
             <Button variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}` })">
