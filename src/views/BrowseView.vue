@@ -221,13 +221,13 @@ onUnmounted(() => clearInterval(interval));
                 :key="item.id"
                 class="flex-grow p-1 basis-auto"
               >
-                <div class="p-1">
+                <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
                     :image="item.poster_path"
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
                     @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
                   />
                 </div>
@@ -254,13 +254,13 @@ onUnmounted(() => clearInterval(interval));
                 :key="item.id"
                 class="flex-grow p-1 basis-auto"
               >
-                <div class="p-1">
+                <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
                     :image="item.poster_path"
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
                     @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
                   />
                 </div>

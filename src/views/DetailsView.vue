@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import getRecommendations from '@/utils/recommendations';
 import { Config, Episode, Movie, TvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -21,8 +22,9 @@ const router = useRouter();
 const item = ref<Movie | TvShow | null>(null);
 const videoItem = ref<Movie | Episode | null>(null);
 const collection = ref<Movie[]>([]);
+const recommendations = ref<(Movie | TvShow)[]>([]);
 
-const currentSeason = ref<number>(0);
+const currentSeason = ref<string>("0");
 
 const { isLoading } = useImage({ src: item.value?.backdrop_path ?? '' });
 
@@ -128,6 +130,9 @@ onMounted(async () => {
           }
         }
 
+        const recommendationsResponse = await getRecommendations(item.value);
+        recommendations.value = recommendationsResponse;
+
         const previewVideoKey = await fetch(`${config.http_server}/preview?id=${item.value.id}`, {
           method: 'GET',
         });
@@ -188,7 +193,52 @@ onUnmounted(() => clearInterval(interval));
         </div>
       </div>
     </div>
-    <div v-if="collection.length > 0" class="flex flex-col gap-8 p-16 bg-black">
+    <div v-if="'seasons' in item" class="flex flex-col gap-8 p-16 bg-black">
+      <Select v-model="currentSeason">
+        <SelectTrigger class="max-w-[200px]">
+          <SelectValue :placeholder="`Season ${item.seasons[parseInt(currentSeason)].season_number}`" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem v-for="(season, index) in item.seasons" :key="index" :value="index.toString()">
+              Season {{ season.season_number }}
+            </SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      <Carousel
+        class="relative w-full"
+        :opts="{
+          align: 'start',
+        }"
+      >
+        <CarouselContent>
+          <CarouselItem
+            v-for="episode in item.seasons[parseInt(currentSeason)].episodes"
+            :key="episode.id"
+            class="flex-grow p1 basis-auto"
+          >
+            <div class="p-1 relative overflow-hidden rounded-lg">
+              <TMDBImage
+                :image="episode.still_path"
+                :alt="episode.title"
+                type="still"
+                size="w300"
+                class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                @click="() => $router.push({ path: `/watch/${episode.id}`, replace: true })"
+              />
+              <div class="absolute bottom-0 left-0 w-full h-auto bg-gradient-to-t from-black from-10% to-transparent p-2">
+                <p class="text-white text-sm">Episode {{ episode.episode_number }}</p>
+                <p class="text-white text-sm">{{ episode.title }}</p>
+              </div>
+            </div>
+          </CarouselItem>
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+      </Carousel>
+    </div>
+    <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 p-16 bg-black">
       <div v-if="collection.length > 0" class="w-full h-auto p-4">
         <h3 class="text-2xl font-bold text-white">Collection</h3>
         <Carousel
@@ -203,13 +253,45 @@ onUnmounted(() => clearInterval(interval));
               :key="movie.id"
               class="flex-grow p1 basis-auto"
             >
-              <div class="p-1">
+              <div class="p-1 overflow-hidden rounded-lg">
                 <TMDBImage
                   :image="movie.poster_path"
                   :alt="movie.title"
                   type="poster"
                   size="w185"
-                  class="w-full h-auto object-cover rounded-lg cursor-pointer"
+                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                  @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
+                />Season 1
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
+      </div>
+    </div>
+    <div v-if="recommendations.length > 0" class="flex flex-col gap-8 p-16 bg-black">
+      <div class="w-full h-auto gap-4">
+        <h3 class="text-2xl font-bold text-white">Recommendations</h3>
+        <Carousel
+          class="relative w-full"
+          :opts="{
+            align: 'start',
+          }"
+        >
+          <CarouselContent>
+            <CarouselItem
+              v-for="movie in recommendations"
+              :key="movie.id"
+              class="flex-grow p1 basis-auto"
+            >
+              <div class="p-1 overflow-hidden rounded-lg">
+                <TMDBImage
+                  :image="movie.poster_path"
+                  :alt="movie.title"
+                  type="poster"
+                  size="w185"
+                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
                   @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
                 />
               </div>
@@ -219,20 +301,6 @@ onUnmounted(() => clearInterval(interval));
           <CarouselNext />
         </Carousel>
       </div>
-    </div>
-    <div v-if="'seasons' in item" class="flex flex-col gap-8 p-16 bg-black">
-      <Select>
-        <SelectTrigger class="max-w-[200px]">
-          <SelectValue :defaultValue="currentSeason.toString()" placeholder="Season 1" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem v-for="(season, index) in item.seasons" :key="index" :value="index.toString()">
-              Season {{ season.season_number }}
-            </SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
     </div>
   </div>
 </template>
