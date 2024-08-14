@@ -66,6 +66,7 @@ export interface Episode {
   overview: string,
   air_date: string,
   still_path: string,
+  runtime: number,
   path: string,
 }
 

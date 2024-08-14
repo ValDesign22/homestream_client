@@ -16,19 +16,19 @@ import { useImage } from '@vueuse/core';
 import { PlayerState, usePlayer } from '@vue-youtube/core';
 
 const stores = ref<Record<string, Movie[] | TvShow[]>>({});
-const randomSelected = ref<Movie | TvShow | null>(null);
-
 const genres = ref<Genre[]>([]);
+const randomSelected = ref<Movie | TvShow | null>(null);
 
 const { isLoading } = useImage({ src: randomSelected?.value?.backdrop_path ?? '' });
 
-const videoKey = ref<string>('');
-const videoPlayer = ref();
-
-const videoPlaying = ref(true);
-const videoError = ref(false);
 const windowFocused = ref(true);
 const headerVisible = ref(true);
+const showFullOverview = ref(false);
+
+const videoKey = ref<string>('');
+const videoPlayer = ref();
+const videoPlaying = ref(true);
+const videoError = ref(false);
 
 const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
   playerVars: {
@@ -187,13 +187,15 @@ onUnmounted(() => clearInterval(interval));
             class="w-[30vw] h-auto object-cover"
           />
           <h2 v-else class="text-4xl font-bold sm:text-3xl text-white">{{ randomSelected.title }}</h2>
-          <p class="text-white max-w-2xl">{{ randomSelected.overview.split(' ').slice(0, 20).join(' ') }}...</p>
+          <p class="text-white max-w-2xl" @click="showFullOverview = !showFullOverview">
+            {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, 50).join(' ') + '...' }}
+          </p>
           <div class="flex gap-4">
-            <Button variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}` })">
+            <Button variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}`, replace: true })">
               <PlayIcon class="w-6 h-6" />
               <span>Play</span>
             </Button>
-            <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}` })">
+            <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}`, replace: true })">
               <InfoIcon class="w-6 h-6" />
               <span>Details</span>
             </Button>
@@ -226,7 +228,7 @@ onUnmounted(() => clearInterval(interval));
                     type="poster"
                     size="w185"
                     class="w-full h-auto object-cover rounded-lg cursor-pointer"
-                    @click="() => $router.push({ path: `/details/${item.id}` })"
+                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
                   />
                 </div>
               </CarouselItem>
@@ -259,7 +261,7 @@ onUnmounted(() => clearInterval(interval));
                     type="poster"
                     size="w185"
                     class="w-full h-auto object-cover rounded-lg cursor-pointer"
-                    @click="() => $router.push({ path: `/details/${item.id}` })"
+                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
                   />
                 </div>
               </CarouselItem>

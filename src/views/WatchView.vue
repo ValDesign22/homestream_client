@@ -6,12 +6,13 @@ import { Slider } from '@/components/ui/slider';
 import { AudioTrack, Config, Episode, Movie, SubtitleTrack } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
-import { useEventListener } from '@vueuse/core';
+import { useEventListener, useGamepad } from '@vueuse/core';
 import { ChevronLeft, Maximize, MessageSquareText, Minimize, Pause, Play, RotateCcw, RotateCw, Volume1, Volume2, VolumeX } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { getNameByISO6392B } from '@/utils/languages';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { computed } from 'vue';
 
 const router = useRouter();
 
@@ -31,6 +32,9 @@ const playerVolume = ref([1]);
 const audioTracks = ref<AudioTrack[]>([]); // Here but currently not supported https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/audioTracks#browser_compatibility
 const subtitles = ref<SubtitleTrack[]>([]);
 const isHoveringTracks = ref(false);
+
+const { isSupported, gamepads } = useGamepad();
+const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
 
 let hideControlsTimeout: ReturnType<typeof setTimeout>;
 
@@ -108,13 +112,25 @@ useEventListener(document, 'click', (event) => {
 });
 
 useEventListener(document, 'keydown', (event) => {
+  if (!videoElem.value) return;
   if (event.key === ' ' || event.key === 'k' || event.key === 'MediaPlayPause') togglePlaying();
+  if (event.key === 'm') playerVolume.value = [playerVolume.value[0] === 0 ? 1 : 0];
+  if (event.key === 'f') toggleFullscreen(!isFullscreen.value);
+  if (event.key === 'Escape') toggleFullscreen(false);
   if (event.key === 'ArrowLeft' || event.key === 'j') backward();
   if (event.key === 'ArrowRight' || event.key === 'l') forward();
   if (event.key === 'ArrowUp') changeVolume(0.1);
   if (event.key === 'ArrowDown') changeVolume(-0.1);
-  if (event.key === 'm') playerVolume.value = [playerVolume.value[0] === 0 ? 1 : 0];
-  if (event.key === 'f') toggleFullscreen(!isFullscreen.value);
+  if (event.key === '0') videoElem.value.currentTime = 0;
+  if (event.key === '1') videoElem.value.currentTime = videoElem.value?.duration * 0.1;
+  if (event.key === '2') videoElem.value.currentTime = videoElem.value?.duration * 0.2;
+  if (event.key === '3') videoElem.value.currentTime = videoElem.value?.duration * 0.3;
+  if (event.key === '4') videoElem.value.currentTime = videoElem.value?.duration * 0.4;
+  if (event.key === '5') videoElem.value.currentTime = videoElem.value?.duration * 0.5;
+  if (event.key === '6') videoElem.value.currentTime = videoElem.value?.duration * 0.6;
+  if (event.key === '7') videoElem.value.currentTime = videoElem.value?.duration * 0.7;
+  if (event.key === '8') videoElem.value.currentTime = videoElem.value?.duration * 0.8;
+  if (event.key === '9') videoElem.value.currentTime = videoElem.value?.duration * 0.9;
 });
 
 watch(progressValue, () => {
@@ -124,6 +140,28 @@ watch(progressValue, () => {
 watch(playerVolume, () => {
   if (videoElem.value) videoElem.value.volume = playerVolume.value[0];
 });
+
+const gamepadInterval = setInterval(() => {
+  if (!isSupported.value) return;
+  if (!gamepad.value) return;
+  if (!videoElem.value) return;
+  if (gamepad.value.buttons[0].pressed) togglePlaying(); // A or Cross
+  if (gamepad.value.buttons[1].pressed) playerVolume.value = [playerVolume.value[0] === 0 ? 1 : 0]; // B or Circle
+  if (gamepad.value.buttons[3].pressed) toggleFullscreen(!isFullscreen.value); // Y or Triangle
+  if (gamepad.value.buttons[4].pressed || gamepad.value.axes[0] < -0.5) backward(); // L1 or L Stick Left
+  if (gamepad.value.buttons[5].pressed || gamepad.value.axes[0] > 0.5) forward(); // R1 or L Stick Right
+  const currentVideoTime = videoElem.value.currentTime;
+  if (gamepad.value.buttons[6].pressed) { // L2
+    const percentageBackward = Math.floor(currentVideoTime / videoElem.value.duration * 10) / 10;
+    videoElem.value.currentTime = videoElem.value.duration * (percentageBackward - 0.1);
+  }
+  if (gamepad.value.buttons[7].pressed) { // R2
+    const percentageForward = Math.ceil(currentVideoTime / videoElem.value.duration * 10) / 10;
+    videoElem.value.currentTime = videoElem.value.duration * percentageForward;
+  }
+  if (gamepad.value.buttons[12].pressed) changeVolume(0.1); // D-Pad Up
+  if (gamepad.value.buttons[13].pressed) changeVolume(-0.1); // D-Pad Down
+}, 100);
 
 onMounted(async () => {
   const config = await invoke<Config | null>("get_config");
@@ -203,6 +241,7 @@ onUnmounted(() => {
     videoElem.value.load();
     toggleFullscreen(false);
   }
+  clearInterval(gamepadInterval);
 });
 </script>
 
