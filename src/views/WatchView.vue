@@ -9,12 +9,13 @@ import { fetch } from '@tauri-apps/plugin-http';
 import { useEventListener, useGamepad } from '@vueuse/core';
 import { ChevronLeft, Maximize, MessageSquareText, Minimize, Pause, Play, RotateCcw, RotateCw, Volume1, Volume2, VolumeX } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { getNameByISO6392B } from '@/utils/languages';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { computed } from 'vue';
 
 const router = useRouter();
+const route = useRoute();
 
 const movieLogo = ref<string | null>(null);
 
@@ -163,7 +164,7 @@ const gamepadInterval = setInterval(() => {
   if (gamepad.value.buttons[13].pressed) changeVolume(-0.1); // D-Pad Down
 }, 100);
 
-onMounted(async () => {
+const loadData = async () => {
   const config = await invoke<Config | null>("get_config");
   if (config) {
     const route = router.currentRoute.value;
@@ -232,7 +233,11 @@ onMounted(async () => {
     else router.push({ path: '/browse' });
   }
   else router.push({ path: "/register", replace: true });
-});
+};
+
+onMounted(loadData);
+
+watch(route, loadData);
 
 onUnmounted(() => {
   if (videoElem.value) {

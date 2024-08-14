@@ -13,11 +13,13 @@ import { fetch } from '@tauri-apps/plugin-http';
 import { PlayerState, usePlayer } from '@vue-youtube/core';
 import { useImage } from '@vueuse/core';
 import { PlayIcon } from 'lucide-vue-next';
+import { watch } from 'vue';
 import { onUnmounted } from 'vue';
 import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
 const item = ref<Movie | TvShow | null>(null);
 const videoItem = ref<Movie | Episode | null>(null);
@@ -87,10 +89,9 @@ const interval = setInterval(async () => {
   }
 }, 1000);
 
-onMounted(async () => {
+const loadData = async () => {
   const config = await invoke<Config | null>('get_config');
   if (config) {
-    const route = router.currentRoute.value;
     const itemId = route.params.id;
     if (!itemId) router.push({ path: '/browse' });
 
@@ -103,7 +104,6 @@ onMounted(async () => {
     if (details.ok) {
       const response = await details.json();
       item.value = response;
-      console.log(item.value);
 
       if (item.value) {
         if ('collection_id' in item.value) {
@@ -146,7 +146,11 @@ onMounted(async () => {
     else router.push({ path: '/browse' });
   }
   else router.push({ path: '/register', replace: true });
-});
+};
+
+onMounted(loadData);
+
+watch(route, loadData);
 
 onUnmounted(() => clearInterval(interval));
 </script>
@@ -193,7 +197,7 @@ onUnmounted(() => clearInterval(interval));
         </div>
       </div>
     </div>
-    <div v-if="'seasons' in item" class="flex flex-col gap-8 p-16 bg-black">
+    <div v-if="'seasons' in item" class="flex flex-col gap-8 py-4 px-16 bg-black">
       <Select v-model="currentSeason">
         <SelectTrigger class="max-w-[200px]">
           <SelectValue :placeholder="`Season ${item.seasons[parseInt(currentSeason)].season_number}`" />
@@ -238,7 +242,7 @@ onUnmounted(() => clearInterval(interval));
         <CarouselNext />
       </Carousel>
     </div>
-    <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 p-16 bg-black">
+    <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 py-4 px-16 bg-black">
       <div v-if="collection.length > 0" class="w-full h-auto p-4">
         <h3 class="text-2xl font-bold text-white">Collection</h3>
         <Carousel
@@ -270,7 +274,7 @@ onUnmounted(() => clearInterval(interval));
         </Carousel>
       </div>
     </div>
-    <div v-if="recommendations.length > 0" class="flex flex-col gap-8 p-16 bg-black">
+    <div v-if="recommendations.length > 0" class="flex flex-col gap-8 py-4 px-16 bg-black">
       <div class="w-full h-auto gap-4">
         <h3 class="text-2xl font-bold text-white">Recommendations</h3>
         <Carousel
