@@ -4,7 +4,7 @@ import { NavBar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Config, Movie, TvShow } from '@/utils/types';
+import { Config, Genre, Movie, TvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { InfoIcon, PlayIcon } from 'lucide-vue-next';
@@ -17,6 +17,8 @@ import { PlayerState, usePlayer } from '@vue-youtube/core';
 
 const stores = ref<Record<string, Movie[] | TvShow[]>>({});
 const randomSelected = ref<Movie | TvShow | null>(null);
+
+const genres = ref<Genre[]>([]);
 
 const { isLoading } = useImage({ src: randomSelected?.value?.backdrop_path ?? '' });
 
@@ -79,8 +81,25 @@ async function fetchStores(http_server: string) {
   if (!response.ok) console.error('An error occurred while fetching the folders', await response.text());
   else {
     stores.value = await response.json();
+    genres.value = getGenres(stores.value);
     randomSelected.value = await selectRandomTopRated(stores.value, http_server);
   }
+}
+
+function getGenres(stores: Record<string, Movie[] | TvShow[]>) {
+  const genres: Genre[] = [];
+  for (const key in stores) {
+    const store = stores[key];
+    store.forEach((item) => {
+      item.genres.forEach((genre) => {
+        if (!genres.find((g) => g.id === genre.id)) genres.push(genre);
+        const genreIndex = genres.findIndex((g) => g.id === genre.id);
+        if (!genres[genreIndex].items) genres[genreIndex].items = [];
+        genres[genreIndex].items.push(item);
+      });
+    });
+  }
+  return genres;
 }
 
 async function selectRandomTopRated(store: Record<string, Movie[] | TvShow[]>, http_server: string): Promise<Movie | TvShow> {
@@ -199,7 +218,6 @@ onUnmounted(() => clearInterval(interval));
                 v-for="item in store.slice(0, 25)"
                 :key="item.id"
                 class="flex-grow p-1 basis-auto"
-                @click="() => $router.push({ path: `/details/${item.id}` })"
               >
                 <div class="p-1">
                   <TMDBImage
@@ -207,7 +225,41 @@ onUnmounted(() => clearInterval(interval));
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
+                  />
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+        <div v-for="(genre, key) in genres"
+          :key="key"
+          class="flex flex-col gap-4"
+        >
+          <h2 class="text-2xl font-bold text-white">{{ genre.name }}</h2>
+          <Carousel
+            class="relative w-full"
+            :opts="{
+              align: 'start',
+            }"
+          >
+            <CarouselContent>
+              <CarouselItem
+                v-for="item in genre.items.slice(0, 25)"
+                :key="item.id"
+                class="flex-grow p-1 basis-auto"
+              >
+                <div class="p-1">
+                  <TMDBImage
+                    :image="item.poster_path"
+                    :alt="item.id.toString()"
+                    type="poster"
+                    size="w185"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>

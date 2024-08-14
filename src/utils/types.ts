@@ -72,23 +72,24 @@ export interface Episode {
 export interface Genre {
   id: number,
   name: string,
+  items: (Movie | TvShow)[],
 }
 
 export interface AudioTrack {
-  index: number;
-  codec_name: string;
-  codec_type: string;
-  channel_layout: string;
-  language: string;
-  handler_name: string;
-  enabled: boolean;
+  index: number,
+  codec_name: string,
+  codec_type: string,
+  channel_layout: string,
+  language: string,
+  handler_name: string,
+  enabled: boolean,
 }
 
 export interface SubtitleTrack {
-  index: number;
-  codec_name: string;
-  codec_type: string;
-  language: string;
-  handler_name: string;
-  enabled: boolean;
+  index: number,
+  codec_name: string,
+  codec_type: string,
+  language: string,
+  handler_name: string,
+  enabled: boolean,
 }
