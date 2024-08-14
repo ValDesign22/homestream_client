@@ -57,6 +57,7 @@ const resetControlsTimer = () => {
 const backward = () => {
   if (videoElem.value) videoElem.value.currentTime -= 10;
 };
+
 const forward = () => {
   if (videoElem.value) videoElem.value.currentTime += 10;
 };
@@ -190,8 +191,9 @@ onMounted(async () => {
         }
       }
     }
+    else router.push({ path: '/browse' });
   }
-  else router.push({ path: "/register", replace: true })
+  else router.push({ path: "/register", replace: true });
 });
 
 onUnmounted(() => {

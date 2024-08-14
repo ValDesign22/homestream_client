@@ -14,7 +14,7 @@ const router = createRouter({
       component: () => import('@/views/BrowseView.vue')
     }, {
       path: '/details/:id',
-      component: () => import('@/views/BrowseView.vue')
+      component: () => import('@/views/DetailsView.vue')
     }, {
       path: '/watch/:id',
       component: () => import('@/views/WatchView.vue')
