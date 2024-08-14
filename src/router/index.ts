@@ -2,6 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior() {
+    return {
+      top: 0,
+      behavior: 'smooth'
+    };
+  },
   routes: [
     {
       path: '/',
@@ -18,6 +24,9 @@ const router = createRouter({
     }, {
       path: '/watch/:id',
       component: () => import('@/views/WatchView.vue')
+    }, {
+      path: '/search',
+      component: () => import('@/views/SearchView.vue')
     }
   ]
 });

@@ -257,7 +257,7 @@ onUnmounted(() => {
     </video>
     <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 bg-black bg-opacity-50">
       <div v-if="showControls" class="flex">
-        <ChevronLeft class="text-white cursor-pointer" @click="router.back()" />
+        <ChevronLeft class="cursor-pointer" @click="router.back()" />
       </div>
       <div v-if="!playing" class="flex flex-col gap-4">
         <TMDBImage
@@ -268,7 +268,7 @@ onUnmounted(() => {
           size="original"
           class="w-[30vw] h-auto object-cover"
         />
-        <h1 v-else class="text-white text-4xl">{{ videoItem.title }}</h1>
+        <h1 v-else class="text-4xl">{{ videoItem.title }}</h1>
       </div>
       <div v-if="showControls" ref="controlsBox" class="flex flex-col gap-4">
         <Slider
@@ -282,12 +282,12 @@ onUnmounted(() => {
         />
         <div class="relative flex justify-between">
           <div v-if="videoElem" class="flex gap-4">
-            <p class="text-white">{{ formatTime(videoElem.currentTime) }} / {{ formatTime(videoElem.duration) }}</p>
+            <span>{{ formatTime(videoElem.currentTime) }} / {{ formatTime(videoElem.duration) }}</span>
           </div>
           <div class="absolute left-1/2 transform -translate-x-1/2 flex gap-4">
-            <RotateCcw @click="backward" class="text-white cursor-pointer" />
-            <component :is="playing ? Pause : Play" class="text-white cursor-pointer" @click="togglePlaying" />
-            <RotateCw @click="forward" class="text-white cursor-pointer" />
+            <RotateCcw @click="backward" class="cursor-pointer" />
+            <component :is="playing ? Pause : Play" class="cursor-pointer" @click="togglePlaying" />
+            <RotateCw @click="forward" class="cursor-pointer" />
           </div>
           <div class="flex gap-4">
             <div
@@ -302,20 +302,20 @@ onUnmounted(() => {
                 :max="1"
                 :step="0.01"
               />
-              <component :is="playerVolume[0] === 0 ? VolumeX : playerVolume[0] < 0.5 ? Volume1 : Volume2" class="text-white cursor-pointer" @click="() => playerVolume[0] = playerVolume[0] === 0 ? 0.5 : 0" />
+              <component :is="playerVolume[0] === 0 ? VolumeX : playerVolume[0] < 0.5 ? Volume1 : Volume2" class="cursor-pointer" @click="() => playerVolume[0] = playerVolume[0] === 0 ? 0.5 : 0" />
             </div>
             <HoverCard v-if="subtitles.length > 0">
               <HoverCardTrigger as-child>
-                <MessageSquareText class="text-white cursor-pointer" />
+                <MessageSquareText class="cursor-pointer" />
               </HoverCardTrigger>
               <HoverCardContent @mouseenter="() => isHoveringTracks = true" @mouseleave="() => isHoveringTracks = false" class="flex flex-col gap-4">
-                <p>Subtitles</p>
+                <span>Subtitles</span>
                 <Button variant="ghost" v-for="(track, index) in subtitles" :key="track.index" @click="() => useSubtitleTrack(index)">
                   {{ `${getNameByISO6392B(track.language)}${track.handler_name ? `- ${track.handler_name}` : ''}` }}
                 </Button>
               </HoverCardContent>
             </HoverCard>
-            <component :is="isFullscreen ? Minimize : Maximize" class="text-white cursor-pointer" @click="() => toggleFullscreen(!isFullscreen)" />
+            <component :is="isFullscreen ? Minimize : Maximize" class="cursor-pointer" @click="() => toggleFullscreen(!isFullscreen)" />
           </div>
         </div>
       </div>

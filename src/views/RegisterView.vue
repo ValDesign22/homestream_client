@@ -175,7 +175,7 @@ async function onSubmit(values: GenericObject) {
         </Stepper>
   
         <div class="flex flex-col gap-4 mt-4 w-fit px-96">
-          <p>{{ steps[stepIndex - 1].description }}</p>
+          <span>{{ steps[stepIndex - 1].description }}</span>
 
           <template v-if="stepIndex === 1">
             <FormField v-slot="{ componentField }" name="httpServer">
@@ -262,9 +262,9 @@ async function onSubmit(values: GenericObject) {
 
           <template v-if="stepIndex === 4">
             <div class="flex flex-col gap-4">
-              <p>
+              <span>
                 Your configuration has been saved successfully. You can now start using the app.
-              </p>
+              </span>
             </div>
           </template>
         </div>

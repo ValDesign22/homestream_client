@@ -186,16 +186,16 @@ onUnmounted(() => clearInterval(interval));
             size="original"
             class="w-[30vw] h-auto object-cover"
           />
-          <h2 v-else class="text-4xl font-bold sm:text-3xl text-white">{{ randomSelected.title }}</h2>
-          <p class="text-white max-w-2xl" @click="showFullOverview = !showFullOverview">
+          <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ randomSelected.title }}</h2>
+          <span class="max-w-2xl" @click="showFullOverview = !showFullOverview">
             {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, 50).join(' ') + '...' }}
-          </p>
+          </span>
           <div class="flex gap-4">
-            <Button variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}`, replace: true })">
+            <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}`, replace: true })">
               <PlayIcon class="w-6 h-6" />
               <span>Play</span>
             </Button>
-            <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}`, replace: true })">
+            <Button variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}`, replace: true })">
               <InfoIcon class="w-6 h-6" />
               <span>Details</span>
             </Button>
@@ -208,7 +208,7 @@ onUnmounted(() => clearInterval(interval));
           :key="key"
           class="flex flex-col gap-4"
         >
-          <h2 class="text-2xl font-bold text-white">{{ key }}</h2>
+          <h2 class="text-2xl font-bold">{{ key }}</h2>
           <Carousel
             class="relative w-full"
             :opts="{
@@ -241,7 +241,7 @@ onUnmounted(() => clearInterval(interval));
           :key="key"
           class="flex flex-col gap-4"
         >
-          <h2 class="text-2xl font-bold text-white">{{ genre.name }}</h2>
+          <h2 class="text-2xl font-bold">{{ genre.name }}</h2>
           <Carousel
             class="relative w-full"
             :opts="{

@@ -183,21 +183,20 @@ onUnmounted(() => clearInterval(interval));
           size="original"
           class="w-[30vw] h-auto object-cover"
         />
-        <h2 v-else class="text-4xl font-bold sm:text-3xl text-white">{{ item.title }}</h2>
-        <p class="text-white max-w-2xl" @click="showFullOverview = !showFullOverview">
+        <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ item.title }}</h2>
+        <span class="max-w-2xl" @click="showFullOverview = !showFullOverview">
           {{ showFullOverview ? item.overview : item.overview.split(' ').slice(0, 50).join(' ') + '...' }}
-        </p>
+        </span>
         <div class="flex gap-4 items-center" v-if="videoItem">
-          <Button variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}`, replace: true })">
+          <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}`, replace: true })">
             <PlayIcon class="w-6 h-6" />
             <span>Play</span>
           </Button>
-          <!-- Show the movie/episode duration -->
-          <span class="text-white">{{ videoItem.runtime }} minutes</span>
+          <span>{{ videoItem.runtime }} minutes</span>
         </div>
       </div>
     </div>
-    <div v-if="'seasons' in item" class="flex flex-col gap-8 py-4 px-16 bg-black">
+    <div v-if="'seasons' in item" class="flex flex-col gap-4 py-4 px-16 bg-black">
       <Select v-model="currentSeason">
         <SelectTrigger class="max-w-[200px]">
           <SelectValue :placeholder="`Season ${item.seasons[parseInt(currentSeason)].season_number}`" />
@@ -231,9 +230,9 @@ onUnmounted(() => clearInterval(interval));
                 class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
                 @click="() => $router.push({ path: `/watch/${episode.id}`, replace: true })"
               />
-              <div class="absolute bottom-0 left-0 w-full h-auto bg-gradient-to-t from-black from-10% to-transparent p-2">
-                <p class="text-white text-sm">Episode {{ episode.episode_number }}</p>
-                <p class="text-white text-sm">{{ episode.title }}</p>
+              <div class="absolute bottom-0 left-0 w-full h-auto pointer-events-none bg-gradient-to-t from-black from-10% to-transparent p-4">
+                <span class="text-sm">Episode {{ episode.episode_number }}</span>
+                <span class="text-sm">{{ episode.title }}</span>
               </div>
             </div>
           </CarouselItem>
@@ -243,8 +242,8 @@ onUnmounted(() => clearInterval(interval));
       </Carousel>
     </div>
     <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 py-4 px-16 bg-black">
-      <div v-if="collection.length > 0" class="w-full h-auto p-4">
-        <h3 class="text-2xl font-bold text-white">Collection</h3>
+      <div v-if="collection.length > 0" class="w-full h-auto flex flex-col p-4">
+        <h3 class="text-2xl font-bold">Collection</h3>
         <Carousel
           class="relative w-full"
           :opts="{
@@ -275,8 +274,8 @@ onUnmounted(() => clearInterval(interval));
       </div>
     </div>
     <div v-if="recommendations.length > 0" class="flex flex-col gap-8 py-4 px-16 bg-black">
-      <div class="w-full h-auto gap-4">
-        <h3 class="text-2xl font-bold text-white">Recommendations</h3>
+      <div class="w-full h-auto flex flex-col gap-4">
+        <h3 class="text-2xl font-bold">Recommendations</h3>
         <Carousel
           class="relative w-full"
           :opts="{
