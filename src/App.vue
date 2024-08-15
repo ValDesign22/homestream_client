@@ -2,7 +2,7 @@
 import { onBeforeMount } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { useRouter } from "vue-router";
-import { Config } from "./utils/types";
+import { Config } from "@/utils/types";
 
 const router = useRouter();
 
