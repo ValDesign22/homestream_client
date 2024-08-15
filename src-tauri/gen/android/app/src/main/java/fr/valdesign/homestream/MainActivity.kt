@@ -1,3 +1,3 @@
-package com.tauri.dev
+package fr.valdesign.homestream
 
 class MainActivity : TauriActivity()

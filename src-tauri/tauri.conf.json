@@ -1,6 +1,6 @@
 {
   "productName": "HomeStream",
-  "version": "0.0.0",
+  "version": "1.0.0-rc.1",
   "identifier": "fr.valdesign.homestream",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -28,6 +28,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -35,5 +36,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ5MjU5Q0EyRUJGOEU5NzQKUldSMDZmanJvcHdsMlZSS21pYmhzL2VSQ3FoWWRGNzRNa3k1Um1nYitwY05yRjdLK0svQmRTbmwK",
+      "endpoints": [
+        "https://github.com/ValDesign22/homestream_client/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
