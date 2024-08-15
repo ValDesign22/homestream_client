@@ -1,6 +1,6 @@
 {
   "productName": "HomeStream",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-1",
   "identifier": "fr.valdesign.homestream",
   "build": {
     "beforeDevCommand": "pnpm dev",
