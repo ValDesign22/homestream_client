@@ -15,6 +15,7 @@ import { Folder, RemoteFolder } from '@/utils/types';
 import { fetch } from '@tauri-apps/plugin-http';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TreeSelector } from '@/components/tree';
+import { Separator } from '@/components/ui/separator';
 
 const router = useRouter();
 
@@ -29,6 +30,7 @@ const formSchema = [
     folders: zod.array(zod.object({
       media_type: zod.string().transform(Number),
       path: zod.string(),
+      name: zod.string(),
     })).optional(),
   }),
 ];
@@ -78,14 +80,32 @@ function goBack() {
 }
 
 async function fetchFolders() {
+  console.log(httpServer.value);
   if (!httpServer.value) return;
 
   const response = await fetch(httpServer.value + '/folders', {
     method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 
   if (!response.ok) console.error('An error occurred while fetching the folders');
   else remoteFolders.value = await response.json();
+
+  const configResponse = await fetch(httpServer.value + '/config', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!configResponse.ok) console.error('An error occurred while fetching the config');
+  else {
+    const config = await configResponse.json();
+    folders.value = config.folders;
+    selectors.value = config.folders.map(() => false);
+  }
 }
 
 async function onSubmit(values: GenericObject) {
@@ -206,39 +226,51 @@ async function onSubmit(values: GenericObject) {
               <div v-if="!folders.length" class="flex items-center gap-4">
                 <span class="text-md font-bold">No folders added</span>
               </div>
-              <div v-for="(folder, index) in folders" :key="index" class="flex items-center gap-4">
-                <FormField v-slot="{ componentField }" :name="'folders[' + index + '].media_type'">
-                  <FormItem>
-                    <Select v-bind="componentField">
+              <div v-for="(folder, index) in folders" :key="index" class="flex flex-col gap-4">
+                <div class="flex gap-4">
+                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].media_type'">
+                    <FormItem>
+                      <Select v-bind="componentField" :defaultValue="folder.media_type.toString()">
+                        <FormControl>
+                          <SelectTrigger class="w-auto">
+                            <SelectValue placeholder="Select a media type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent class="w-auto">
+                          <SelectGroup class="w-auto">
+                            <SelectLabel>Media Type</SelectLabel>
+                            <SelectItem value="0">Movies</SelectItem>
+                            <SelectItem value="1">TV Shows</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  </FormField>
+                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].name'">
+                    <FormItem>
                       <FormControl>
-                        <SelectTrigger class="w-auto">
-                          <SelectValue placeholder="Select a media type" />
-                        </SelectTrigger>
+                        <Input v-bind="componentField" type="text" v-model="folder.name" placeholder="Folder name" />
                       </FormControl>
-                      <SelectContent class="w-auto">
-                        <SelectGroup class="w-auto">
-                          <SelectLabel>Media Type</SelectLabel>
-                          <SelectItem value="0">Movies</SelectItem>
-                          <SelectItem value="1">TV Shows</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                </FormField>
-                <FormField v-slot="{ componentField }" :name="'folders[' + index + '].path'">
-                  <FormItem>
-                    <FormControl>
-                      <Input type="text" v-bind="componentField" @click="() => toggleSelector(index)" :value="folder.path.length ? folder.path : 'Select a folder'" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                </FormField>
-                <Button variant="destructive" @click="() => {
-                  folders = folders.filter((_, i) => i !== index)
-                  selectors = selectors.filter((_, i) => i !== index)
-                }">
-                  <Trash2 />
-                </Button>
+                      <FormMessage />
+                    </FormItem>
+                  </FormField>
+                </div>
+                <div class="flex gap-4">
+                  <FormField :name="'folders[' + index + '].path'">
+                    <FormItem>
+                      <FormControl>
+                        <Input type="text" @click="() => toggleSelector(index)" :value="folder.path.length ? folder.path : 'Select a folder'" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  </FormField>
+                  <Button variant="destructive" @click="() => {
+                    folders = folders.filter((_, i) => i !== index)
+                    selectors = selectors.filter((_, i) => i !== index)
+                  }">
+                    <Trash2 />
+                  </Button>
+                </div>
 
                 <TreeSelector
                   :open="selectors[index]"
@@ -248,6 +280,8 @@ async function onSubmit(values: GenericObject) {
                   :selectItem="selectItem"
                   :toggle="(index) => toggleSelector(index)"
                 />
+
+                <Separator v-if="index !== folders.length - 1" />
               </div>
               <div class="flex items-center gap-4">
                 <Button @click="() => {
@@ -274,7 +308,10 @@ async function onSubmit(values: GenericObject) {
             Back
           </Button>
           <div class="flex items-center gap-3">
-            <Button v-if="stepIndex !== steps.length" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="meta.valid && goNext()">
+            <Button v-if="stepIndex !== steps.length" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
+              fetchFolders();
+              meta.valid && goNext();
+            }">
               Next
             </Button>
             <Button
