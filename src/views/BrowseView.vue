@@ -12,14 +12,11 @@ import { onMounted, ref } from 'vue';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onUnmounted } from 'vue';
 import { vIntersectionObserver } from '@vueuse/components'
-import { useImage } from '@vueuse/core';
 import { PlayerState, usePlayer } from '@vue-youtube/core';
 
 const stores = ref<Record<string, Movie[] | TvShow[]>>({});
 const genres = ref<Genre[]>([]);
 const randomSelected = ref<Movie | TvShow | null>(null);
-
-const { isLoading } = useImage({ src: randomSelected?.value?.backdrop_path ?? '' });
 
 const windowFocused = ref(true);
 const headerVisible = ref(true);
@@ -167,9 +164,7 @@ onUnmounted(() => clearInterval(interval));
     </div>
     <div v-else class="w-full h-auto">
       <div v-if="randomSelected" class="w-full h-screen relative" v-intersection-observer="onIntersectionObserver">
-        <Skeleton v-if="isLoading" class="w-full h-full" />
         <TMDBImage
-          v-if="!isLoading"
           :image="randomSelected.backdrop_path"
           :alt="randomSelected.id.toString()"
           type="backdrop"
@@ -184,7 +179,7 @@ onUnmounted(() => clearInterval(interval));
             :alt="randomSelected.id.toString()"
             type="logo"
             size="original"
-            class="w-[30vw] h-auto object-cover"
+            class="w-[20vw] h-auto object-cover"
           />
           <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ randomSelected.title }}</h2>
           <span class="max-w-2xl" @click="showFullOverview = !showFullOverview">

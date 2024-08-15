@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { useImage } from '@vueuse/core';
 import { HTMLAttributes } from 'vue';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface BackdropProps {
   type: "backdrop";
@@ -32,11 +34,16 @@ type TMDBImageProps = (BackdropProps | LogoProps | PosterProps | ProfileProps | 
 };
 
 const props = defineProps<TMDBImageProps & { class?: HTMLAttributes['class'] }>();
+
+const imageUrl = `https://image.tmdb.org/t/p/${props.size}${props.image}`;
+const { isLoading } = useImage({ src: imageUrl });
 </script>
 
 <template>
+  <Skeleton v-if="isLoading" class="w-full h-full rounded-lg" />
   <img
-    :src="`https://image.tmdb.org/t/p/${props.size}${props.image}`"
+    v-else
+    :src="imageUrl"
     :alt="props.alt"
     :class="props.class"
   />

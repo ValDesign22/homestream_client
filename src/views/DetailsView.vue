@@ -181,7 +181,7 @@ onUnmounted(() => clearInterval(interval));
           :alt="item.id.toString()"
           type="logo"
           size="original"
-          class="w-[30vw] h-auto object-cover"
+          class="w-[20vw] h-auto object-cover"
         />
         <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ item.title }}</h2>
         <span class="max-w-2xl" @click="showFullOverview = !showFullOverview">

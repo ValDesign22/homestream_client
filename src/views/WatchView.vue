@@ -266,7 +266,7 @@ onUnmounted(() => {
           :alt="videoItem.title"
           type="logo"
           size="original"
-          class="w-[30vw] h-auto object-cover"
+          class="w-[20vw] h-auto object-cover"
         />
         <h1 v-else class="text-4xl">{{ videoItem.title }}</h1>
       </div>
