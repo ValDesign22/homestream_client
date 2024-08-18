@@ -39,7 +39,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVBNDY4OUIzMjMzMjIyNTYKUldSV0lqSWpzNGxHNm5jUUdOd3JVOVByaFV0akFlSU0yOHY1TDRBNDNlK3VGcGJNWm5SbjNVWW0K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE0NDI0NTg3NDFFN0YyQzQKUldURTh1ZEJoMFZDcFBGNUVYbzZXZCtOZGNGcEIyeXNxMjhBclRPaDRlQkZjV1A1SE5yeU11bEYK",
       "endpoints": [
         "https://github.com/ValDesign22/homestream_client/releases/latest/download/latest.json"
       ],
