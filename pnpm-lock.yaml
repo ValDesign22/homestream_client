@@ -17,7 +17,7 @@ importers:
       '@tauri-apps/plugin-http':
         specifier: 2.0.0-rc.1
         version: 2.0.0-rc.1
-      '@tauri-apps/plugin-shell':
+      '@tauri-apps/plugin-store':
         specifier: 2.0.0-rc.0
         version: 2.0.0-rc.0
       '@tauri-apps/plugin-updater':
@@ -53,9 +53,6 @@ importers:
       lucide-vue-next:
         specifier: 0.428.0
         version: 0.428.0(vue@3.4.37(typescript@5.5.4))
-      pinia:
-        specifier: ^2.2.2
-        version: 2.2.2(typescript@5.5.4)(vue@3.4.37(typescript@5.5.4))
       radix-vue:
         specifier: 1.9.4
         version: 1.9.4(vue@3.4.37(typescript@5.5.4))
@@ -544,8 +541,8 @@ packages:
   '@tauri-apps/plugin-http@2.0.0-rc.1':
     resolution: {integrity: sha512-j4WdTEKx0CFa6u8ubke0mo75pCrnu6XtrFtvjsh+zjuNYgMG/l0+A1woWXHm73f2Levskhs+KbKcLQA/nr8k2w==}
 
-  '@tauri-apps/plugin-shell@2.0.0-rc.0':
-    resolution: {integrity: sha512-bhUcQcrqZoK8H1DFXapr5r1Z75oh6Kd5Tltz97XpZFLREEqp+KhN2Fvyh8r/fKAyenYsTYUIsDsyGdjdueuF9g==}
+  '@tauri-apps/plugin-store@2.0.0-rc.0':
+    resolution: {integrity: sha512-KqiEzq6EdRwxrl0/FwyNLwumDBM91xTchdu2a8vfkNub30GuP9z7RskP9ifVRI1gbxfa5TUDi0hKFk/SP7TANQ==}
 
   '@tauri-apps/plugin-updater@2.0.0-rc.0':
     resolution: {integrity: sha512-EKajf/sBpFif0cwXhTo3BmNvTZ2t2DDLRyhA8FFKugZNoOeqU97bHhPT5DIqMUPRE1tyDk9o7sXm8dKf7oz+EA==}
@@ -1409,18 +1406,6 @@ packages:
     resolution: {integrity: sha512-udgsAY+fTnvv7kI7aaxbqwWNb0AHiB0qBO89PZKPkoTmGOgdbrHDKD+0B2X4uTfJ/FT1R09r9gTsjUjNJotuog==}
     engines: {node: '>=0.10.0'}
 
-  pinia@2.2.2:
-    resolution: {integrity: sha512-ja2XqFWZC36mupU4z1ZzxeTApV7DOw44cV4dhQ9sGwun+N89v/XP7+j7q6TanS1u1tdbK4r+1BUx7heMaIdagA==}
-    peerDependencies:
-      '@vue/composition-api': ^1.4.0
-      typescript: '>=4.4.4'
-      vue: ^2.6.14 || ^3.3.0
-    peerDependenciesMeta:
-      '@vue/composition-api':
-        optional: true
-      typescript:
-        optional: true
-
   pirates@4.0.6:
     resolution: {integrity: sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==}
     engines: {node: '>= 6'}
@@ -2089,7 +2074,7 @@ snapshots:
     dependencies:
       '@tauri-apps/api': 2.0.0-rc.1
 
-  '@tauri-apps/plugin-shell@2.0.0-rc.0':
+  '@tauri-apps/plugin-store@2.0.0-rc.0':
     dependencies:
       '@tauri-apps/api': 2.0.0-rc.1
 
@@ -3010,14 +2995,6 @@ snapshots:
   picomatch@2.3.1: {}
 
   pify@2.3.0: {}
-
-  pinia@2.2.2(typescript@5.5.4)(vue@3.4.37(typescript@5.5.4)):
-    dependencies:
-      '@vue/devtools-api': 6.6.3
-      vue: 3.4.37(typescript@5.5.4)
-      vue-demi: 0.14.10(vue@3.4.37(typescript@5.5.4))
-    optionalDependencies:
-      typescript: 5.5.4
 
   pirates@4.0.6: {}
 

@@ -3,8 +3,9 @@ import { useFocus, useGamepad, useWindowScroll } from '@vueuse/core';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-vue-next';
-import { computed, HTMLAttributes, onUnmounted, ref, watch } from 'vue';
+import { computed, HTMLAttributes, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useStore } from '@/lib/stores';
+import { IProfile } from '@/utils/types';
 
 interface NavBarProps {
   full?: boolean;
@@ -14,9 +15,10 @@ const props = defineProps<NavBarProps & { class?: HTMLAttributes['class'] }>();
 
 const router = useRouter();
 const route = useRoute();
-const store = useStore();
+const store = useStore;
 const { y } = useWindowScroll({ behavior: 'smooth' });
 
+const user = ref<IProfile | null>(null);
 const searchInput = ref();
 const { focused } = useFocus(searchInput);
 const searchContent = ref<string>(route.query.q as string || '');
@@ -41,6 +43,11 @@ watch(searchContent, () => {
   else router.push({ path: '/search', query: { q: searchContent.value } });
 });
 
+onMounted(async () => {
+  user.value = await store.getProfile();
+  if (!user.value) return router.push({ path: '/' });
+});
+
 onUnmounted(() => clearInterval(gamepadInterval));
 </script>
 
@@ -53,7 +60,7 @@ onUnmounted(() => clearInterval(gamepadInterval));
     }"
   >
     <RouterLink
-      :to="store.profile ? '/browse' : '/'"
+      :to="user ? '/browse' : '/'"
       class="text-2xl font-bold"
     >
       HomeStream

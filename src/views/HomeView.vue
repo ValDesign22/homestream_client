@@ -11,13 +11,13 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const store = useStore();
+const store = useStore;
 
 const version = ref<string | null>(null);
 const profiles = ref<IProfile[]>([]);
 
-const selectProfile = (profile: IProfile) => {
-  store.setProfile(profile);
+const selectProfile = async (selectedProfile: IProfile) => {
+  await store.setProfile(selectedProfile);
   router.push({ path: '/browse' });
 };
 

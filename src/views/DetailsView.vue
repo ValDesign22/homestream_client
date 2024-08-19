@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useStore } from '@/lib/stores';
 import getRecommendations from '@/utils/recommendations';
 import { IConfig, IEpisode, IMovie, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
@@ -12,7 +14,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { fetch } from '@tauri-apps/plugin-http';
 import { PlayerState, usePlayer } from '@vue-youtube/core';
 import { useImage } from '@vueuse/core';
-import { PlayIcon } from 'lucide-vue-next';
+import { PlayIcon, SquareCheck, SquarePlus, Star, StarOff } from 'lucide-vue-next';
 import { watch } from 'vue';
 import { onUnmounted } from 'vue';
 import { onMounted, ref } from 'vue';
@@ -21,7 +23,11 @@ import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
 const route = useRoute();
 
+const store = useStore;
+
 const item = ref<IMovie | ITvShow | null>(null);
+const isInFavorites = ref(false);
+const isInWatchlist = ref(false);
 const videoItem = ref<IMovie | IEpisode | null>(null);
 const collection = ref<IMovie[]>([]);
 const recommendations = ref<(IMovie | ITvShow)[]>([]);
@@ -106,6 +112,9 @@ const loadData = async () => {
       item.value = response;
 
       if (item.value) {
+        isInFavorites.value = await store.isInFavorites(item.value);
+        isInWatchlist.value = await store.isInWatchlist(item.value);
+
         if ('collection_id' in item.value) {
           const movie = item.value as IMovie;
           if (!movie.collection_id) collection.value = [];
@@ -152,6 +161,18 @@ onMounted(loadData);
 
 watch(route, loadData);
 
+watch(isInFavorites, async () => {
+  if (!item.value) return;
+  if (isInFavorites.value) await store.addToFavorites(item.value);
+  else await store.removeFromFavorites(item.value);
+});
+
+watch(isInWatchlist, async () => {
+  if (!item.value) return;
+  if (isInWatchlist.value) await store.addToWatchlist(item.value);
+  else await store.removeFromWatchlist(item.value);
+});
+
 onUnmounted(() => clearInterval(interval));
 </script>
 
@@ -193,6 +214,34 @@ onUnmounted(() => clearInterval(interval));
             <span>Play</span>
           </Button>
           <span>{{ videoItem.runtime }} minutes</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <component
+                  :is="isInWatchlist ? SquareCheck : SquarePlus"
+                  class="w-8 h-8 cursor-pointer"
+                  @click="() => isInWatchlist = !isInWatchlist"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>{{ isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist' }}</span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <component
+                  :is="isInFavorites ? StarOff : Star"
+                  class="w-8 h-8 cursor-pointer"
+                  @click="() => isInFavorites = !isInFavorites"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>{{ isInFavorites ? 'Remove from favorites' : 'Add to favorites' }}</span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </div>
