@@ -4,7 +4,7 @@ import { NavBar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Config, Genre, Movie, TvShow } from '@/utils/types';
+import { IConfig, IGenre, IMovie, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { InfoIcon, PlayIcon } from 'lucide-vue-next';
@@ -14,9 +14,9 @@ import { onUnmounted } from 'vue';
 import { vIntersectionObserver } from '@vueuse/components'
 import { PlayerState, usePlayer } from '@vue-youtube/core';
 
-const stores = ref<Record<string, Movie[] | TvShow[]>>({});
-const genres = ref<Genre[]>([]);
-const randomSelected = ref<Movie | TvShow | null>(null);
+const stores = ref<Record<string, IMovie[] | ITvShow[]>>({});
+const genres = ref<IGenre[]>([]);
+const randomSelected = ref<IMovie | ITvShow | null>(null);
 
 const windowFocused = ref(true);
 const headerVisible = ref(true);
@@ -83,8 +83,8 @@ async function fetchStores(http_server: string) {
   }
 }
 
-function getGenres(stores: Record<string, Movie[] | TvShow[]>) {
-  const genres: Genre[] = [];
+function getGenres(stores: Record<string, IMovie[] | ITvShow[]>) {
+  const genres: IGenre[] = [];
   for (const key in stores) {
     const store = stores[key];
     store.forEach((item) => {
@@ -99,7 +99,7 @@ function getGenres(stores: Record<string, Movie[] | TvShow[]>) {
   return genres;
 }
 
-async function selectRandomTopRated(store: Record<string, Movie[] | TvShow[]>, http_server: string): Promise<Movie | TvShow> {
+async function selectRandomTopRated(store: Record<string, IMovie[] | ITvShow[]>, http_server: string): Promise<IMovie | ITvShow> {
   const keys = Object.keys(store);
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
   const randomStore = store[randomKey];
@@ -130,7 +130,7 @@ const interval = setInterval(async () => {
 }, 1000);
 
 onMounted(async () => {
-  const config = await invoke<Config | null>("get_config");
+  const config = await invoke<IConfig | null>("get_config");
   if (config) fetchStores(config.http_server);
 });
 

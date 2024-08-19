@@ -3,21 +3,32 @@ import { onBeforeMount } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { check } from '@tauri-apps/plugin-updater';
 import { useRouter } from "vue-router";
-import { Config } from "@/utils/types";
+import { IConfig, IProfile } from "@/utils/types";
+import { fetch } from "@tauri-apps/plugin-http";
 
 const router = useRouter();
 
 onBeforeMount(async () => {
-  console.log("Checking if the app is registered");
-  const config = await invoke<Config | null>("get_config");
-  if (config === null) router.push({ path: "/register", replace: true });
-
-  const update = await check();
-  if (update) {
-    console.log(`Found update ${update.version} from ${update.date} with notes ${update.body}`);
-  } else {
-    console.log("No update available");
+  if (!import.meta.env.DEV) {
+    const update = await check();
+    if (update) console.log(`Found update ${update.version} from ${update.date} with notes ${update.body}`);
+    else console.log("No updates found");
   }
+
+  console.log("Checking if the app is registered");
+  const config = await invoke<IConfig | null>("get_config");
+  if (!config) return router.push({ path: "/register", replace: true });
+
+  const profiles = await fetch(config.http_server + '/profiles', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!profiles.ok) return router.push({ path: "/profiles", replace: true });
+  const data: IProfile[] = await profiles.json();
+  if (data.length === 0) return router.push({ path: "/profiles", replace: true });
 });
 </script>
 

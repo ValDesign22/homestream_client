@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { RemoteFolder } from '@/utils/types';
+import { IRemoteFolder } from '@/utils/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { HTMLAttributes, ref } from 'vue';
 import TreeNode from './TreeNode.vue';
 
 interface TreeViewerProps {
-  data: RemoteFolder[];
-  selectedItem: RemoteFolder | null;
-  selectItem: (item: RemoteFolder | null) => void;
+  data: IRemoteFolder[];
+  selectedItem: IRemoteFolder | null;
+  selectItem: (item: IRemoteFolder | null) => void;
 }
 
 const props = defineProps<TreeViewerProps & { class?: HTMLAttributes['class'] }>();

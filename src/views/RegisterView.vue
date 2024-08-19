@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GenericObject } from 'vee-validate';
 import { create, exists, writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
-import { Folder, RemoteFolder } from '@/utils/types';
+import { IFolder, IRemoteFolder } from '@/utils/types';
 import { fetch } from '@tauri-apps/plugin-http';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TreeSelector } from '@/components/tree';
@@ -36,12 +36,12 @@ const formSchema = [
 ];
 
 const httpServer = ref('');
-const remoteFolders = ref<RemoteFolder[]>([]);
-const folders = ref<Folder[]>([]);
-const selectedItem = ref<RemoteFolder | null>(null);
+const IRemoteFolders = ref<IRemoteFolder[]>([]);
+const folders = ref<IFolder[]>([]);
+const selectedItem = ref<IRemoteFolder | null>(null);
 const selectors = ref<boolean[]>([]);
 
-const selectItem = (item: RemoteFolder | null, index: number) => {
+const selectItem = (item: IRemoteFolder | null, index: number) => {
   selectedItem.value = item;
   folders.value[index].path = item ? item.path : '';
 };
@@ -91,7 +91,7 @@ async function fetchFolders() {
   });
 
   if (!response.ok) console.error('An error occurred while fetching the folders');
-  else remoteFolders.value = await response.json();
+  else IRemoteFolders.value = await response.json();
 
   const configResponse = await fetch(httpServer.value + '/config', {
     method: 'GET',
@@ -117,7 +117,7 @@ async function onSubmit(values: GenericObject) {
     http_server: values.httpServer,
   }), { baseDir: BaseDirectory.AppConfig });
 
-  const foldersToSend: Folder[] = values.folders ? values.folders.map((folder: { media_type: string, path: string }, index: number) => ({
+  const foldersToSend: IFolder[] = values.folders ? values.folders.map((folder: { media_type: string, path: string }, index: number) => ({
     id: index,
     name: folder.path.split('/').pop() || '',
     media_type: parseInt(folder.media_type),
@@ -275,7 +275,7 @@ async function onSubmit(values: GenericObject) {
                 <TreeSelector
                   :open="selectors[index]"
                   :index="index"
-                  :data="remoteFolders"
+                  :data="IRemoteFolders"
                   :selectedItem="selectedItem"
                   :selectItem="selectItem"
                   :toggle="(index) => toggleSelector(index)"

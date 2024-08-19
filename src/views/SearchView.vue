@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import TMDBImage from '@/components/image/TMDBImage.vue';
 import { NavBar } from '@/components/navbar';
-import { Config, Movie, TvShow } from '@/utils/types';
+import { IConfig, IMovie, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { onMounted, onUnmounted, ref } from 'vue';
@@ -10,8 +10,8 @@ import { useRoute } from 'vue-router';
 
 const route = useRoute();
 
-const stores = ref<Record<string, Movie[] | TvShow[]>>({});
-const results = ref<(Movie | TvShow)[]>([]);
+const stores = ref<Record<string, IMovie[] | ITvShow[]>>({});
+const results = ref<(IMovie | ITvShow)[]>([]);
 
 function search(query: string) {
   results.value = [];
@@ -28,7 +28,7 @@ watch(route, () => {
 });
 
 onMounted(async () => {
-  const config = await invoke<Config | null>('get_config');
+  const config = await invoke<IConfig | null>('get_config');
   if (config) {
     const response = await fetch(config.http_server + '/stores', {
       method: 'GET',

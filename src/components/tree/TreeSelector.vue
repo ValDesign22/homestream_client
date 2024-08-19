@@ -2,15 +2,15 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { HTMLAttributes, ref } from 'vue';
-import { RemoteFolder } from '@/utils/types';
+import { IRemoteFolder } from '@/utils/types';
 import TreeViewer from './TreeViewer.vue';
 
 interface TreeSelectorProps {
   open: boolean;
   index: number;
-  data: RemoteFolder[];
-  selectedItem: RemoteFolder | null;
-  selectItem: (item: RemoteFolder | null, index: number) => void;
+  data: IRemoteFolder[];
+  selectedItem: IRemoteFolder | null;
+  selectItem: (item: IRemoteFolder | null, index: number) => void;
   toggle: (index: number) => void;
 }
 
@@ -18,7 +18,7 @@ const props = defineProps<TreeSelectorProps & { class?: HTMLAttributes['class'] 
 
 const input = ref<string>('');
 
-const searchByPath = (data: RemoteFolder[], path: string): RemoteFolder | null => {
+const searchByPath = (data: IRemoteFolder[], path: string): IRemoteFolder | null => {
   const stack = [...data];
 
   while (stack.length) {
@@ -32,7 +32,7 @@ const searchByPath = (data: RemoteFolder[], path: string): RemoteFolder | null =
   return null;
 };
 
-const selectItem = (item: RemoteFolder | null) => {
+const selectItem = (item: IRemoteFolder | null) => {
   props.selectItem(item, props.index);
   input.value = item ? item.path : '';
 };

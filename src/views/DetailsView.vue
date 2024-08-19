@@ -6,7 +6,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import getRecommendations from '@/utils/recommendations';
-import { Config, Episode, Movie, TvShow } from '@/utils/types';
+import { IConfig, IEpisode, IMovie, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { fetch } from '@tauri-apps/plugin-http';
@@ -21,10 +21,10 @@ import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
 const route = useRoute();
 
-const item = ref<Movie | TvShow | null>(null);
-const videoItem = ref<Movie | Episode | null>(null);
-const collection = ref<Movie[]>([]);
-const recommendations = ref<(Movie | TvShow)[]>([]);
+const item = ref<IMovie | ITvShow | null>(null);
+const videoItem = ref<IMovie | IEpisode | null>(null);
+const collection = ref<IMovie[]>([]);
+const recommendations = ref<(IMovie | ITvShow)[]>([]);
 
 const currentSeason = ref<string>("0");
 
@@ -90,7 +90,7 @@ const interval = setInterval(async () => {
 }, 1000);
 
 const loadData = async () => {
-  const config = await invoke<Config | null>('get_config');
+  const config = await invoke<IConfig | null>('get_config');
   if (config) {
     const itemId = route.params.id;
     if (!itemId) router.push({ path: '/browse' });
@@ -107,7 +107,7 @@ const loadData = async () => {
 
       if (item.value) {
         if ('collection_id' in item.value) {
-          const movie = item.value as Movie;
+          const movie = item.value as IMovie;
           if (!movie.collection_id) collection.value = [];
           else {
             const collectionResponse = await fetch(config.http_server + '/collection?id=' + movie.collection_id, {
@@ -124,7 +124,7 @@ const loadData = async () => {
 
           videoItem.value = item.value;
         } else {
-          const tvshow = item.value as TvShow;
+          const tvshow = item.value as ITvShow;
           if (tvshow.seasons.length > 0) {
             videoItem.value = tvshow.seasons[0].episodes[0];
           }

@@ -1,9 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Config, Movie, TvShow } from "./types";
+import { IConfig, IMovie, ITvShow } from "./types";
 import { fetch } from "@tauri-apps/plugin-http";
 
-export default async function getRecommendations(item: Movie | TvShow): Promise<(Movie | TvShow)[]> {
-  const config = await invoke<Config | null>("get_config");
+export default async function getRecommendations(item: IMovie | ITvShow): Promise<(IMovie | ITvShow)[]> {
+  const config = await invoke<IConfig | null>("get_config");
   if (config) {
     const response = await fetch(config.http_server + "/stores", {
       method: "GET",
@@ -13,7 +13,7 @@ export default async function getRecommendations(item: Movie | TvShow): Promise<
     });
     if (!response.ok) return [];
 
-    const stores: Record<string, Movie[] | TvShow[]> = await response.json();
+    const stores: Record<string, IMovie[] | ITvShow[]> = await response.json();
     const groupedStores = Object.values(stores).flat();
 
     const genreIds = new Set(item.genres.map(genre => genre.id));

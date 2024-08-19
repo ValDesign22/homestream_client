@@ -4,16 +4,9 @@ import router from "@/router";
 import "@/assets/index.css";
 import { createManager } from '@vue-youtube/core';
 
-async function setup() {
-}
+const app = createApp(App);
 
-setup().then(() => {
-  const app = createApp(App);
+app.use(router);
+app.use(createManager());
 
-  app.use(router);
-  app.use(createManager());
-
-  app.mount("#app");
-}).catch((error) => {
-  console.error('Error setting up frontend:', error);
-});
+app.mount("#app");

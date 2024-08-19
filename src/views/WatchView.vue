@@ -3,23 +3,28 @@ import { TMDBImage } from '@/components/image';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Slider } from '@/components/ui/slider';
-import { AudioTrack, Config, Episode, Movie, SubtitleTrack } from '@/utils/types';
+import { IAudioTrack, IConfig, IEpisode, IMovie, ISeason, ISubtitleTrack, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { useEventListener, useGamepad } from '@vueuse/core';
-import { ChevronLeft, Maximize, MessageSquareText, Minimize, Pause, Play, RotateCcw, RotateCw, Volume1, Volume2, VolumeX } from 'lucide-vue-next';
+import { ChevronLeft, GalleryVerticalEnd, Maximize, MessageSquareText, Minimize, Pause, Play, RotateCcw, RotateCw, Volume1, Volume2, VolumeX } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getNameByISO6392B } from '@/utils/languages';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { computed } from 'vue';
+import { getTvShowFromEpisode } from '@/utils/video';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const router = useRouter();
 const route = useRoute();
 
 const movieLogo = ref<string | null>(null);
 
-const videoItem = ref<Movie | Episode | null>(null);
+const tvShow = ref<ITvShow | null>(null);
+const currentSeason = ref<ISeason | null>(null);
+
+const videoItem = ref<IMovie | IEpisode | null>(null);
 const videoElem = ref<HTMLVideoElement>();
 const sourceElem = ref<HTMLSourceElement | null>(null);
 const playing = ref(false);
@@ -30,9 +35,10 @@ const isFullscreen = ref(false);
 const isUserSliding = ref(false);
 const isHoveringVolume = ref(false);
 const playerVolume = ref([1]);
-const audioTracks = ref<AudioTrack[]>([]); // Here but currently not supported https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/audioTracks#browser_compatibility
-const subtitles = ref<SubtitleTrack[]>([]);
+const audioTracks = ref<IAudioTrack[]>([]); // Here but currently not supported https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/audioTracks#browser_compatibility
+const subtitles = ref<ISubtitleTrack[]>([]);
 const isHoveringTracks = ref(false);
+const isHoveringSeasons = ref(false);
 
 const { isSupported, gamepads } = useGamepad();
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
@@ -106,6 +112,7 @@ useEventListener(document, 'mousemove', () => {
 
 useEventListener(document, 'click', (event) => {
   if (isHoveringTracks.value) return;
+  if (tvShow.value && isHoveringSeasons.value) return;
   if (controlsBox.value) {
     const bbox = controlsBox.value.getBoundingClientRect();
     if (!(event.clientX >= bbox.left && event.clientX <= bbox.right && event.clientY >= bbox.top && event.clientY <= bbox.bottom)) togglePlaying();
@@ -165,7 +172,7 @@ const gamepadInterval = setInterval(() => {
 }, 100);
 
 const loadData = async () => {
-  const config = await invoke<Config | null>("get_config");
+  const config = await invoke<IConfig | null>("get_config");
   if (config) {
     const route = router.currentRoute.value;
     const videoId = route.params.id;
@@ -182,7 +189,15 @@ const loadData = async () => {
       videoItem.value = video;
 
       if (videoItem.value) {
-        if ('logo_path' in videoItem.value) movieLogo.value = `https://image.tmdb.org/t/p/w300${(videoItem.value as Movie).logo_path}`;
+        if ('logo_path' in videoItem.value) movieLogo.value = `https://image.tmdb.org/t/p/w300${videoItem.value.logo_path}`;
+        if ('episode_number' in videoItem.value) {
+          const tvShowResult = await getTvShowFromEpisode(videoItem.value.id);
+          if (tvShowResult) {
+            tvShow.value = tvShowResult;
+            const season = tvShow.value.seasons.find(season => season.episodes.find(episode => episode.id === videoItem.value!.id));
+            if (season) currentSeason.value = season;
+          }
+        };
 
         const tracks = await fetch(config.http_server + `/tracks?id=${videoId}`, {
           method: 'GET',
@@ -192,13 +207,13 @@ const loadData = async () => {
         });
         if (tracks.ok) {
           const data = await tracks.json();
-          data.tracks.forEach((track: AudioTrack | SubtitleTrack) => {
+          data.tracks.forEach((track: IAudioTrack | ISubtitleTrack) => {
             if (track.codec_type === 'audio') audioTracks.value.push({
-              ...track as AudioTrack,
+              ...track as IAudioTrack,
               enabled: false,
             });
             if (track.codec_type === 'subtitle') subtitles.value.push({
-              ...track as SubtitleTrack,
+              ...track as ISubtitleTrack,
               enabled: false,
             });
           });
@@ -257,7 +272,7 @@ onUnmounted(() => {
     </video>
     <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 bg-black bg-opacity-50">
       <div v-if="showControls" class="flex">
-        <ChevronLeft class="cursor-pointer" @click="router.back()" />
+        <ChevronLeft class="cursor-pointer" @click="router.push({ path: '/browse' })" />
       </div>
       <div v-if="!playing" class="flex flex-col gap-4">
         <TMDBImage
@@ -304,15 +319,52 @@ onUnmounted(() => {
               />
               <component :is="playerVolume[0] === 0 ? VolumeX : playerVolume[0] < 0.5 ? Volume1 : Volume2" class="cursor-pointer" @click="() => playerVolume[0] = playerVolume[0] === 0 ? 0.5 : 0" />
             </div>
-            <HoverCard v-if="subtitles.length > 0">
+            <HoverCard v-if="subtitles.length > 0" v-model:open="isHoveringTracks">
               <HoverCardTrigger as-child>
                 <MessageSquareText class="cursor-pointer" />
               </HoverCardTrigger>
-              <HoverCardContent @mouseenter="() => isHoveringTracks = true" @mouseleave="() => isHoveringTracks = false" class="flex flex-col gap-4">
+              <HoverCardContent class="flex flex-col gap-4">
                 <span>Subtitles</span>
                 <Button variant="ghost" v-for="(track, index) in subtitles" :key="track.index" @click="() => useSubtitleTrack(index)">
                   {{ `${getNameByISO6392B(track.language)}${track.handler_name ? `- ${track.handler_name}` : ''}` }}
                 </Button>
+              </HoverCardContent>
+            </HoverCard>
+            <HoverCard v-if="tvShow && currentSeason && ('episode_number' in videoItem)" v-model:open="isHoveringSeasons">
+              <HoverCardTrigger as-child>
+                <GalleryVerticalEnd class="cursor-pointer" />
+              </HoverCardTrigger>
+              <HoverCardContent class="flex flex-col gap-4 w-[32rem]">
+                <Button variant="ghost">Season {{ currentSeason.season_number }}</Button>
+                <ScrollArea class="w-full h-64">
+                  <div
+                    v-for="(episode, index) in currentSeason.episodes"
+                    :key="episode.id"
+                    class="flex flex-col gap-4 p-4 rounded-md transition-colors \
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:cursor-pointer"
+                    :class="{
+                      'hover:bg-accent hover:text-accent-foreground': episode.id !== videoItem.id,
+                      'border border-input bg-background hover:bg-accent hover:text-accent-foreground': episode.id === videoItem.id,
+                      'my-4': index !== 0 && index !== currentSeason.episodes.length - 1,
+                      'mb-4': index === 0,
+                      'mt-4': index === currentSeason.episodes.length - 1,
+                    }"
+                    @click="() => router.push({ path: `/watch/${episode.id}` })"
+                  >
+                    <span>{{ episode.episode_number }}. {{ episode.title }}</span>
+                    <div class="flex gap-4">
+                      <TMDBImage
+                        v-if="episode.still_path"
+                        :image="episode.still_path"
+                        :alt="episode.title"
+                        type="still"
+                        size="w300"
+                        class="w-48 h-auto object-cover"
+                      />
+                      <span>{{ episode.overview }}</span>
+                    </div>
+                  </div>
+                </ScrollArea>
               </HoverCardContent>
             </HoverCard>
             <component :is="isFullscreen ? Minimize : Maximize" class="cursor-pointer" @click="() => toggleFullscreen(!isFullscreen)" />

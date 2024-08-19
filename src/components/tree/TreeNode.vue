@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { RemoteFolder } from '@/utils/types';
+import { IRemoteFolder } from '@/utils/types';
 import { FolderClosed, FolderOpen } from 'lucide-vue-next';
 import { HTMLAttributes } from 'vue';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import TreeLeaf from './TreeLeaf.vue';
 
 interface TreeNodeProps {
-  data: RemoteFolder[] | RemoteFolder;
+  data: IRemoteFolder[] | IRemoteFolder;
   opened_ids: string[];
-  selectedItem: RemoteFolder | null;
+  selectedItem: IRemoteFolder | null;
   toggleFolder: (id: string) => void;
-  selectItem: (item: RemoteFolder | null) => void;
+  selectItem: (item: IRemoteFolder | null) => void;
 }
 
 const props = defineProps<TreeNodeProps & { class?: HTMLAttributes['class'] }>();
@@ -20,7 +20,7 @@ const props = defineProps<TreeNodeProps & { class?: HTMLAttributes['class'] }>()
   <div role="tree" :class="props.class">
     <ul>
       <!-- eslint-disable-next-line vue/no-use-v-if-with-v-for -->
-      <li v-if="props.data instanceof Array" v-for="item in props.data as RemoteFolder[]" :key="String(item.id)">
+      <li v-if="props.data instanceof Array" v-for="item in props.data as IRemoteFolder[]" :key="String(item.id)">
         <Accordion v-if="item.children" type="multiple" :defaultValue="opened_ids">
           <AccordionItem :value="String(item.id)">
             <AccordionTrigger
