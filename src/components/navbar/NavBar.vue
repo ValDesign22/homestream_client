@@ -3,10 +3,18 @@ import { useFocus, useGamepad, useWindowScroll } from '@vueuse/core';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-vue-next';
-import { computed, onUnmounted, ref, watch } from 'vue';
+import { computed, HTMLAttributes, onUnmounted, ref, watch } from 'vue';
+import { useStore } from '@/lib/stores';
+
+interface NavBarProps {
+  full?: boolean;
+}
+
+const props = defineProps<NavBarProps & { class?: HTMLAttributes['class'] }>();
 
 const router = useRouter();
 const route = useRoute();
+const store = useStore();
 const { y } = useWindowScroll({ behavior: 'smooth' });
 
 const searchInput = ref();
@@ -33,9 +41,7 @@ watch(searchContent, () => {
   else router.push({ path: '/search', query: { q: searchContent.value } });
 });
 
-onUnmounted(() => {
-  clearInterval(gamepadInterval);
-});
+onUnmounted(() => clearInterval(gamepadInterval));
 </script>
 
 <template>
@@ -46,8 +52,13 @@ onUnmounted(() => {
       'to-transparent backdrop-blur': y > 0
     }"
   >
-    <RouterLink to="/" class="text-2xl font-bold">HomeStream</RouterLink>
-    <div class="flex items-center space-x-4">
+    <RouterLink
+      :to="store.profile ? '/browse' : '/'"
+      class="text-2xl font-bold"
+    >
+      HomeStream
+    </RouterLink>
+    <div v-if="props.full" class="flex items-center space-x-4">
       <RouterLink to="/browse">Browse</RouterLink>
        <div class="relative w-full max-w-xs items-center">
         <Input v-model="searchContent" ref="searchInput" type="text" placeholder="Search..." class="pl-10" />

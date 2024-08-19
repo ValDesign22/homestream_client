@@ -5,7 +5,7 @@ import { Check, Circle, Dot, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toTypedSchema } from '@vee-validate/zod'
-import * as zod from 'zod';
+import zod from 'zod';
 import { Stepper, StepperItem, StepperSeparator, StepperTitle, StepperTrigger } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

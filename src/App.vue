@@ -3,8 +3,7 @@ import { onBeforeMount } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { check } from '@tauri-apps/plugin-updater';
 import { useRouter } from "vue-router";
-import { IConfig, IProfile } from "@/utils/types";
-import { fetch } from "@tauri-apps/plugin-http";
+import { IConfig } from "@/utils/types";
 
 const router = useRouter();
 
@@ -18,17 +17,6 @@ onBeforeMount(async () => {
   console.log("Checking if the app is registered");
   const config = await invoke<IConfig | null>("get_config");
   if (!config) return router.push({ path: "/register", replace: true });
-
-  const profiles = await fetch(config.http_server + '/profiles', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-
-  if (!profiles.ok) return router.push({ path: "/profiles", replace: true });
-  const data: IProfile[] = await profiles.json();
-  if (data.length === 0) return router.push({ path: "/profiles", replace: true });
 });
 </script>
 

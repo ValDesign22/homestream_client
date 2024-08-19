@@ -138,7 +138,7 @@ onUnmounted(() => clearInterval(interval));
 </script>
 
 <template class="w-full h-screen flex flex-col justify-center items-center">
-  <NavBar />
+  <NavBar full />
   <div
     ref="videoPlayer"
     class="w-full h-screen object-cover absolute top-0 left-0"

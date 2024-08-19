@@ -341,7 +341,7 @@ onUnmounted(() => {
                     v-for="(episode, index) in currentSeason.episodes"
                     :key="episode.id"
                     class="flex flex-col gap-4 p-4 rounded-md transition-colors \
-                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:cursor-pointer"
+                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                     :class="{
                       'hover:bg-accent hover:text-accent-foreground': episode.id !== videoItem.id,
                       'border border-input bg-background hover:bg-accent hover:text-accent-foreground': episode.id === videoItem.id,

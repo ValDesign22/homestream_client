@@ -51,7 +51,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <NavBar />
+  <NavBar full />
   <div class="flex flex-col py-24 px-4">
     <h1 v-if="results.length === 0" class="text-2xl">No results found for "{{ route.query.q }}"</h1>
     <div v-else class="flex flex-col gap-4">

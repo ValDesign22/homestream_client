@@ -15,7 +15,6 @@
     "core:menu:default",
     "core:tray:default",
     "core:window:allow-set-fullscreen",
-    "shell:allow-open",
     {
       "identifier": "http:default",
       "allow": [

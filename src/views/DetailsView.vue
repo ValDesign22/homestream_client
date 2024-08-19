@@ -156,7 +156,7 @@ onUnmounted(() => clearInterval(interval));
 </script>
 
 <template>
-  <NavBar />
+  <NavBar full />
   <div
     ref="videoPlayer"
     class="w-full h-screen object-cover absolute top-0 left-0"
@@ -264,7 +264,7 @@ onUnmounted(() => clearInterval(interval));
                   size="w185"
                   class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
                   @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
-                />Season 1
+                />
               </div>
             </CarouselItem>
           </CarouselContent>
