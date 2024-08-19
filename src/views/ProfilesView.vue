@@ -14,9 +14,11 @@ import { Input } from '@/components/ui/input';
 import { GenericObject } from 'vee-validate';
 import { NavBar } from '@/components/navbar';
 import { UserRound, Trash2 } from 'lucide-vue-next';
+import { getVersion } from '@tauri-apps/api/app';
 
 const router = useRouter();
 
+const version = ref<string | null>(null);
 const profiles = ref<IProfile[]>([]);
 const hovering = ref<number | null>(null);
 
@@ -58,9 +60,7 @@ async function deleteProfile(id: number) {
   const config = await invoke<IConfig | null>("get_config");
   if (!config) return router.push({ path: "/register", replace: true });
 
-  const url = config.http_server + '/profiles?id=' + id;
-  console.log(url);
-  const res = await fetch(url, {
+  const res = await fetch(`${config.http_server}/profiles?id=${id}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'
@@ -74,6 +74,8 @@ async function deleteProfile(id: number) {
 onMounted(async () => {
   const config = await invoke<IConfig | null>("get_config");
   if (!config) return router.push({ path: "/register", replace: true });
+
+  version.value = await getVersion();
 
   const profilesRes = await fetch(config.http_server + '/profiles', {
     method: 'GET',
@@ -107,68 +109,77 @@ onMounted(async () => {
             <AvatarImage :src="`https://avatar.vercel.sh/${profile.name}?size=128`" />
             <component
               :is="hovering === profile.id ? Trash2 : UserRound"
-              class="absolute inset-0 w-full h-full"
-              :class="hovering === profile.id ? 'text-red-500' : 'text-white'"
+              class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full"
+              :class="hovering === profile.id ?
+                'text-red-500 w-1/2 h-1/2' :
+                'text-white'"
             />
             <AvatarFallback>{{ profile.name[0] }}</AvatarFallback>
           </Avatar>
           <span>{{ profile.name }}</span>
         </div>
       </div>
-      <Dialog>
-        <DialogTrigger as-child>
-          <Button variant="outline">Add profile</Button>
-        </DialogTrigger>
-        <DialogContent class="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add profile</DialogTitle>
-            <DialogDescription>
-              Add new profile to HomeStream
-            </DialogDescription>
-          </DialogHeader>
-
-          <Form :validation-schema="formSchema" @submit="onSubmit" class="flex flex-col gap-4">
-            <FormField v-slot="{ componentField }" name="name">
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input type="text" placeholder="ValDesign" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-
-            <FormField v-slot="{ componentField }" name="password">
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="********" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-
-            <FormField v-slot="{ componentField }" name="role">
-              <FormItem>
-                <FormLabel>Role</FormLabel>
-                <FormControl>
-                  <Input type="text" placeholder="admin" v-bind="componentField" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-
-            <DialogFooter>
-              <DialogClose as-child>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <DialogClose as-child>
-                <Button type="submit">Add</Button>
-              </DialogClose>
-            </DialogFooter>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      <div class="flex gap-4">
+        <Button variant="ghost" @click="$router.push({ path: '/' })">Back</Button>
+        <Dialog>
+          <DialogTrigger as-child>
+            <Button variant="outline">Add profile</Button>
+          </DialogTrigger>
+          <DialogContent class="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add profile</DialogTitle>
+              <DialogDescription>
+                Add new profile to HomeStream
+              </DialogDescription>
+            </DialogHeader>
+  
+            <Form :validation-schema="formSchema" @submit="onSubmit" class="flex flex-col gap-4">
+              <FormField v-slot="{ componentField }" name="name">
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="ValDesign" v-bind="componentField" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+  
+              <FormField v-slot="{ componentField }" name="password">
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="********" v-bind="componentField" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+  
+              <FormField v-slot="{ componentField }" name="role">
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="admin" v-bind="componentField" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              </FormField>
+  
+              <DialogFooter>
+                <DialogClose as-child>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <DialogClose as-child>
+                  <Button type="submit">Add</Button>
+                </DialogClose>
+              </DialogFooter>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
+  </div>
+
+  <div class="absolute bottom-0 right-0 p-4 ">
+    <span v-if="version" class="text-sm text-gray-500">HomeStream v{{ version }}</span>
   </div>
 </template>
