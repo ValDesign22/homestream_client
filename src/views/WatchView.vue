@@ -244,8 +244,8 @@ onUnmounted(() => {
     videoElem.value.pause();
     videoElem.value.src = '';
     videoElem.value.load();
-    toggleFullscreen(false);
   }
+  toggleFullscreen(false);
   clearInterval(gamepadInterval);
 });
 </script>
