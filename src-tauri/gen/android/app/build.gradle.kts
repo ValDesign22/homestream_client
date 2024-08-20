@@ -27,7 +27,7 @@ android {
     }
     signingConfigs {
         create("release") {
-            val keystorePropertiesFile = root.project.file("keystore.properties")
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
             val keystoreProperties = Properties()
             if (keystorePropertiesFile.exists()) {
                 keystoreProperties.load(FileInputStream(keystorePropertiesFile))
