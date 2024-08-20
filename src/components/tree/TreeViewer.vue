@@ -21,7 +21,7 @@ const toggleFolder = (id: string) => {
 </script>
 
 <template>
-  <div class="overflow-hidden flex-shrink-0 w-[460px] h-[360px] border rounded-md">
+  <div class="overflow-hidden flex-shrink-0 w-[460px] h-[360px] border rounded-md md:w-[600px] md:h-[480px]">
     <ScrollArea :class="`w-full h-full`">
       <div class="relative px-2">
         <TreeNode

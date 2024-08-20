@@ -79,19 +79,8 @@ function goBack() {
   if (get(canGoBack)) set(stepIndex, stepIndex.value - 1);
 }
 
-async function fetchFolders() {
-  console.log(httpServer.value);
+async function fetchConfig() {
   if (!httpServer.value) return;
-
-  const response = await fetch(httpServer.value + '/folders', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) console.error('An error occurred while fetching the folders');
-  else IRemoteFolders.value = await response.json();
 
   const configResponse = await fetch(httpServer.value + '/config', {
     method: 'GET',
@@ -106,6 +95,20 @@ async function fetchFolders() {
     folders.value = config.folders;
     selectors.value = config.folders.map(() => false);
   }
+}
+
+async function fetchFolders() {
+  if (!httpServer.value) return;
+
+  const response = await fetch(httpServer.value + '/folders', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) console.error('An error occurred while fetching the folders');
+  else IRemoteFolders.value = await response.json();
 }
 
 async function onSubmit(values: GenericObject) {
@@ -309,14 +312,12 @@ async function onSubmit(values: GenericObject) {
           </Button>
           <div class="flex items-center gap-3">
             <Button v-if="stepIndex !== steps.length" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
-              fetchFolders();
+              fetchConfig();
               meta.valid && goNext();
             }">
               Next
             </Button>
-            <Button
-              v-if="stepIndex === steps.length" size="sm" type="submit"
-            >
+            <Button v-if="stepIndex === steps.length" size="sm" type="submit">
               Submit
             </Button>
           </div>

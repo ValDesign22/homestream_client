@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { HTMLAttributes, ref } from 'vue';
 import { IRemoteFolder } from '@/utils/types';
 import TreeViewer from './TreeViewer.vue';
+import { onClickOutside } from '@vueuse/core';
 
 interface TreeSelectorProps {
   open: boolean;
@@ -16,7 +17,12 @@ interface TreeSelectorProps {
 
 const props = defineProps<TreeSelectorProps & { class?: HTMLAttributes['class'] }>();
 
+const target = ref<HTMLDivElement | null>(null);
 const input = ref<string>('');
+
+onClickOutside(target, () => {
+  if (props.open) props.toggle(props.index);
+});
 
 const searchByPath = (data: IRemoteFolder[], path: string): IRemoteFolder | null => {
   const stack = [...data];
@@ -48,6 +54,7 @@ const searchItem = (event: InputEvent) => {
 
 <template>
   <div
+    ref="target"
     class="flex flex-col justify-center p-4 gap-4 border rounded-md fixed top-1/2 left-1/2 transform -translate-x-1/2 bg-background dark:bg-background-dark shadow-lg duration-300 transition-transform"
     :class="props.open ?
       'visible z-10 -translate-y-1/2' :

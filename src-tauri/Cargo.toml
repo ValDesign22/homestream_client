@@ -12,17 +12,16 @@ name = "homestream_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-rc.3", features = [] }
+tauri-build = { version = "2.0.0-rc.4", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.0-rc.3", features = [] }
+tauri = { version = "2.0.0-rc.4", features = [] }
 serde = { version = "1.0.208", features = ["derive"] }
 serde_json = "1.0.125"
 tauri-plugin-http = { version = "2.0.0-rc.0", features = ["rustls-tls"] }
 tokio = "1.39.3"
 tauri-plugin-fs = "2.0.0-rc.0"
-tauri-plugin-window-state = "2.0.0-rc.1"
-tauri-plugin-store = "2.0.0-rc.1"
+tauri-plugin-store = "2.0.0-rc.2"
 
 [profile.dev]
 incremental = true
@@ -39,3 +38,4 @@ strip = true
 
 [target."cfg(not(any(target_os = \"android\", target_os = \"ios\")))".dependencies]
 tauri-plugin-updater = "2.0.0-rc.1"
+tauri-plugin-window-state = "2.0.0-rc.1"
