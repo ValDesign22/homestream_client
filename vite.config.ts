@@ -7,8 +7,6 @@ import autoprefixer from "autoprefixer";
 
 const mobile = !!/android|ios/.exec(process.env.TAURI_ENV_PLATFORM);
 
-console.log(mobile);
-
 export default defineConfig(async () => ({
   css: {
     postcss: {

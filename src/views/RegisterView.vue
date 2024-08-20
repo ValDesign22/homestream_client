@@ -28,7 +28,7 @@ const formSchema = [
   }),
   zod.object({
     folders: zod.array(zod.object({
-      media_type: zod.string().transform(Number),
+      media_type: zod.string(),
       path: zod.string(),
       name: zod.string(),
     })).optional(),
@@ -36,7 +36,8 @@ const formSchema = [
 ];
 
 const httpServer = ref('');
-const IRemoteFolders = ref<IRemoteFolder[]>([]);
+const skipped = ref(false);
+const remoteFolders = ref<IRemoteFolder[]>([]);
 const folders = ref<IFolder[]>([]);
 const selectedItem = ref<IRemoteFolder | null>(null);
 const selectors = ref<boolean[]>([]);
@@ -54,15 +55,15 @@ const toggleSelector = (index: number) => {
 const stepIndex = ref(1);
 const steps = [{
   step: 1,
-  title: 'Server Configuration',
+  title: 'Server',
   description: 'Connect your HomeStream server to the app.',
 }, {
   step: 2,
-  title: 'The Movie Database',
+  title: 'Language',
   description: 'Configure your app language',
 }, {
   step: 3,
-  title: 'File configuration',
+  title: 'Folders',
   description: 'Configure the folders where your movies and TV shows are stored.',
 }, {
   step: 4,
@@ -108,7 +109,7 @@ async function fetchFolders() {
   });
 
   if (!response.ok) console.error('An error occurred while fetching the folders');
-  else IRemoteFolders.value = await response.json();
+  else remoteFolders.value = await response.json();
 }
 
 async function onSubmit(values: GenericObject) {
@@ -120,9 +121,9 @@ async function onSubmit(values: GenericObject) {
     http_server: values.httpServer,
   }), { baseDir: BaseDirectory.AppConfig });
 
-  const foldersToSend: IFolder[] = values.folders ? values.folders.map((folder: { media_type: string, path: string }, index: number) => ({
+  const foldersToSend: IFolder[] = values.folders ? values.folders.map((folder: { media_type: string, name: string, path: string }, index: number) => ({
     id: index,
-    name: folder.path.split('/').pop() || '',
+    name: folder.name,
     media_type: parseInt(folder.media_type),
     path: folder.path,
   })) : [];
@@ -130,7 +131,7 @@ async function onSubmit(values: GenericObject) {
   const response = await fetch(httpServer.value + '/config', {
     method: 'PATCH',
     body: JSON.stringify({
-      folders: foldersToSend,
+      folders: skipped.value ? folders.value : foldersToSend,
       tmdb_language: values.tmdbLanguage,
     }),
     headers: {
@@ -138,7 +139,7 @@ async function onSubmit(values: GenericObject) {
     },
   });
 
-  if (response.ok) router.push({ path: "/browse", replace: true });
+  if (response.ok) router.push({ path: "/", replace: true });
   else console.error('An error occurred while saving the configuration', await response.text());
 }
 </script>
@@ -154,9 +155,7 @@ async function onSubmit(values: GenericObject) {
           e.preventDefault();
           validate();
   
-          if (stepIndex === steps.length) {
-            onSubmit(values);
-          }
+          if (stepIndex === steps.length) onSubmit(values);
         }"
       >
         <Stepper v-model="stepIndex" class="flex w-full items-start gap-2">
@@ -197,7 +196,7 @@ async function onSubmit(values: GenericObject) {
           </StepperItem>
         </Stepper>
   
-        <div class="flex flex-col gap-4 mt-4 w-fit px-96">
+        <div class="flex flex-col gap-4 mt-4">
           <span>{{ steps[stepIndex - 1].description }}</span>
 
           <template v-if="stepIndex === 1">
@@ -225,13 +224,13 @@ async function onSubmit(values: GenericObject) {
           </template>
 
           <template v-if="stepIndex === 3">
-            <div class="flex flex-col gap-4 w-full max-w-[460px] p-4 border rounded-md">
+            <div class="flex flex-col gap-4 w-full p-4 border rounded-md">
               <div v-if="!folders.length" class="flex items-center gap-4">
                 <span class="text-md font-bold">No folders added</span>
               </div>
               <div v-for="(folder, index) in folders" :key="index" class="flex flex-col gap-4">
                 <div class="flex gap-4">
-                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].media_type'">
+                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].media_type'" :defaultValue="folder.media_type.toString()">
                     <FormItem>
                       <Select v-bind="componentField" :defaultValue="folder.media_type.toString()">
                         <FormControl>
@@ -249,7 +248,7 @@ async function onSubmit(values: GenericObject) {
                       </Select>
                     </FormItem>
                   </FormField>
-                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].name'">
+                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].name'" :defaultValue="folder.name">
                     <FormItem>
                       <FormControl>
                         <Input v-bind="componentField" type="text" v-model="folder.name" placeholder="Folder name" />
@@ -259,10 +258,10 @@ async function onSubmit(values: GenericObject) {
                   </FormField>
                 </div>
                 <div class="flex gap-4">
-                  <FormField :name="'folders[' + index + '].path'">
+                  <FormField v-slot="{ componentField }"  :name="'folders[' + index + '].path'" :defaultValue="folder.path">
                     <FormItem>
                       <FormControl>
-                        <Input type="text" @click="() => toggleSelector(index)" :value="folder.path.length ? folder.path : 'Select a folder'" />
+                        <Input v-bind="componentField" type="text" @click="() => toggleSelector(index)" :value="folder.path.length ? folder.path : 'Select a folder'" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -278,7 +277,7 @@ async function onSubmit(values: GenericObject) {
                 <TreeSelector
                   :open="selectors[index]"
                   :index="index"
-                  :data="IRemoteFolders"
+                  :data="remoteFolders"
                   :selectedItem="selectedItem"
                   :selectItem="selectItem"
                   :toggle="(index) => toggleSelector(index)"
@@ -306,12 +305,19 @@ async function onSubmit(values: GenericObject) {
           </template>
         </div>
   
-        <div class="flex items-center justify-between mt-4 px-96">
+        <div class="flex items-center justify-between mt-4">
           <Button :disabled="!canGoBack" variant="outline" size="sm" @click="goBack">
             Back
           </Button>
           <div class="flex items-center gap-3">
-            <Button v-if="stepIndex !== steps.length" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
+            <Button v-if="stepIndex === 3 && !meta.touched" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
+              fetchFolders();
+              goNext();
+              skipped = true;
+            }">
+              Skip
+            </Button>
+            <Button v-else-if="stepIndex !== steps.length" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
               fetchConfig();
               meta.valid && goNext();
             }">

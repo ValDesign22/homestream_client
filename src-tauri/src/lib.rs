@@ -37,29 +37,20 @@ pub fn run() {
                 }
             }
 
-            #[cfg(not(any(target_os = "android", target_os = "ios")))]
-            {
-                tauri::async_runtime::block_on(async {
-                    if let Some(window) = app.get_webview_window("main") {
-                        let _ = window.restore_state(StateFlags::all());
-
-                        #[cfg(debug_assertions)]
-                        {
-                            let _ = window.open_devtools();
-                        }
-                    }
-                });
-            }
             
+                if let Some(window) = app.get_webview_window("main") {
+                    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+                    {
+                        let _ = window.restore_state(StateFlags::all());
+                    }
+                    #[cfg(debug_assertions)]
+                    {
+                        let _ = window.open_devtools();
+                    }
+                }
 
             Ok(())
         })
-        // .on_window_event(|app, event| match event {
-        //     tauri::WindowEvent::CloseRequested { .. } | tauri::WindowEvent::Destroyed => {
-        //         let _ = AppHandleExt::save_window_state(app.app_handle(), StateFlags::all());
-        //     }
-        //     _ => {}
-        // })
         .on_window_event(|app, event| {
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
             match event {

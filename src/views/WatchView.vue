@@ -6,7 +6,7 @@ import { Slider } from '@/components/ui/slider';
 import { IAudioTrack, IConfig, IEpisode, IMovie, ISeason, ISubtitleTrack, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
-import { useEventListener, useGamepad } from '@vueuse/core';
+import { useEventListener, useGamepad, useScreenOrientation } from '@vueuse/core';
 import { ChevronLeft, GalleryVerticalEnd, Maximize, MessageSquareText, Minimize, Pause, Play, RotateCcw, RotateCw, Volume1, Volume2, VolumeX } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -18,6 +18,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const router = useRouter();
 const route = useRoute();
+
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 const movieLogo = ref<string | null>(null);
 
@@ -42,6 +44,8 @@ const isHoveringSeasons = ref(false);
 
 const { isSupported, gamepads } = useGamepad();
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
+
+const { lockOrientation } = useScreenOrientation();
 
 let hideControlsTimeout: ReturnType<typeof setTimeout>;
 
@@ -86,10 +90,19 @@ const togglePlaying = () => {
 };
 
 const toggleFullscreen = async (state: boolean) => {
-  const appwindow = getCurrentWindow();
-  const isAppFullscreen = await appwindow.isFullscreen();
-  await appwindow.setFullscreen(state ?? !isAppFullscreen);
-  isFullscreen.value = state ?? !isAppFullscreen;
+  if (isMobile) {
+    lockOrientation("landscape");
+    if (videoElem.value) {
+      if (state) await videoElem.value.requestFullscreen();
+      else await document.exitFullscreen();
+    }
+    isFullscreen.value = state;
+  } else {
+    const appwindow = getCurrentWindow();
+    const isAppFullscreen = await appwindow.isFullscreen();
+    await appwindow.setFullscreen(state ?? !isAppFullscreen);
+    isFullscreen.value = state ?? !isAppFullscreen;
+  }
 };
 
 const useSubtitleTrack = (index: number) => {
@@ -231,10 +244,11 @@ const loadData = async () => {
             videoElem.value.appendChild(trackElem);
           }
 
-          videoElem.value.onloadedmetadata = () => {
+          videoElem.value.onloadedmetadata = async () => {
             if (!videoElem.value) return;
-            videoElem.value.volume = playerVolume.value[0];
+            // if (isMobile) toggleFullscreen(true);
             videoElem.value.play();
+            changeVolume(1);
             playing.value = true;
           };
 
@@ -306,6 +320,7 @@ onUnmounted(() => {
           </div>
           <div class="flex gap-4">
             <div
+              v-if="!isMobile"
               class="flex gap-4"
               @mouseenter="() => isHoveringVolume = true"
               @mouseleave="() => isHoveringVolume = false"
@@ -334,7 +349,7 @@ onUnmounted(() => {
               <HoverCardTrigger as-child>
                 <GalleryVerticalEnd class="cursor-pointer" />
               </HoverCardTrigger>
-              <HoverCardContent class="flex flex-col gap-4 w-[32rem]">
+              <HoverCardContent class="flex flex-col gap-4 w-screen sm:w-[32rem]">
                 <Button variant="ghost">Season {{ currentSeason.season_number }}</Button>
                 <ScrollArea class="w-full h-64">
                   <div
@@ -367,7 +382,7 @@ onUnmounted(() => {
                 </ScrollArea>
               </HoverCardContent>
             </HoverCard>
-            <component :is="isFullscreen ? Minimize : Maximize" class="cursor-pointer" @click="() => toggleFullscreen(!isFullscreen)" />
+            <component v-if="!isMobile" :is="isFullscreen ? Minimize : Maximize" class="cursor-pointer" @click="() => toggleFullscreen(!isFullscreen)" />
           </div>
         </div>
       </div>

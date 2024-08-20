@@ -14,6 +14,8 @@ import { onUnmounted } from 'vue';
 import { vIntersectionObserver } from '@vueuse/components'
 import { PlayerState, usePlayer } from '@vue-youtube/core';
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 const stores = ref<Record<string, IMovie[] | ITvShow[]>>({});
 const genres = ref<IGenre[]>([]);
 const randomSelected = ref<IMovie | ITvShow | null>(null);
@@ -117,7 +119,7 @@ async function selectRandomTopRated(store: Record<string, IMovie[] | ITvShow[]>,
 }
 
 const interval = setInterval(async () => {
-  windowFocused.value = await getCurrentWindow().isFocused();
+  windowFocused.value = isMobile ? document.visibilityState === 'visible' : await getCurrentWindow().isFocused();
   if (videoKey.value === '' || videoError.value || !instance.value) return videoPlaying.value = false;
   if (!instance.value?.getDuration) return videoPlaying.value = false;
   if (!windowFocused.value || !headerVisible.value) {
@@ -141,7 +143,7 @@ onUnmounted(() => clearInterval(interval));
   <NavBar full />
   <div
     ref="videoPlayer"
-    class="w-full h-screen object-cover absolute top-0 left-0"
+    class="w-full aspect-video absolute top-0 left-0"
     :class="{ 'z-10': videoPlaying && !videoError, 'z-0': !videoPlaying || videoError }"
   />
   <div class="flex flex-col justify-center">
@@ -183,7 +185,7 @@ onUnmounted(() => clearInterval(interval));
           />
           <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ randomSelected.title }}</h2>
           <span class="max-w-2xl" @click="showFullOverview = !showFullOverview">
-            {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, 50).join(' ') + '...' }}
+            {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
           </span>
           <div class="flex gap-4">
             <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}`, replace: true })">

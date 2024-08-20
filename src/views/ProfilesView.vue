@@ -13,7 +13,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Input } from '@/components/ui/input';
 import { GenericObject } from 'vee-validate';
 import { NavBar } from '@/components/navbar';
-import { UserRound, Trash2 } from 'lucide-vue-next';
+import { Trash2 } from 'lucide-vue-next';
 import { getVersion } from '@tauri-apps/api/app';
 
 const router = useRouter();
@@ -95,7 +95,7 @@ onMounted(async () => {
 
     <div class="flex flex-col items-center gap-2">
       <span v-if="profiles.length === 0">No profiles found</span>
-      <div v-else class="flex gap-2">
+      <div v-else class="flex justify-center flex-wrap gap-2">
         <div
           v-for="profile in profiles"
           :key="profile.id"
@@ -105,15 +105,9 @@ onMounted(async () => {
           @mouseenter="hovering = profile.id"
           @mouseleave="hovering = null"
         >
-          <Avatar size="lg" class="relative">
+          <Avatar size="lg" shape="square" class="relative">
             <AvatarImage :src="`https://avatar.vercel.sh/${profile.name}?size=128`" />
-            <component
-              :is="hovering === profile.id ? Trash2 : UserRound"
-              class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full"
-              :class="hovering === profile.id ?
-                'text-red-500 w-1/2 h-1/2' :
-                'text-white'"
-            />
+            <Trash2 class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/2 h-1/2 text-red-500 transition-opacity" :class="{ 'opacity-100': hovering === profile.id, 'opacity-0': hovering !== profile.id }" />
             <AvatarFallback>{{ profile.name[0] }}</AvatarFallback>
           </Avatar>
           <span>{{ profile.name }}</span>

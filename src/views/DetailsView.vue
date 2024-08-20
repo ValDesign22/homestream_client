@@ -23,6 +23,8 @@ import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
 const route = useRoute();
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 const store = useStore;
 
 const item = ref<IMovie | ITvShow | null>(null);
@@ -206,7 +208,7 @@ onUnmounted(() => clearInterval(interval));
         />
         <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ item.title }}</h2>
         <span class="max-w-2xl" @click="showFullOverview = !showFullOverview">
-          {{ showFullOverview ? item.overview : item.overview.split(' ').slice(0, 50).join(' ') + '...' }}
+          {{ showFullOverview ? item.overview : item.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
         </span>
         <div class="flex gap-4 items-center" v-if="videoItem">
           <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}`, replace: true })">

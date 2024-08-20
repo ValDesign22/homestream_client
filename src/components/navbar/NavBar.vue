@@ -6,6 +6,7 @@ import { Search } from 'lucide-vue-next';
 import { computed, HTMLAttributes, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useStore } from '@/lib/stores';
 import { IProfile } from '@/utils/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface NavBarProps {
   full?: boolean;
@@ -66,13 +67,16 @@ onUnmounted(() => clearInterval(gamepadInterval));
       HomeStream
     </RouterLink>
     <div v-if="props.full" class="flex items-center space-x-4">
-      <RouterLink to="/browse">Browse</RouterLink>
-       <div class="relative w-full max-w-xs items-center">
+       <div class="relative max-w-32 items-center">
         <Input v-model="searchContent" ref="searchInput" type="text" placeholder="Search..." class="pl-10" />
         <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
           <Search class="size-6 text-muted-foreground" />
         </span>
       </div>
+      <Avatar v-if="user" size="lg" shape="square" class="relative w-10 h-10 cursor-pointer" @click="() => router.push({ path: '/' })">
+        <AvatarImage :src="`https://avatar.vercel.sh/${user.name}?size=128`" />
+        <AvatarFallback>{{ user.name }}</AvatarFallback>
+      </Avatar>
     </div>
   </nav>
 </template>
