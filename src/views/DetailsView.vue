@@ -4,7 +4,6 @@ import { NavBar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useStore } from '@/lib/stores';
 import getRecommendations from '@/utils/recommendations';
@@ -13,7 +12,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { fetch } from '@tauri-apps/plugin-http';
 import { PlayerState, usePlayer } from '@vue-youtube/core';
-import { useImage } from '@vueuse/core';
 import { PlayIcon, SquareCheck, SquarePlus, Star, StarOff } from 'lucide-vue-next';
 import { watch } from 'vue';
 import { onUnmounted } from 'vue';
@@ -35,8 +33,6 @@ const collection = ref<IMovie[]>([]);
 const recommendations = ref<(IMovie | ITvShow)[]>([]);
 
 const currentSeason = ref<string>("0");
-
-const { isLoading } = useImage({ src: item.value?.backdrop_path ?? '' });
 
 const windowFocused = ref(true);
 const headerVisible = ref(true);
@@ -85,7 +81,7 @@ onReady((event) => {
 });
 
 const interval = setInterval(async () => {
-  windowFocused.value = await getCurrentWindow().isFocused();
+  windowFocused.value = isMobile ? document.visibilityState === 'visible' : await getCurrentWindow().isFocused()
   if (videoKey.value === '' || videoError.value || !instance.value) return videoPlaying.value = false;
   if (!instance.value?.getDuration) return videoPlaying.value = false;
   if (!windowFocused.value || !headerVisible.value) {
@@ -101,6 +97,7 @@ const loadData = async () => {
   const config = await invoke<IConfig | null>('get_config');
   if (config) {
     const itemId = route.params.id;
+    console.log(itemId);
     if (!itemId) router.push({ path: '/browse' });
 
     const details = await fetch(config.http_server + `/details?id=${itemId}`, {
@@ -187,14 +184,12 @@ onUnmounted(() => clearInterval(interval));
   />
   <div v-if="item" class="w-full h-auto">
     <div class="w-full h-screen relative">
-      <Skeleton v-if="isLoading" class="w-full h-full" />
       <TMDBImage
-        v-else
         :image="item.backdrop_path"
         :alt="item.title"
         type="backdrop"
         size="original"
-        class="w-full h-full object-cover relative z-0"
+        class="w-full h-full object-center object-cover relative z-0"
         :class="{ 'z-[11]': !videoPlaying }"
       />
       <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
@@ -282,8 +277,8 @@ onUnmounted(() => clearInterval(interval));
                 @click="() => $router.push({ path: `/watch/${episode.id}`, replace: true })"
               />
               <div class="absolute bottom-0 left-0 w-full h-auto pointer-events-none bg-gradient-to-t from-black from-10% to-transparent p-4">
-                <span class="text-sm">Episode {{ episode.episode_number }}</span>
-                <span class="text-sm">{{ episode.title }}</span>
+                <p class="text-sm">Episode {{ episode.episode_number }}</p>
+                <p class="text-sm">{{ episode.title }}</p>
               </div>
             </div>
           </CarouselItem>

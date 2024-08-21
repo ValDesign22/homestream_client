@@ -4,7 +4,7 @@ import { NavBar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Skeleton } from '@/components/ui/skeleton';
-import { IConfig, IGenre, IMovie, ITvShow } from '@/utils/types';
+import { EMediaType, IConfig, IGenre, IMovie, IProfile, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { InfoIcon, PlayIcon } from 'lucide-vue-next';
@@ -13,12 +13,18 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onUnmounted } from 'vue';
 import { vIntersectionObserver } from '@vueuse/components'
 import { PlayerState, usePlayer } from '@vue-youtube/core';
+import { useStore } from '@/lib/stores';
+import { getMovieFromId, getTvShowFromEpisode } from '@/utils/video';
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+const store = useStore;
+const user = ref<IProfile | null>(null);
 
 const stores = ref<Record<string, IMovie[] | ITvShow[]>>({});
 const genres = ref<IGenre[]>([]);
 const randomSelected = ref<IMovie | ITvShow | null>(null);
+const history = ref<(IMovie | ITvShow)[]>([]);
 
 const windowFocused = ref(true);
 const headerVisible = ref(true);
@@ -118,6 +124,21 @@ async function selectRandomTopRated(store: Record<string, IMovie[] | ITvShow[]>,
   return randomItem;
 }
 
+async function parseHistory() {
+  if (!user.value) return;
+  const userHistory = await store.getHistory();
+  if (!userHistory) return;
+  userHistory.forEach(async (item) => {
+    if (item.media_type === EMediaType.ITvShow) {
+      const tvShow = await getTvShowFromEpisode(item.id);
+      if (tvShow && !history.value.find((h) => h.id === tvShow.id)) history.value.push(tvShow);
+    } else {
+      const movie = await getMovieFromId(item.id);
+      if (movie) history.value.push(movie);
+    }
+  });
+}
+
 const interval = setInterval(async () => {
   windowFocused.value = isMobile ? document.visibilityState === 'visible' : await getCurrentWindow().isFocused();
   if (videoKey.value === '' || videoError.value || !instance.value) return videoPlaying.value = false;
@@ -134,16 +155,19 @@ const interval = setInterval(async () => {
 onMounted(async () => {
   const config = await invoke<IConfig | null>("get_config");
   if (config) fetchStores(config.http_server);
+
+  user.value = await store.getProfile();
+  parseHistory();
 });
 
 onUnmounted(() => clearInterval(interval));
 </script>
 
-<template class="w-full h-screen flex flex-col justify-center items-center">
+<template>
   <NavBar full />
   <div
     ref="videoPlayer"
-    class="w-full aspect-video absolute top-0 left-0"
+    class="w-full h-screen absolute top-0 left-0"
     :class="{ 'z-10': videoPlaying && !videoError, 'z-0': !videoPlaying || videoError }"
   />
   <div class="flex flex-col justify-center">
@@ -171,7 +195,7 @@ onUnmounted(() => clearInterval(interval));
           :alt="randomSelected.id.toString()"
           type="backdrop"
           size="w1280"
-          class="w-full h-full object-cover relative z-0"
+          class="w-full h-full object-center object-cover relative z-0"
           :class="{ 'z-[11]': !videoPlaying }"
         />
         <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
@@ -200,7 +224,91 @@ onUnmounted(() => clearInterval(interval));
         </div>
       </div>
       <div class="flex flex-col gap-8 p-16 bg-black">
-        <div 
+        <div v-if="user && history.length !== 0" class="flex flex-col gap-4">
+          <h2 class="text-2xl font-bold">Continue Watching</h2>
+          <Carousel
+            class="relative w-full"
+            :opts="{ align: 'start' }"
+          >
+            <CarouselContent>
+              <CarouselItem
+                v-for="item in history.slice(0, 25)"
+                :key="item.id"
+                class="flex-grow p-1 basis-auto"
+              >
+                <div class="p-1 overflow-hidden rounded-lg">
+                  <TMDBImage
+                    :image="item.poster_path"
+                    :alt="item.id.toString()"
+                    type="poster"
+                    size="w185"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                  />
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+        <div v-if="user && user.watchlist.length !== 0" class="flex flex-col gap-4">
+          <h2 class="text-2xl font-bold">Watchlist</h2>
+          <Carousel
+            class="relative w-full"
+            :opts="{ align: 'start' }"
+          >
+            <CarouselContent>
+              <CarouselItem
+                v-for="item in user.watchlist.slice(0, 25)"
+                :key="item.id"
+                class="flex-grow p-1 basis-auto"
+              >
+                <div class="p-1 overflow-hidden rounded-lg">
+                  <TMDBImage
+                    :image="item.poster_path"
+                    :alt="item.id.toString()"
+                    type="poster"
+                    size="w185"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                  />
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+        <div v-if="user && user.favorites.length !== 0" class="flex flex-col gap-4">
+          <h2 class="text-2xl font-bold">Favorites</h2>
+          <Carousel
+            class="relative w-full"
+            :opts="{ align: 'start' }"
+          >
+            <CarouselContent>
+              <CarouselItem
+                v-for="item in user.favorites.slice(0, 25)"
+                :key="item.id"
+                class="flex-grow p-1 basis-auto"
+              >
+                <div class="p-1 overflow-hidden rounded-lg">
+                  <TMDBImage
+                    :image="item.poster_path"
+                    :alt="item.id.toString()"
+                    type="poster"
+                    size="w185"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                  />
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+        <div
           v-for="(store, key) in stores"
           :key="key"
           class="flex flex-col gap-4"

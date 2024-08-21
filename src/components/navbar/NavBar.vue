@@ -2,11 +2,21 @@
 import { useFocus, useGamepad, useWindowScroll } from '@vueuse/core';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-vue-next';
+import { Settings, Search, User } from 'lucide-vue-next';
 import { computed, HTMLAttributes, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useStore } from '@/lib/stores';
 import { IProfile } from '@/utils/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface NavBarProps {
   full?: boolean;
@@ -73,10 +83,33 @@ onUnmounted(() => clearInterval(gamepadInterval));
           <Search class="size-6 text-muted-foreground" />
         </span>
       </div>
-      <Avatar v-if="user" size="lg" shape="square" class="relative w-10 h-10 cursor-pointer" @click="() => router.push({ path: '/' })">
-        <AvatarImage :src="`https://avatar.vercel.sh/${user.name}?size=128`" />
-        <AvatarFallback>{{ user.name }}</AvatarFallback>
-      </Avatar>
+      <DropdownMenu :modal="false">
+        <DropdownMenuTrigger as-child>
+          <Button variant="outline" class="px-0">
+            <Avatar v-if="user" size="lg" shape="square" class="relative w-10 h-10 cursor-pointer">
+              <AvatarImage :src="`https://avatar.vercel.sh/${user.name}?size=128`" />
+              <AvatarFallback>{{ user.name }}</AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="w-56">
+          <DropdownMenuLabel>Profile</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem class="cursor-pointer" @click="$router.push({ path: '/' })">
+              <User class="mr-2 h-4 w-4" />
+              <span>Switch profile</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem class="cursor-pointer" @click="$router.push({ path: '/settings' })">
+              <Settings class="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   </nav>
 </template>

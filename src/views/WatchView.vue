@@ -15,9 +15,12 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { computed } from 'vue';
 import { getTvShowFromEpisode } from '@/utils/video';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useStore } from '@/lib/stores';
 
 const router = useRouter();
 const route = useRoute();
+
+const store = useStore;
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
@@ -108,9 +111,7 @@ const toggleFullscreen = async (state: boolean) => {
 const useSubtitleTrack = (index: number) => {
   if (videoElem.value) {
     // const track = videoElem.value.textTracks[index];
-    // if (track) {
-    //   track.mode = track.mode === 'showing' ? 'hidden' : 'showing';
-    // }
+    // if (track) track.mode = track.mode === 'showing' ? 'hidden' : 'showing';
     console.log(`Subtitle index ${index} currently not supported`);
   }
 };
@@ -245,16 +246,27 @@ const loadData = async () => {
           }
 
           videoElem.value.onloadedmetadata = async () => {
-            if (!videoElem.value) return;
-            // if (isMobile) toggleFullscreen(true);
+            if (!videoElem.value || !videoItem.value) return;
+            // if (isMobile) await toggleFullscreen(true);
+            const lastTime = await store.getProgress(videoItem.value);
+            if (lastTime) videoElem.value.currentTime = lastTime;
             videoElem.value.play();
             changeVolume(1);
             playing.value = true;
           };
 
-          videoElem.value.ontimeupdate = () => {
-            if (!videoElem.value || isUserSliding.value) return;
+          videoElem.value.ontimeupdate = async () => {
+            if (!videoElem.value || isUserSliding.value || !videoItem.value) return;
             progressValue.value = [videoElem.value.currentTime / videoElem.value.duration * 100];
+            const currentTime = Math.floor(videoElem.value.currentTime);
+            const lastTime = await store.getProgress(videoItem.value);
+            if (currentTime % 5 === 0 && currentTime !== lastTime) await store.saveProgress(videoItem.value, currentTime);
+          };
+
+          videoElem.value.onended = async () => {
+            if (!videoElem.value || !videoItem.value) return;
+            await store.saveProgress(videoItem.value, videoElem.value.duration, true);
+            router.push({ path: '/browse' });
           };
         }
       }
