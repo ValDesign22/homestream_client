@@ -8,13 +8,14 @@ import { EMediaType, IConfig, IGenre, IMovie, IProfile, ITvShow } from '@/utils/
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { InfoIcon, PlayIcon } from 'lucide-vue-next';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onUnmounted } from 'vue';
 import { vIntersectionObserver } from '@vueuse/components'
 import { PlayerState, usePlayer } from '@vue-youtube/core';
 import { useStore } from '@/lib/stores';
 import { getMovieFromId, getTvShowFromEpisode } from '@/utils/video';
+import { useGamepad } from '@vueuse/core';
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
@@ -34,6 +35,9 @@ const videoKey = ref<string>('');
 const videoPlayer = ref();
 const videoPlaying = ref(true);
 const videoError = ref(false);
+
+const { isSupported, gamepads } = useGamepad();
+const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
 
 const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
   playerVars: {
@@ -152,6 +156,26 @@ const interval = setInterval(async () => {
   }
 }, 1000);
 
+const gamepadInterval = setInterval(() => {
+  if (!isSupported.value) return;
+  if (!gamepad.value) return;
+  const focusableElements = Array.from(document.querySelectorAll('[tabindex="0"]'));
+  if (focusableElements.length === 0) return;
+  const focusedElement = document.activeElement;
+  let currentIndex = focusableElements.indexOf(focusedElement as HTMLElement);
+  if (gamepad.value.buttons[14].pressed || gamepad.value.axes[0] < -0.5) {
+    currentIndex = currentIndex === 0 ? focusableElements.length - 1 : currentIndex - 1;
+    (focusableElements[currentIndex] as HTMLElement).focus();
+  }
+  if (gamepad.value.buttons[15].pressed || gamepad.value.axes[0] > 0.5) {
+    currentIndex = currentIndex === focusableElements.length - 1 ? 0 : currentIndex + 1;
+    (focusableElements[currentIndex] as HTMLElement).focus();
+  }
+  if (gamepad.value.axes[3] < -0.5) window.scrollBy(0, -100);
+  if (gamepad.value.axes[3] > 0.5) window.scrollBy(0, 100);
+  if (gamepad.value.buttons[0].pressed) (focusedElement as HTMLElement).click();
+}, 200);
+
 onMounted(async () => {
   const config = await invoke<IConfig | null>("get_config");
   if (config) fetchStores(config.http_server);
@@ -160,13 +184,17 @@ onMounted(async () => {
   parseHistory();
 });
 
-onUnmounted(() => clearInterval(interval));
+onUnmounted(() => {
+  clearInterval(interval)
+  clearInterval(gamepadInterval)
+});
 </script>
 
 <template>
   <NavBar full />
   <div
     ref="videoPlayer"
+    tabindex="-1"
     class="w-full h-screen absolute top-0 left-0"
     :class="{ 'z-10': videoPlaying && !videoError, 'z-0': !videoPlaying || videoError }"
   />
@@ -212,11 +240,11 @@ onUnmounted(() => clearInterval(interval));
             {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
           </span>
           <div class="flex gap-4">
-            <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}`, replace: true })">
+            <Button tabindex="0" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}`, replace: true })">
               <PlayIcon class="w-6 h-6" />
               <span>Play</span>
             </Button>
-            <Button variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}`, replace: true })">
+            <Button tabindex="0" variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}`, replace: true })">
               <InfoIcon class="w-6 h-6" />
               <span>Details</span>
             </Button>
@@ -227,6 +255,7 @@ onUnmounted(() => clearInterval(interval));
         <div v-if="user && history.length !== 0" class="flex flex-col gap-4">
           <h2 class="text-2xl font-bold">Continue Watching</h2>
           <Carousel
+            tabindex="-1"
             class="relative w-full"
             :opts="{ align: 'start' }"
           >
@@ -238,6 +267,7 @@ onUnmounted(() => clearInterval(interval));
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
+                    tabindex="0"
                     :image="item.poster_path"
                     :alt="item.id.toString()"
                     type="poster"
@@ -255,6 +285,7 @@ onUnmounted(() => clearInterval(interval));
         <div v-if="user && user.watchlist.length !== 0" class="flex flex-col gap-4">
           <h2 class="text-2xl font-bold">Watchlist</h2>
           <Carousel
+            tabindex="-1"
             class="relative w-full"
             :opts="{ align: 'start' }"
           >
@@ -266,6 +297,7 @@ onUnmounted(() => clearInterval(interval));
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
+                    tabindex="0"
                     :image="item.poster_path"
                     :alt="item.id.toString()"
                     type="poster"
@@ -283,6 +315,7 @@ onUnmounted(() => clearInterval(interval));
         <div v-if="user && user.favorites.length !== 0" class="flex flex-col gap-4">
           <h2 class="text-2xl font-bold">Favorites</h2>
           <Carousel
+            tabindex="-1"
             class="relative w-full"
             :opts="{ align: 'start' }"
           >
@@ -294,6 +327,7 @@ onUnmounted(() => clearInterval(interval));
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
+                    tabindex="0"
                     :image="item.poster_path"
                     :alt="item.id.toString()"
                     type="poster"
@@ -315,6 +349,7 @@ onUnmounted(() => clearInterval(interval));
         >
           <h2 class="text-2xl font-bold">{{ key }}</h2>
           <Carousel
+            tabindex="-1"
             class="relative w-full"
             :opts="{
               align: 'start',
@@ -328,6 +363,7 @@ onUnmounted(() => clearInterval(interval));
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
+                    tabindex="0"
                     :image="item.poster_path"
                     :alt="item.id.toString()"
                     type="poster"
@@ -348,6 +384,7 @@ onUnmounted(() => clearInterval(interval));
         >
           <h2 class="text-2xl font-bold">{{ genre.name }}</h2>
           <Carousel
+            tabindex="-1"
             class="relative w-full"
             :opts="{
               align: 'start',
@@ -361,6 +398,7 @@ onUnmounted(() => clearInterval(interval));
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
+                    tabindex="0"
                     :image="item.poster_path"
                     :alt="item.id.toString()"
                     type="poster"

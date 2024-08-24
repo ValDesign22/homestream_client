@@ -2,7 +2,7 @@
 import { useFocus, useGamepad, useWindowScroll } from '@vueuse/core';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { Input } from '@/components/ui/input';
-import { Settings, Search, User } from 'lucide-vue-next';
+import { Settings, Search, Users } from 'lucide-vue-next';
 import { computed, HTMLAttributes, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useStore } from '@/lib/stores';
 import { IProfile } from '@/utils/types';
@@ -30,7 +30,7 @@ const store = useStore;
 const { y } = useWindowScroll({ behavior: 'smooth' });
 
 const user = ref<IProfile | null>(null);
-const searchInput = ref();
+const searchInput = ref<HTMLInputElement | null>(null);
 const { focused } = useFocus(searchInput);
 const searchContent = ref<string>(route.query.q as string || '');
 
@@ -40,13 +40,15 @@ const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'
 const gamepadInterval = setInterval(() => {
   if (!isSupported.value) return;
   if (!gamepad.value) return;
+  if (gamepad.value.buttons[1].pressed) router.push({ path: '/browse' });
   if (!searchInput.value) return;
   if (gamepad.value.buttons[3].pressed) focused.value = true;
 }, 100);
 
 watch(focused, (focused) => {
-  if (focused) console.log('focused');
-  else console.log('unfocused');
+  if (!searchInput.value || !searchInput.value.focus) return;
+  if (focused) searchInput.value.focus();
+  else searchInput.value.blur();
 });
 
 watch(searchContent, () => {
@@ -73,18 +75,19 @@ onUnmounted(() => clearInterval(gamepadInterval));
     <RouterLink
       :to="user ? '/browse' : '/'"
       class="text-2xl font-bold"
+      tabindex="-1"
     >
       HomeStream
     </RouterLink>
     <div v-if="props.full" class="flex items-center space-x-4">
        <div class="relative max-w-32 items-center">
-        <Input v-model="searchContent" ref="searchInput" type="text" placeholder="Search..." class="pl-10" />
+        <Input ref="searchInput" v-model="searchContent" type="text" placeholder="Search..." class="pl-10" tabindex="0" />
         <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
           <Search class="size-6 text-muted-foreground" />
         </span>
       </div>
       <DropdownMenu :modal="false">
-        <DropdownMenuTrigger as-child>
+        <DropdownMenuTrigger as-child tabindex="0">
           <Button variant="outline" class="px-0">
             <Avatar v-if="user" size="lg" shape="square" class="relative w-10 h-10 cursor-pointer">
               <AvatarImage :src="`https://avatar.vercel.sh/${user.name}?size=128`" />
@@ -97,7 +100,7 @@ onUnmounted(() => clearInterval(gamepadInterval));
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem class="cursor-pointer" @click="$router.push({ path: '/' })">
-              <User class="mr-2 h-4 w-4" />
+              <Users class="mr-2 h-4 w-4" />
               <span>Switch profile</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
