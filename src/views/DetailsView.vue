@@ -40,7 +40,7 @@ const showFullOverview = ref(false);
 
 const videoKey = ref<string>('');
 const videoPlayer = ref();
-const videoPlaying = ref(true);
+const videoPlaying = ref(false);
 const videoError = ref(false);
 
 const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
@@ -97,7 +97,6 @@ const loadData = async () => {
   const config = await invoke<IConfig | null>('get_config');
   if (config) {
     const itemId = route.params.id;
-    console.log(itemId);
     if (!itemId) router.push({ path: '/browse' });
 
     const details = await fetch(config.http_server + `/details?id=${itemId}`, {
@@ -189,8 +188,8 @@ onUnmounted(() => clearInterval(interval));
         :alt="item.title"
         type="backdrop"
         size="original"
-        class="w-full h-full object-center object-cover relative z-0"
-        :class="{ 'z-[11]': !videoPlaying }"
+        class="w-full h-full object-center object-cover relative"
+        :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
       />
       <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
         <TMDBImage

@@ -30,9 +30,6 @@ const router = createRouter({
     }, {
       path: '/profiles',
       component: () => import('@/views/ProfilesView.vue')
-    }, {
-      path: '/settings',
-      component: () => import('@/views/SettingsView.vue')
     }
   ]
 });

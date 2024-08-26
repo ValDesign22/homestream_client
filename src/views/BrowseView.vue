@@ -33,7 +33,7 @@ const showFullOverview = ref(false);
 
 const videoKey = ref<string>('');
 const videoPlayer = ref();
-const videoPlaying = ref(true);
+const videoPlaying = ref(false);
 const videoError = ref(false);
 
 const { isSupported, gamepads } = useGamepad();
@@ -223,8 +223,8 @@ onUnmounted(() => {
           :alt="randomSelected.id.toString()"
           type="backdrop"
           size="w1280"
-          class="w-full h-full object-center object-cover relative z-0"
-          :class="{ 'z-[11]': !videoPlaying }"
+          class="w-full h-full object-center object-cover relative"
+          :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
         />
         <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
           <TMDBImage

@@ -17,6 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface NavBarProps {
   full?: boolean;
@@ -28,6 +30,8 @@ const router = useRouter();
 const route = useRoute();
 const store = useStore;
 const { y } = useWindowScroll({ behavior: 'smooth' });
+
+const settingsOpened = ref(false);
 
 const user = ref<IProfile | null>(null);
 const searchInput = ref<HTMLInputElement | null>(null);
@@ -106,7 +110,7 @@ onUnmounted(() => clearInterval(gamepadInterval));
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem class="cursor-pointer" @click="$router.push({ path: '/settings' })">
+            <DropdownMenuItem class="cursor-pointer" @click="settingsOpened = true">
               <Settings class="mr-2 h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
@@ -115,4 +119,31 @@ onUnmounted(() => clearInterval(gamepadInterval));
       </DropdownMenu>
     </div>
   </nav>
+  <Dialog v-model:open="settingsOpened">
+    <DialogContent class="min-w-[80vw] max-w-[80vw] max-h-[80vh]">
+      <DialogHeader class="flex items-center justify-between">
+        <DialogTitle>Settings</DialogTitle>
+      </DialogHeader>
+      <Tabs default-value="general" class="w-full">
+        <TabsList class="w-full">
+          <TabsTrigger value="general" class="w-full">
+            General
+          </TabsTrigger>
+          <TabsTrigger value="server" class="w-full">
+            Server
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="general">
+          <div class="p-4">
+            <h2 class="text-xl font-bold">General</h2>
+          </div>
+        </TabsContent>
+        <TabsContent value="server">
+          <div class="p-4">
+            <h2 class="text-xl font-bold">Server</h2>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </DialogContent>
+  </Dialog>
 </template>

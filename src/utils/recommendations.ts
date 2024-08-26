@@ -2,41 +2,42 @@ import { invoke } from "@tauri-apps/api/core";
 import { IConfig, IMovie, ITvShow } from "./types";
 import { fetch } from "@tauri-apps/plugin-http";
 
-export default async function getRecommendations(item: IMovie | ITvShow): Promise<(IMovie | ITvShow)[]> {
+async function fetchStores(): Promise<(IMovie | ITvShow)[]> {
   const config = await invoke<IConfig | null>("get_config");
-  if (config) {
-    const response = await fetch(config.http_server + "/stores", {
+  if (!config) return [];
+
+  try {
+    const response = await fetch(`${config.http_server}/stores`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
     });
     if (!response.ok) return [];
-
     const stores: Record<string, IMovie[] | ITvShow[]> = await response.json();
-    const groupedStores = Object.values(stores).flat();
-
-    const genreIds = new Set(item.genres.map(genre => genre.id));
-    const genreCounts: Record<number, number> = {};
-
-    // Count how many genres each item shares with the input item
-    for (const storeItem of groupedStores) {
-      if (storeItem.id === item.id) continue; // Skip the same item
-
-      const commonGenres = storeItem.genres.filter(genre => genreIds.has(genre.id));
-      if (commonGenres.length > 0) {
-        genreCounts[storeItem.id] = commonGenres.length;
-      }
-    }
-
-    // Sort the items by the number of common genres in descending order
-    const recommendations = groupedStores
-      .filter(storeItem => genreCounts[storeItem.id] > 0)
-      .sort((a, b) => genreCounts[b.id] - genreCounts[a.id])
-      .slice(0, 10);
-
-    return recommendations;
+    return Object.values(stores).flat();
+  } catch (error) {
+    console.error(error);
+    return [];
   }
+}
 
-  return [];
+export default async function getRecommendations(item: IMovie | ITvShow): Promise<(IMovie | ITvShow)[]> {
+  const allItems = await fetchStores();
+  if (allItems.length === 0) return [];
+
+  const genreIds = new Set(item.genres.map(genre => genre.id));
+
+  const recommendations = allItems
+    .filter(storeItem => storeItem.id !== item.id)
+    .map(storeItem => ({
+      item: storeItem,
+      similarity: storeItem.genres.filter(genre => genreIds.has(genre.id)).length
+    }))
+    .filter(({ similarity }) => similarity > 0)
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, 10)
+    .map(({ item }) => item);
+
+  return recommendations;
 }
