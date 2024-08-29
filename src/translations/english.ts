@@ -1,6 +1,4 @@
-import { MessageFormat } from '.';
-
-export const english: MessageFormat = {
+export default {
   app: {
     name: 'HomeStream',
     footerVersion: 'HomeStream v{version}',

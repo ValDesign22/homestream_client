@@ -24,7 +24,7 @@ export default [
       }
     }
   },
-  ...vueI18n.configs['flat/recommended'],
+  ...vueI18n.configs['recommended'],
   {
     rules: {
       '@intlify/vue-i18n/no-dynamic-keys': 'error',
