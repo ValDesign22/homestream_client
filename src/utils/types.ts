@@ -1,27 +1,27 @@
-export interface Config {
+export interface IConfig {
   http_server: string,
 }
 
-export interface RemoteFolder {
+export interface IRemoteFolder {
   id: number,
   name: string,
   path: string,
-  children?: RemoteFolder[],
+  children?: IRemoteFolder[],
 }
 
-export interface Folder {
+export interface IFolder {
   id: number,
   name: string,
   path: string,
-  media_type: MediaType,
+  media_type: EMediaType,
 }
 
-export enum MediaType {
+export enum EMediaType {
   Movie,
-  TvShow,
+  ITvShow,
 }
 
-export interface Movie {
+export interface IMovie {
   id: number,
   collection_id: number,
   title: string,
@@ -32,11 +32,11 @@ export interface Movie {
   logo_path: string,
   release_date: string,
   runtime: number,
-  genres: Genre[],
+  genres: IGenre[],
   path: string,
 }
 
-export interface TvShow {
+export interface ITvShow {
   id: number,
   title: string,
   original_title: string,
@@ -44,22 +44,22 @@ export interface TvShow {
   poster_path: string,
   backdrop_path: string,
   logo_path: string,
-  genres: Genre[],
-  seasons: Season[],
+  genres: IGenre[],
+  seasons: ISeason[],
   path: string,
 }
 
-export interface Season {
+export interface ISeason {
   id: number,
   season_number: number,
   name: string,
   overview: string,
-  episodes: Episode[],
+  episodes: IEpisode[],
   poster_path?: string,
   path: string,
 }
 
-export interface Episode {
+export interface IEpisode {
   id: number,
   episode_number: number,
   title: string,
@@ -70,13 +70,13 @@ export interface Episode {
   path: string,
 }
 
-export interface Genre {
+export interface IGenre {
   id: number,
   name: string,
-  items: (Movie | TvShow)[],
+  items: (IMovie | ITvShow)[],
 }
 
-export interface AudioTrack {
+export interface IAudioTrack {
   index: number,
   codec_name: string,
   codec_type: string,
@@ -86,11 +86,35 @@ export interface AudioTrack {
   enabled: boolean,
 }
 
-export interface SubtitleTrack {
+export interface ISubtitleTrack {
   index: number,
   codec_name: string,
   codec_type: string,
   language: string,
   handler_name: string,
   enabled: boolean,
+}
+
+export interface IProfile {
+  id: number,
+  name: string,
+  password?: string,
+  role: ERole,
+  history: IHistory[],
+  watchlist: (IMovie | ITvShow)[],
+  favorites: (IMovie | ITvShow)[],
+}
+
+export enum ERole {
+  Admin,
+  User,
+}
+
+export interface IHistory {
+  id: number,
+  date: string,
+  title: string,
+  media_type: EMediaType,
+  watched: boolean,
+  progress: number,
 }

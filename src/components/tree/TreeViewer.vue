@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { RemoteFolder } from '@/utils/types';
+import { IRemoteFolder } from '@/utils/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { HTMLAttributes, ref } from 'vue';
 import TreeNode from './TreeNode.vue';
 
 interface TreeViewerProps {
-  data: RemoteFolder[];
-  selectedItem: RemoteFolder | null;
-  selectItem: (item: RemoteFolder | null) => void;
+  data: IRemoteFolder[];
+  selectedItem: IRemoteFolder | null;
+  selectItem: (item: IRemoteFolder | null) => void;
 }
 
 const props = defineProps<TreeViewerProps & { class?: HTMLAttributes['class'] }>();
@@ -21,7 +21,7 @@ const toggleFolder = (id: string) => {
 </script>
 
 <template>
-  <div class="overflow-hidden flex-shrink-0 w-[460px] h-[360px] border rounded-md">
+  <div class="overflow-hidden flex-shrink-0 border rounded-md sm:w-[460px] sm:h-[360px] w-[320px] h-[240px] bg-background dark:bg-background-dark transition-all">
     <ScrollArea :class="`w-full h-full`">
       <div class="relative px-2">
         <TreeNode

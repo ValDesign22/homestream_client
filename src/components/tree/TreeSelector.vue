@@ -2,23 +2,29 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { HTMLAttributes, ref } from 'vue';
-import { RemoteFolder } from '@/utils/types';
+import { IRemoteFolder } from '@/utils/types';
 import TreeViewer from './TreeViewer.vue';
+import { onClickOutside } from '@vueuse/core';
 
 interface TreeSelectorProps {
   open: boolean;
   index: number;
-  data: RemoteFolder[];
-  selectedItem: RemoteFolder | null;
-  selectItem: (item: RemoteFolder | null, index: number) => void;
+  data: IRemoteFolder[];
+  selectedItem: IRemoteFolder | null;
+  selectItem: (item: IRemoteFolder | null, index: number) => void;
   toggle: (index: number) => void;
 }
 
 const props = defineProps<TreeSelectorProps & { class?: HTMLAttributes['class'] }>();
 
+const target = ref<HTMLDivElement | null>(null);
 const input = ref<string>('');
 
-const searchByPath = (data: RemoteFolder[], path: string): RemoteFolder | null => {
+onClickOutside(target, () => {
+  if (props.open) props.toggle(props.index);
+});
+
+const searchByPath = (data: IRemoteFolder[], path: string): IRemoteFolder | null => {
   const stack = [...data];
 
   while (stack.length) {
@@ -32,7 +38,7 @@ const searchByPath = (data: RemoteFolder[], path: string): RemoteFolder | null =
   return null;
 };
 
-const selectItem = (item: RemoteFolder | null) => {
+const selectItem = (item: IRemoteFolder | null) => {
   props.selectItem(item, props.index);
   input.value = item ? item.path : '';
 };
@@ -48,13 +54,14 @@ const searchItem = (event: InputEvent) => {
 
 <template>
   <div
+    ref="target"
     class="flex flex-col justify-center p-4 gap-4 border rounded-md fixed top-1/2 left-1/2 transform -translate-x-1/2 bg-background dark:bg-background-dark shadow-lg duration-300 transition-transform"
     :class="props.open ?
       'visible z-10 -translate-y-1/2' :
       'invisible z-[-1] -translate-y-1/3 pointer-events-none'"
   >
     <h1 class="text-lg font-bold">
-      Select a folder
+      {{ $t('components.tree.selectFolder') }}
     </h1>
     <TreeViewer
       :data="props.data"
@@ -66,7 +73,9 @@ const searchItem = (event: InputEvent) => {
         v-model="input"
         @input="searchItem"
         />
-      <Button @click="props.toggle">Select</Button>
+      <Button @click="props.toggle">
+        {{ $t('components.tree.select') }}
+      </Button>
     </div>
   </div>
 </template>

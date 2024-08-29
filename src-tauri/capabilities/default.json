@@ -2,6 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
+  "platforms": [
+    "windows"
+  ],
   "windows": [
     "main"
   ],
@@ -15,7 +18,6 @@
     "core:menu:default",
     "core:tray:default",
     "core:window:allow-set-fullscreen",
-    "shell:allow-open",
     {
       "identifier": "http:default",
       "allow": [
@@ -58,6 +60,10 @@
     "updater:allow-check",
     "updater:allow-download",
     "updater:allow-install",
-    "updater:allow-download-and-install"
+    "updater:allow-download-and-install",
+    "store:allow-get",
+    "store:allow-set",
+    "store:allow-save",
+    "store:allow-load"
   ]
 }

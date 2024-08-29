@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { RemoteFolder } from '@/utils/types';
+import { IRemoteFolder } from '@/utils/types';
 import { Folder } from 'lucide-vue-next';
 import { HTMLAttributes } from 'vue';
 
 interface TreeLeaf {
-  item: RemoteFolder;
-  selectedItem: RemoteFolder | null;
-  selectItem: (item: RemoteFolder) => void;
+  item: IRemoteFolder;
+  selectedItem: IRemoteFolder | null;
+  selectItem: (item: IRemoteFolder) => void;
 }
 
 const props = defineProps<TreeLeaf & { class?: HTMLAttributes['class'] }>();

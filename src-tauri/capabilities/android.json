@@ -1,0 +1,61 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "android",
+  "description": "Capability for the main window",
+  "platforms": ["android"],
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:path:default",
+    "core:event:default",
+    "core:window:default",
+    "core:app:default",
+    "core:image:default",
+    "core:resources:default",
+    "core:menu:default",
+    "core:tray:default",
+    "core:window:allow-set-fullscreen",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://*/**"
+        },
+        {
+          "url": "http://*:*/**"
+        }
+      ],
+      "deny": []
+    },
+    "fs:default",
+    {
+      "identifier": "fs:allow-create",
+      "allow": [
+        {
+          "path": "$APPCONFIG/*"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [
+        {
+          "path": "$APPCONFIG"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [
+        {
+          "path": "$APPCONFIG/*"
+        }
+      ]
+    },
+    "store:allow-get",
+    "store:allow-set",
+    "store:allow-save",
+    "store:allow-load"
+  ]
+}

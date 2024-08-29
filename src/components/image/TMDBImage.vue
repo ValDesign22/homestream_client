@@ -1,42 +1,28 @@
 <script setup lang="ts">
 import { useImage } from '@vueuse/core';
-import { HTMLAttributes } from 'vue';
+import { computed, HTMLAttributes } from 'vue';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface BackdropProps {
-  type: "backdrop";
-  size:  "w300" | "w780" | "w1280" | "original";
+type SizeOptions = {
+  backdrop: "w300" | "w780" | "w1280" | "original";
+  logo: "w45" | "w92" | "w154" | "w185" | "w300" | "w500" | "original";
+  poster: "w92" | "w154" | "w185" | "w342" | "w500" | "w780" | "original";
+  profile: "w45" | "w185" | "h632" | "original";
+  still: "w92" | "w185" | "w300" | "original";
 }
 
-interface LogoProps {
-  type: "logo";
-  size: "w45" | "w92" | "w154" | "w185" | "w300" | "w500" | "original";
-}
-
-interface PosterProps {
-  type: "poster";
-  size: "w92" | "w154" | "w185" | "w342" | "w500" | "w780" | "original";
-}
-
-interface ProfileProps {
-  type: "profile";
-  size: "w45" | "w185" | "h632" | "original";
-}
-
-interface StillProps {
-  type: "still";
-  size: "w92" | "w185" | "w300" | "original";
-}
-
-type TMDBImageProps = (BackdropProps | LogoProps | PosterProps | ProfileProps | StillProps) & {
+type TMDBImageProps<T extends keyof SizeOptions> = {
+  type: T;
+  size: SizeOptions[T];
   image: string;
   alt: string;
+  class?: HTMLAttributes['class'];
 };
 
-const props = defineProps<TMDBImageProps & { class?: HTMLAttributes['class'] }>();
+const props = defineProps<TMDBImageProps<keyof SizeOptions>>();
 
-const imageUrl = `https://image.tmdb.org/t/p/${props.size}${props.image}`;
-const { isLoading } = useImage({ src: imageUrl });
+const imageUrl = computed(() => `https://image.tmdb.org/t/p/${props.size}${props.image}`);
+const { isLoading } = useImage({ src: imageUrl.value });
 </script>
 
 <template>

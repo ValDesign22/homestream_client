@@ -5,18 +5,20 @@ import { Check, Circle, Dot, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toTypedSchema } from '@vee-validate/zod'
-import * as zod from 'zod';
+import zod from 'zod';
 import { Stepper, StepperItem, StepperSeparator, StepperTitle, StepperTrigger } from '@/components/ui/stepper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GenericObject } from 'vee-validate';
 import { create, exists, writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
-import { Folder, RemoteFolder } from '@/utils/types';
+import { IFolder, IRemoteFolder } from '@/utils/types';
 import { fetch } from '@tauri-apps/plugin-http';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TreeSelector } from '@/components/tree';
 import { Separator } from '@/components/ui/separator';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const router = useRouter();
 
 const formSchema = [
@@ -28,7 +30,7 @@ const formSchema = [
   }),
   zod.object({
     folders: zod.array(zod.object({
-      media_type: zod.string().transform(Number),
+      media_type: zod.string(),
       path: zod.string(),
       name: zod.string(),
     })).optional(),
@@ -36,12 +38,13 @@ const formSchema = [
 ];
 
 const httpServer = ref('');
-const remoteFolders = ref<RemoteFolder[]>([]);
-const folders = ref<Folder[]>([]);
-const selectedItem = ref<RemoteFolder | null>(null);
+const skipped = ref(false);
+const remoteFolders = ref<IRemoteFolder[]>([]);
+const folders = ref<IFolder[]>([]);
+const selectedItem = ref<IRemoteFolder | null>(null);
 const selectors = ref<boolean[]>([]);
 
-const selectItem = (item: RemoteFolder | null, index: number) => {
+const selectItem = (item: IRemoteFolder | null, index: number) => {
   selectedItem.value = item;
   folders.value[index].path = item ? item.path : '';
 };
@@ -54,20 +57,20 @@ const toggleSelector = (index: number) => {
 const stepIndex = ref(1);
 const steps = [{
   step: 1,
-  title: 'Server Configuration',
-  description: 'Connect your HomeStream server to the app.',
+  title: t('register.steps.connect'),
+  description: t('register.steps.connectDescription'),
 }, {
   step: 2,
-  title: 'The Movie Database',
-  description: 'Configure your app language',
+  title: t('register.steps.language'),
+  description: t('register.steps.languageDescription'),
 }, {
   step: 3,
-  title: 'File configuration',
-  description: 'Configure the folders where your movies and TV shows are stored.',
+  title: t('register.steps.folders'),
+  description: t('register.steps.foldersDescription'),
 }, {
   step: 4,
-  title: 'Success',
-  description: 'You have successfully connected to your FTP server and The Movie Database.',
+  title: t('register.steps.success'),
+  description: t('register.steps.successDescription'),
 }];
 
 const canGoNext = computed(() => stepIndex.value < steps.length);
@@ -79,19 +82,8 @@ function goBack() {
   if (get(canGoBack)) set(stepIndex, stepIndex.value - 1);
 }
 
-async function fetchFolders() {
-  console.log(httpServer.value);
+async function fetchConfig() {
   if (!httpServer.value) return;
-
-  const response = await fetch(httpServer.value + '/folders', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) console.error('An error occurred while fetching the folders');
-  else remoteFolders.value = await response.json();
 
   const configResponse = await fetch(httpServer.value + '/config', {
     method: 'GET',
@@ -108,6 +100,20 @@ async function fetchFolders() {
   }
 }
 
+async function fetchFolders() {
+  if (!httpServer.value) return;
+
+  const response = await fetch(httpServer.value + '/folders', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) console.error('An error occurred while fetching the folders');
+  else remoteFolders.value = await response.json();
+}
+
 async function onSubmit(values: GenericObject) {
   const fileExists = await exists("config.json", { baseDir: BaseDirectory.AppConfig });
 
@@ -117,9 +123,9 @@ async function onSubmit(values: GenericObject) {
     http_server: values.httpServer,
   }), { baseDir: BaseDirectory.AppConfig });
 
-  const foldersToSend: Folder[] = values.folders ? values.folders.map((folder: { media_type: string, path: string }, index: number) => ({
+  const foldersToSend: IFolder[] = values.folders ? values.folders.map((folder: { media_type: string, name: string, path: string }, index: number) => ({
     id: index,
-    name: folder.path.split('/').pop() || '',
+    name: folder.name,
     media_type: parseInt(folder.media_type),
     path: folder.path,
   })) : [];
@@ -127,7 +133,7 @@ async function onSubmit(values: GenericObject) {
   const response = await fetch(httpServer.value + '/config', {
     method: 'PATCH',
     body: JSON.stringify({
-      folders: foldersToSend,
+      folders: skipped.value ? folders.value : foldersToSend,
       tmdb_language: values.tmdbLanguage,
     }),
     headers: {
@@ -135,7 +141,7 @@ async function onSubmit(values: GenericObject) {
     },
   });
 
-  if (response.ok) router.push({ path: "/browse", replace: true });
+  if (response.ok) router.push({ path: "/", replace: true });
   else console.error('An error occurred while saving the configuration', await response.text());
 }
 </script>
@@ -151,9 +157,7 @@ async function onSubmit(values: GenericObject) {
           e.preventDefault();
           validate();
   
-          if (stepIndex === steps.length) {
-            onSubmit(values);
-          }
+          if (stepIndex === steps.length) onSubmit(values);
         }"
       >
         <Stepper v-model="stepIndex" class="flex w-full items-start gap-2">
@@ -194,13 +198,13 @@ async function onSubmit(values: GenericObject) {
           </StepperItem>
         </Stepper>
   
-        <div class="flex flex-col gap-4 mt-4 w-fit px-96">
+        <div class="flex flex-col gap-4 mt-4">
           <span>{{ steps[stepIndex - 1].description }}</span>
 
           <template v-if="stepIndex === 1">
             <FormField v-slot="{ componentField }" name="httpServer">
               <FormItem>
-                <FormLabel>HomeStream Server Address</FormLabel>
+                <FormLabel>{{ $t('register.form.address') }}</FormLabel>
                 <FormControl>
                   <Input type="text" v-bind="componentField" v-model="httpServer" />
                 </FormControl>
@@ -212,7 +216,7 @@ async function onSubmit(values: GenericObject) {
           <template v-if="stepIndex === 2">
             <FormField v-slot="{ componentField }" name="tmdbLanguage">
               <FormItem>
-                <FormLabel>TMDB Language</FormLabel>
+                <FormLabel>{{ $t('register.form.language') }}</FormLabel>
                 <FormControl>
                   <Input type="text" v-bind="componentField" />
                 </FormControl>
@@ -222,44 +226,52 @@ async function onSubmit(values: GenericObject) {
           </template>
 
           <template v-if="stepIndex === 3">
-            <div class="flex flex-col gap-4 w-full max-w-[460px] p-4 border rounded-md">
+            <div class="flex flex-col gap-4 w-full p-4 border rounded-md">
               <div v-if="!folders.length" class="flex items-center gap-4">
-                <span class="text-md font-bold">No folders added</span>
+                <span class="text-md font-bold">
+                  {{ $t('register.form.noFolders') }}
+                </span>
               </div>
               <div v-for="(folder, index) in folders" :key="index" class="flex flex-col gap-4">
                 <div class="flex gap-4">
-                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].media_type'">
+                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].media_type'" :defaultValue="folder.media_type.toString()">
                     <FormItem>
                       <Select v-bind="componentField" :defaultValue="folder.media_type.toString()">
                         <FormControl>
                           <SelectTrigger class="w-auto">
-                            <SelectValue placeholder="Select a media type" />
+                            <SelectValue :placeholder="$t('register.form.selectType')" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent class="w-auto">
                           <SelectGroup class="w-auto">
-                            <SelectLabel>Media Type</SelectLabel>
-                            <SelectItem value="0">Movies</SelectItem>
-                            <SelectItem value="1">TV Shows</SelectItem>
+                            <SelectLabel>
+                              {{ $t('register.form.mediaType') }}
+                            </SelectLabel>
+                            <SelectItem value="0">
+                              {{ $t('register.form.movies') }}
+                            </SelectItem> 
+                            <SelectItem value="1">
+                              {{ $t('register.form.tvShows') }}
+                            </SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>
                     </FormItem>
                   </FormField>
-                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].name'">
+                  <FormField v-slot="{ componentField }" :name="'folders[' + index + '].name'" :defaultValue="folder.name">
                     <FormItem>
                       <FormControl>
-                        <Input v-bind="componentField" type="text" v-model="folder.name" placeholder="Folder name" />
+                        <Input v-bind="componentField" type="text" v-model="folder.name" :placeholder="$t('register.form.folderName')" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   </FormField>
                 </div>
                 <div class="flex gap-4">
-                  <FormField :name="'folders[' + index + '].path'">
+                  <FormField v-slot="{ componentField }"  :name="'folders[' + index + '].path'" :defaultValue="folder.path">
                     <FormItem>
                       <FormControl>
-                        <Input type="text" @click="() => toggleSelector(index)" :value="folder.path.length ? folder.path : 'Select a folder'" />
+                        <Input v-bind="componentField" type="text" @click="() => toggleSelector(index)" :value="folder.path.length ? folder.path : $t('register.form.selectFolder')" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -288,7 +300,7 @@ async function onSubmit(values: GenericObject) {
                   folders = [...folders, { id: folders.length, name: '', path: '', media_type: 0 }]
                   selectors = [...selectors, false]
                 }">
-                  Add Folder
+                  {{ $t('register.form.addFolder') }}
                 </Button>
               </div>
             </div>
@@ -297,27 +309,32 @@ async function onSubmit(values: GenericObject) {
           <template v-if="stepIndex === 4">
             <div class="flex flex-col gap-4">
               <span>
-                Your configuration has been saved successfully. You can now start using the app.
+                {{ $t('register.form.success') }}
               </span>
             </div>
           </template>
         </div>
   
-        <div class="flex items-center justify-between mt-4 px-96">
+        <div class="flex items-center justify-between mt-4">
           <Button :disabled="!canGoBack" variant="outline" size="sm" @click="goBack">
-            Back
+            {{ $t('register.form.back') }}
           </Button>
           <div class="flex items-center gap-3">
-            <Button v-if="stepIndex !== steps.length" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
+            <Button v-if="stepIndex === 3 && !meta.touched" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
               fetchFolders();
+              goNext();
+              skipped = true;
+            }">
+              {{ $t('register.form.skip') }}
+            </Button>
+            <Button v-else-if="stepIndex !== steps.length" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
+              fetchConfig();
               meta.valid && goNext();
             }">
-              Next
+              {{ $t('register.form.next') }}
             </Button>
-            <Button
-              v-if="stepIndex === steps.length" size="sm" type="submit"
-            >
-              Submit
+            <Button v-if="stepIndex === steps.length" size="sm" type="submit">
+              {{ $t('register.form.submit') }}
             </Button>
           </div>
         </div>

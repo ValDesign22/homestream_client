@@ -4,15 +4,15 @@ import { NavBar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useStore } from '@/lib/stores';
 import getRecommendations from '@/utils/recommendations';
-import { Config, Episode, Movie, TvShow } from '@/utils/types';
+import { IConfig, IEpisode, IMovie, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { fetch } from '@tauri-apps/plugin-http';
 import { PlayerState, usePlayer } from '@vue-youtube/core';
-import { useImage } from '@vueuse/core';
-import { PlayIcon } from 'lucide-vue-next';
+import { PlayIcon, SquareCheck, SquarePlus, Star, StarOff } from 'lucide-vue-next';
 import { watch } from 'vue';
 import { onUnmounted } from 'vue';
 import { onMounted, ref } from 'vue';
@@ -21,14 +21,18 @@ import { useRoute, useRouter } from 'vue-router';
 const router = useRouter();
 const route = useRoute();
 
-const item = ref<Movie | TvShow | null>(null);
-const videoItem = ref<Movie | Episode | null>(null);
-const collection = ref<Movie[]>([]);
-const recommendations = ref<(Movie | TvShow)[]>([]);
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+const store = useStore;
+
+const item = ref<IMovie | ITvShow | null>(null);
+const isInFavorites = ref(false);
+const isInWatchlist = ref(false);
+const videoItem = ref<IMovie | IEpisode | null>(null);
+const collection = ref<IMovie[]>([]);
+const recommendations = ref<(IMovie | ITvShow)[]>([]);
 
 const currentSeason = ref<string>("0");
-
-const { isLoading } = useImage({ src: item.value?.backdrop_path ?? '' });
 
 const windowFocused = ref(true);
 const headerVisible = ref(true);
@@ -36,7 +40,7 @@ const showFullOverview = ref(false);
 
 const videoKey = ref<string>('');
 const videoPlayer = ref();
-const videoPlaying = ref(true);
+const videoPlaying = ref(false);
 const videoError = ref(false);
 
 const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
@@ -77,7 +81,7 @@ onReady((event) => {
 });
 
 const interval = setInterval(async () => {
-  windowFocused.value = await getCurrentWindow().isFocused();
+  windowFocused.value = isMobile ? document.visibilityState === 'visible' : await getCurrentWindow().isFocused()
   if (videoKey.value === '' || videoError.value || !instance.value) return videoPlaying.value = false;
   if (!instance.value?.getDuration) return videoPlaying.value = false;
   if (!windowFocused.value || !headerVisible.value) {
@@ -90,7 +94,7 @@ const interval = setInterval(async () => {
 }, 1000);
 
 const loadData = async () => {
-  const config = await invoke<Config | null>('get_config');
+  const config = await invoke<IConfig | null>('get_config');
   if (config) {
     const itemId = route.params.id;
     if (!itemId) router.push({ path: '/browse' });
@@ -106,8 +110,11 @@ const loadData = async () => {
       item.value = response;
 
       if (item.value) {
+        isInFavorites.value = await store.isInFavorites(item.value);
+        isInWatchlist.value = await store.isInWatchlist(item.value);
+
         if ('collection_id' in item.value) {
-          const movie = item.value as Movie;
+          const movie = item.value as IMovie;
           if (!movie.collection_id) collection.value = [];
           else {
             const collectionResponse = await fetch(config.http_server + '/collection?id=' + movie.collection_id, {
@@ -124,7 +131,7 @@ const loadData = async () => {
 
           videoItem.value = item.value;
         } else {
-          const tvshow = item.value as TvShow;
+          const tvshow = item.value as ITvShow;
           if (tvshow.seasons.length > 0) {
             videoItem.value = tvshow.seasons[0].episodes[0];
           }
@@ -152,11 +159,23 @@ onMounted(loadData);
 
 watch(route, loadData);
 
+watch(isInFavorites, async () => {
+  if (!item.value) return;
+  if (isInFavorites.value) await store.addToFavorites(item.value);
+  else await store.removeFromFavorites(item.value);
+});
+
+watch(isInWatchlist, async () => {
+  if (!item.value) return;
+  if (isInWatchlist.value) await store.addToWatchlist(item.value);
+  else await store.removeFromWatchlist(item.value);
+});
+
 onUnmounted(() => clearInterval(interval));
 </script>
 
 <template>
-  <NavBar />
+  <NavBar full />
   <div
     ref="videoPlayer"
     class="w-full h-screen object-cover absolute top-0 left-0"
@@ -164,15 +183,13 @@ onUnmounted(() => clearInterval(interval));
   />
   <div v-if="item" class="w-full h-auto">
     <div class="w-full h-screen relative">
-      <Skeleton v-if="isLoading" class="w-full h-full" />
       <TMDBImage
-        v-else
         :image="item.backdrop_path"
         :alt="item.title"
         type="backdrop"
         size="original"
-        class="w-full h-full object-cover relative z-0"
-        :class="{ 'z-[11]': !videoPlaying }"
+        class="w-full h-full object-center object-cover relative"
+        :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
       />
       <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
         <TMDBImage
@@ -184,27 +201,63 @@ onUnmounted(() => clearInterval(interval));
           class="w-[20vw] h-auto object-cover"
         />
         <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ item.title }}</h2>
-        <span class="max-w-2xl" @click="showFullOverview = !showFullOverview">
-          {{ showFullOverview ? item.overview : item.overview.split(' ').slice(0, 50).join(' ') + '...' }}
+        <span v-if="item.overview.length" class="max-w-2xl" @click="showFullOverview = !showFullOverview">
+          {{ showFullOverview ? item.overview : item.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
         </span>
         <div class="flex gap-4 items-center" v-if="videoItem">
           <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}`, replace: true })">
             <PlayIcon class="w-6 h-6" />
-            <span>Play</span>
+            <span>
+              {{ $t('pages.details.watch') }}
+            </span>
           </Button>
-          <span>{{ videoItem.runtime }} minutes</span>
+          <span>
+            {{ $t('pages.details.runtime', { runtime: videoItem.runtime }) }}
+          </span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <component
+                  :is="isInWatchlist ? SquareCheck : SquarePlus"
+                  class="w-8 h-8 cursor-pointer"
+                  @click="() => isInWatchlist = !isInWatchlist"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>
+                  {{ isInWatchlist ? $t('pages.details.watchlist.remove') : $t('pages.details.watchlist.add') }}
+                </span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <component
+                  :is="isInFavorites ? StarOff : Star"
+                  class="w-8 h-8 cursor-pointer"
+                  @click="() => isInFavorites = !isInFavorites"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>
+                  {{ isInFavorites ? $t('pages.details.favorites.remove') : $t('pages.details.favorites.add') }}
+                </span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </div>
     <div v-if="'seasons' in item" class="flex flex-col gap-4 py-4 px-16 bg-black">
       <Select v-model="currentSeason">
         <SelectTrigger class="max-w-[200px]">
-          <SelectValue :placeholder="`Season ${item.seasons[parseInt(currentSeason)].season_number}`" />
+           <SelectValue :placeholder="$t('pages.details.season', { season: item.seasons[parseInt(currentSeason)].season_number })" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             <SelectItem v-for="(season, index) in item.seasons" :key="index" :value="index.toString()">
-              Season {{ season.season_number }}
+              {{ $t('pages.details.season', { season: season.season_number }) }}
             </SelectItem>
           </SelectGroup>
         </SelectContent>
@@ -231,8 +284,8 @@ onUnmounted(() => clearInterval(interval));
                 @click="() => $router.push({ path: `/watch/${episode.id}`, replace: true })"
               />
               <div class="absolute bottom-0 left-0 w-full h-auto pointer-events-none bg-gradient-to-t from-black from-10% to-transparent p-4">
-                <span class="text-sm">Episode {{ episode.episode_number }}</span>
-                <span class="text-sm">{{ episode.title }}</span>
+                <p class="text-sm">{{ $t('pages.details.episode', { episode: episode.episode_number }) }}</p>
+                <p class="text-sm">{{ episode.title }}</p>
               </div>
             </div>
           </CarouselItem>
@@ -243,7 +296,7 @@ onUnmounted(() => clearInterval(interval));
     </div>
     <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 py-4 px-16 bg-black">
       <div v-if="collection.length > 0" class="w-full h-auto flex flex-col p-4">
-        <h3 class="text-2xl font-bold">Collection</h3>
+        <h3 class="text-2xl font-bold">{{ $t('pages.details.collection') }}</h3>
         <Carousel
           class="relative w-full"
           :opts="{
@@ -264,7 +317,7 @@ onUnmounted(() => clearInterval(interval));
                   size="w185"
                   class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
                   @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
-                />Season 1
+                />
               </div>
             </CarouselItem>
           </CarouselContent>
@@ -275,7 +328,7 @@ onUnmounted(() => clearInterval(interval));
     </div>
     <div v-if="recommendations.length > 0" class="flex flex-col gap-8 py-4 px-16 bg-black">
       <div class="w-full h-auto flex flex-col gap-4">
-        <h3 class="text-2xl font-bold">Recommendations</h3>
+        <h3 class="text-2xl font-bold">{{ $t('pages.details.recommendations') }}</h3>
         <Carousel
           class="relative w-full"
           :opts="{
