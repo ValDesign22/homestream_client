@@ -201,15 +201,19 @@ onUnmounted(() => clearInterval(interval));
           class="w-[20vw] h-auto object-cover"
         />
         <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ item.title }}</h2>
-        <span class="max-w-2xl" @click="showFullOverview = !showFullOverview">
+        <span v-if="item.overview.length" class="max-w-2xl" @click="showFullOverview = !showFullOverview">
           {{ showFullOverview ? item.overview : item.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
         </span>
         <div class="flex gap-4 items-center" v-if="videoItem">
           <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}`, replace: true })">
             <PlayIcon class="w-6 h-6" />
-            <span>Play</span>
+            <span>
+              {{ $t('pages.details.watch') }}
+            </span>
           </Button>
-          <span>{{ videoItem.runtime }} minutes</span>
+          <span>
+            {{ $t('pages.details.runtime', { runtime: videoItem.runtime }) }}
+          </span>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger as-child>
@@ -220,7 +224,9 @@ onUnmounted(() => clearInterval(interval));
                 />
               </TooltipTrigger>
               <TooltipContent>
-                <span>{{ isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist' }}</span>
+                <span>
+                  {{ isInWatchlist ? $t('pages.details.watchlist.remove') : $t('pages.details.watchlist.add') }}
+                </span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -234,7 +240,9 @@ onUnmounted(() => clearInterval(interval));
                 />
               </TooltipTrigger>
               <TooltipContent>
-                <span>{{ isInFavorites ? 'Remove from favorites' : 'Add to favorites' }}</span>
+                <span>
+                  {{ isInFavorites ? $t('pages.details.favorites.remove') : $t('pages.details.favorites.add') }}
+                </span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -244,12 +252,12 @@ onUnmounted(() => clearInterval(interval));
     <div v-if="'seasons' in item" class="flex flex-col gap-4 py-4 px-16 bg-black">
       <Select v-model="currentSeason">
         <SelectTrigger class="max-w-[200px]">
-          <SelectValue :placeholder="`Season ${item.seasons[parseInt(currentSeason)].season_number}`" />
+           <SelectValue :placeholder="$t('pages.details.season', { season: item.seasons[parseInt(currentSeason)].season_number })" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             <SelectItem v-for="(season, index) in item.seasons" :key="index" :value="index.toString()">
-              Season {{ season.season_number }}
+              {{ $t('pages.details.season', { season: season.season_number }) }}
             </SelectItem>
           </SelectGroup>
         </SelectContent>
@@ -276,7 +284,7 @@ onUnmounted(() => clearInterval(interval));
                 @click="() => $router.push({ path: `/watch/${episode.id}`, replace: true })"
               />
               <div class="absolute bottom-0 left-0 w-full h-auto pointer-events-none bg-gradient-to-t from-black from-10% to-transparent p-4">
-                <p class="text-sm">Episode {{ episode.episode_number }}</p>
+                <p class="text-sm">{{ $t('pages.details.episode', { episode: episode.episode_number }) }}</p>
                 <p class="text-sm">{{ episode.title }}</p>
               </div>
             </div>
@@ -288,7 +296,7 @@ onUnmounted(() => clearInterval(interval));
     </div>
     <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 py-4 px-16 bg-black">
       <div v-if="collection.length > 0" class="w-full h-auto flex flex-col p-4">
-        <h3 class="text-2xl font-bold">Collection</h3>
+        <h3 class="text-2xl font-bold">{{ $t('pages.details.collection') }}</h3>
         <Carousel
           class="relative w-full"
           :opts="{
@@ -320,7 +328,7 @@ onUnmounted(() => clearInterval(interval));
     </div>
     <div v-if="recommendations.length > 0" class="flex flex-col gap-8 py-4 px-16 bg-black">
       <div class="w-full h-auto flex flex-col gap-4">
-        <h3 class="text-2xl font-bold">Recommendations</h3>
+        <h3 class="text-2xl font-bold">{{ $t('pages.details.recommendations') }}</h3>
         <Carousel
           class="relative w-full"
           :opts="{

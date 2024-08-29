@@ -61,7 +61,7 @@ const searchItem = (event: InputEvent) => {
       'invisible z-[-1] -translate-y-1/3 pointer-events-none'"
   >
     <h1 class="text-lg font-bold">
-      Select a folder
+      {{ $t('components.tree.selectFolder') }}
     </h1>
     <TreeViewer
       :data="props.data"
@@ -73,7 +73,9 @@ const searchItem = (event: InputEvent) => {
         v-model="input"
         @input="searchItem"
         />
-      <Button @click="props.toggle">Select</Button>
+      <Button @click="props.toggle">
+        {{ $t('components.tree.select') }}
+      </Button>
     </div>
   </div>
 </template>

@@ -16,7 +16,9 @@ import { fetch } from '@tauri-apps/plugin-http';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TreeSelector } from '@/components/tree';
 import { Separator } from '@/components/ui/separator';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const router = useRouter();
 
 const formSchema = [
@@ -55,20 +57,20 @@ const toggleSelector = (index: number) => {
 const stepIndex = ref(1);
 const steps = [{
   step: 1,
-  title: 'Server',
-  description: 'Connect your HomeStream server to the app.',
+  title: t('register.steps.connect'),
+  description: t('register.steps.connectDescription'),
 }, {
   step: 2,
-  title: 'Language',
-  description: 'Configure your app language',
+  title: t('register.steps.language'),
+  description: t('register.steps.languageDescription'),
 }, {
   step: 3,
-  title: 'Folders',
-  description: 'Configure the folders where your movies and TV shows are stored.',
+  title: t('register.steps.folders'),
+  description: t('register.steps.foldersDescription'),
 }, {
   step: 4,
-  title: 'Success',
-  description: 'You have successfully connected to your FTP server and The Movie Database.',
+  title: t('register.steps.success'),
+  description: t('register.steps.successDescription'),
 }];
 
 const canGoNext = computed(() => stepIndex.value < steps.length);
@@ -202,7 +204,7 @@ async function onSubmit(values: GenericObject) {
           <template v-if="stepIndex === 1">
             <FormField v-slot="{ componentField }" name="httpServer">
               <FormItem>
-                <FormLabel>HomeStream Server Address</FormLabel>
+                <FormLabel>{{ $t('register.form.address') }}</FormLabel>
                 <FormControl>
                   <Input type="text" v-bind="componentField" v-model="httpServer" />
                 </FormControl>
@@ -214,7 +216,7 @@ async function onSubmit(values: GenericObject) {
           <template v-if="stepIndex === 2">
             <FormField v-slot="{ componentField }" name="tmdbLanguage">
               <FormItem>
-                <FormLabel>TMDB Language</FormLabel>
+                <FormLabel>{{ $t('register.form.language') }}</FormLabel>
                 <FormControl>
                   <Input type="text" v-bind="componentField" />
                 </FormControl>
@@ -226,7 +228,9 @@ async function onSubmit(values: GenericObject) {
           <template v-if="stepIndex === 3">
             <div class="flex flex-col gap-4 w-full p-4 border rounded-md">
               <div v-if="!folders.length" class="flex items-center gap-4">
-                <span class="text-md font-bold">No folders added</span>
+                <span class="text-md font-bold">
+                  {{ $t('register.form.noFolders') }}
+                </span>
               </div>
               <div v-for="(folder, index) in folders" :key="index" class="flex flex-col gap-4">
                 <div class="flex gap-4">
@@ -235,14 +239,20 @@ async function onSubmit(values: GenericObject) {
                       <Select v-bind="componentField" :defaultValue="folder.media_type.toString()">
                         <FormControl>
                           <SelectTrigger class="w-auto">
-                            <SelectValue placeholder="Select a media type" />
+                            <SelectValue :placeholder="$t('register.form.selectType')" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent class="w-auto">
                           <SelectGroup class="w-auto">
-                            <SelectLabel>Media Type</SelectLabel>
-                            <SelectItem value="0">Movies</SelectItem>
-                            <SelectItem value="1">TV Shows</SelectItem>
+                            <SelectLabel>
+                              {{ $t('register.form.mediaType') }}
+                            </SelectLabel>
+                            <SelectItem value="0">
+                              {{ $t('register.form.movies') }}
+                            </SelectItem> 
+                            <SelectItem value="1">
+                              {{ $t('register.form.tvShows') }}
+                            </SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -251,7 +261,7 @@ async function onSubmit(values: GenericObject) {
                   <FormField v-slot="{ componentField }" :name="'folders[' + index + '].name'" :defaultValue="folder.name">
                     <FormItem>
                       <FormControl>
-                        <Input v-bind="componentField" type="text" v-model="folder.name" placeholder="Folder name" />
+                        <Input v-bind="componentField" type="text" v-model="folder.name" :placeholder="$t('register.form.folderName')" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -261,7 +271,7 @@ async function onSubmit(values: GenericObject) {
                   <FormField v-slot="{ componentField }"  :name="'folders[' + index + '].path'" :defaultValue="folder.path">
                     <FormItem>
                       <FormControl>
-                        <Input v-bind="componentField" type="text" @click="() => toggleSelector(index)" :value="folder.path.length ? folder.path : 'Select a folder'" />
+                        <Input v-bind="componentField" type="text" @click="() => toggleSelector(index)" :value="folder.path.length ? folder.path : $t('register.form.selectFolder')" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -290,7 +300,7 @@ async function onSubmit(values: GenericObject) {
                   folders = [...folders, { id: folders.length, name: '', path: '', media_type: 0 }]
                   selectors = [...selectors, false]
                 }">
-                  Add Folder
+                  {{ $t('register.form.addFolder') }}
                 </Button>
               </div>
             </div>
@@ -299,7 +309,7 @@ async function onSubmit(values: GenericObject) {
           <template v-if="stepIndex === 4">
             <div class="flex flex-col gap-4">
               <span>
-                Your configuration has been saved successfully. You can now start using the app.
+                {{ $t('register.form.success') }}
               </span>
             </div>
           </template>
@@ -307,7 +317,7 @@ async function onSubmit(values: GenericObject) {
   
         <div class="flex items-center justify-between mt-4">
           <Button :disabled="!canGoBack" variant="outline" size="sm" @click="goBack">
-            Back
+            {{ $t('register.form.back') }}
           </Button>
           <div class="flex items-center gap-3">
             <Button v-if="stepIndex === 3 && !meta.touched" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
@@ -315,16 +325,16 @@ async function onSubmit(values: GenericObject) {
               goNext();
               skipped = true;
             }">
-              Skip
+              {{ $t('register.form.skip') }}
             </Button>
             <Button v-else-if="stepIndex !== steps.length" :type="meta.valid ? 'button' : 'submit'" :disabled="!canGoNext" size="sm" @click="() => {
               fetchConfig();
               meta.valid && goNext();
             }">
-              Next
+              {{ $t('register.form.next') }}
             </Button>
             <Button v-if="stepIndex === steps.length" size="sm" type="submit">
-              Submit
+              {{ $t('register.form.submit') }}
             </Button>
           </div>
         </div>

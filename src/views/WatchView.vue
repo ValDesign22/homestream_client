@@ -351,7 +351,7 @@ onUnmounted(() => {
                 <MessageSquareText class="cursor-pointer" />
               </HoverCardTrigger>
               <HoverCardContent class="flex flex-col gap-4">
-                <span>Subtitles</span>
+                <span>{{ $t('pages.watch.subtitles') }}</span>
                 <Button variant="ghost" v-for="(track, index) in subtitles" :key="track.index" @click="() => useSubtitleTrack(index)">
                   {{ `${getNameByISO6392B(track.language)}${track.handler_name ? `- ${track.handler_name}` : ''}` }}
                 </Button>
@@ -362,7 +362,9 @@ onUnmounted(() => {
                 <GalleryVerticalEnd class="cursor-pointer" />
               </HoverCardTrigger>
               <HoverCardContent class="flex flex-col gap-4 w-screen sm:w-[32rem]">
-                <Button variant="ghost">Season {{ currentSeason.season_number }}</Button>
+                <Button variant="ghost">
+                  {{ $t('pages.watch.season', { season: currentSeason.season_number }) }}
+                </Button>
                 <ScrollArea class="w-full h-64">
                   <div
                     v-for="(episode, index) in currentSeason.episodes"

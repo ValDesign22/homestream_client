@@ -236,24 +236,30 @@ onUnmounted(() => {
             class="w-[20vw] h-auto object-cover"
           />
           <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ randomSelected.title }}</h2>
-          <span class="max-w-2xl" @click="showFullOverview = !showFullOverview">
+          <span v-if="randomSelected.overview.length" class="max-w-2xl" @click="showFullOverview = !showFullOverview">
             {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
           </span>
           <div class="flex gap-4">
             <Button tabindex="0" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}`, replace: true })">
               <PlayIcon class="w-6 h-6" />
-              <span>Play</span>
+              <span>
+                {{ $t('pages.browse.watch') }}
+              </span>
             </Button>
             <Button tabindex="0" variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}`, replace: true })">
               <InfoIcon class="w-6 h-6" />
-              <span>Details</span>
+              <span>
+                {{ $t('pages.browse.details') }}
+              </span>
             </Button>
           </div>
         </div>
       </div>
       <div class="flex flex-col gap-8 p-16 bg-black">
         <div v-if="user && history.length !== 0" class="flex flex-col gap-4">
-          <h2 class="text-2xl font-bold">Continue Watching</h2>
+          <h2 class="text-2xl font-bold">
+            {{ $t('pages.browse.continue') }}
+          </h2>
           <Carousel
             tabindex="-1"
             class="relative w-full"
@@ -283,7 +289,9 @@ onUnmounted(() => {
           </Carousel>
         </div>
         <div v-if="user && user.watchlist.length !== 0" class="flex flex-col gap-4">
-          <h2 class="text-2xl font-bold">Watchlist</h2>
+          <h2 class="text-2xl font-bold">
+            {{ $t('pages.browse.watchlist') }}
+          </h2>
           <Carousel
             tabindex="-1"
             class="relative w-full"
@@ -313,7 +321,9 @@ onUnmounted(() => {
           </Carousel>
         </div>
         <div v-if="user && user.favorites.length !== 0" class="flex flex-col gap-4">
-          <h2 class="text-2xl font-bold">Favorites</h2>
+          <h2 class="text-2xl font-bold">
+            {{ $t('pages.browse.favorites') }}
+          </h2>
           <Carousel
             tabindex="-1"
             class="relative w-full"

@@ -41,9 +41,13 @@ onMounted(async () => {
 <template>
   <NavBar />
   <div class="flex flex-col items-center justify-center h-screen gap-4">
-    <h2 class="text-2xl font-bold">Select a profile</h2>
+    <h2 class="text-2xl font-bold">
+      {{ $t('pages.home.selectProfile') }}
+    </h2>
     <div class="flex flex-col items-center gap-2">
-      <span v-if="profiles.length === 0">No profiles found</span>
+      <span v-if="profiles.length === 0">
+        {{ $t('pages.home.noProfiles') }}
+      </span>
       <div v-else class="flex justify-center flex-wrap gap-2">
         <div v-for="profile in profiles" :key="profile.id" class="flex flex-col items-center gap-2 p-4 cursor-pointer rounded-lg hover:shadow-lg hover:bg-accent transition-colors" @click="() => selectProfile(profile)">
           <Avatar size="lg" shape="square">
@@ -55,10 +59,14 @@ onMounted(async () => {
       </div>
     </div>
     <div class="flex flex-col items-center gap-4">
-      <Button variant="outline" @click="() => $router.push({ path: '/profiles' })">Manage profiles</Button>
+      <Button variant="outline" @click="() => $router.push({ path: '/profiles' })">
+        {{ $t('pages.home.manageProfiles') }}
+      </Button>
     </div>
   </div>
   <div class="absolute bottom-0 right-0 p-4 ">
-    <span v-if="version" class="text-sm text-gray-500">HomeStream v{{ version }}</span>
+    <span v-if="version" class="text-sm text-gray-500">
+      {{ $t('app.footerVersion', { version }) }}
+    </span>
   </div>
 </template>

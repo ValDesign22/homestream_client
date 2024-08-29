@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Settings, Search, Users } from 'lucide-vue-next';
 import { computed, HTMLAttributes, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useStore } from '@/lib/stores';
-import { IProfile } from '@/utils/types';
+import { IConfig, IProfile } from '@/utils/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,8 +17,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { fetch } from '@tauri-apps/plugin-http';
+import { invoke } from '@tauri-apps/api/core';
+import { VisuallyHidden } from 'radix-vue';
 
 interface NavBarProps {
   full?: boolean;
@@ -28,10 +31,30 @@ const props = defineProps<NavBarProps & { class?: HTMLAttributes['class'] }>();
 
 const router = useRouter();
 const route = useRoute();
+const config = ref<IConfig | null>(null);
 const store = useStore;
 const { y } = useWindowScroll({ behavior: 'smooth' });
 
 const settingsOpened = ref(false);
+
+const serverVersion = ref<{ updateAvailable: boolean, latestVersion: string } | null>(null);
+
+const getServerVersion = async () => {
+  if (!config.value) return;
+
+  const response = await fetch(`${config.value.http_server}/update`);
+  if (response.ok) serverVersion.value = await response.json();
+};
+
+const updateServer = async () => {
+  if (!config.value) return;
+
+  await fetch(`${config.value.http_server}/update`, {
+    method: 'POST',
+  });
+
+  getServerVersion();
+};
 
 const user = ref<IProfile | null>(null);
 const searchInput = ref<HTMLInputElement | null>(null);
@@ -61,6 +84,12 @@ watch(searchContent, () => {
 });
 
 onMounted(async () => {
+  const configRes = await invoke<IConfig | null>("get_config");
+  if (configRes) {
+    config.value = configRes;
+    getServerVersion();
+  }
+
   user.value = await store.getProfile();
   if (!user.value) return router.push({ path: '/' });
 });
@@ -81,11 +110,18 @@ onUnmounted(() => clearInterval(gamepadInterval));
       class="text-2xl font-bold"
       tabindex="-1"
     >
-      HomeStream
+      {{ $t('app.name') }}
     </RouterLink>
     <div v-if="props.full" class="flex items-center space-x-4">
        <div class="relative max-w-32 items-center">
-        <Input ref="searchInput" v-model="searchContent" type="text" placeholder="Search..." class="pl-10" tabindex="0" />
+        <Input
+          ref="searchInput"
+          v-model="searchContent"
+          type="text"
+          :placeholder="$t('components.navbar.search')"
+          class="pl-10"
+          tabindex="0"
+        />
         <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
           <Search class="size-6 text-muted-foreground" />
         </span>
@@ -100,19 +136,21 @@ onUnmounted(() => clearInterval(gamepadInterval));
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-56">
-          <DropdownMenuLabel>Profile</DropdownMenuLabel>
+          <DropdownMenuLabel>
+            {{ $t('components.navbar.profile') }}
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem class="cursor-pointer" @click="$router.push({ path: '/' })">
               <Users class="mr-2 h-4 w-4" />
-              <span>Switch profile</span>
+              <span>{{ $t('components.navbar.switchProfile') }}</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem class="cursor-pointer" @click="settingsOpened = true">
               <Settings class="mr-2 h-4 w-4" />
-              <span>Settings</span>
+              <span>{{ $t('components.navbar.settings') }}</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -120,27 +158,34 @@ onUnmounted(() => clearInterval(gamepadInterval));
     </div>
   </nav>
   <Dialog v-model:open="settingsOpened">
-    <DialogContent class="min-w-[80vw] max-w-[80vw] max-h-[80vh]">
-      <DialogHeader class="flex items-center justify-between">
-        <DialogTitle>Settings</DialogTitle>
-      </DialogHeader>
-      <Tabs default-value="general" class="w-full">
+    <DialogContent class="min-w-[80vw] max-w-[80vw] h-[80vh]">
+      <VisuallyHidden>
+        <DialogTitle>{{ $t('settings.title') }}</DialogTitle>
+      </VisuallyHidden>
+      <Tabs default-value="general" class="w-full p-4">
         <TabsList class="w-full">
           <TabsTrigger value="general" class="w-full">
-            General
+            {{ $t('settings.tabs.general') }}
           </TabsTrigger>
           <TabsTrigger value="server" class="w-full">
-            Server
+            {{ $t('settings.tabs.server') }}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="general">
           <div class="p-4">
-            <h2 class="text-xl font-bold">General</h2>
+            <h2 class="text-xl font-bold">{{ $t('settings.general.title') }}</h2>
           </div>
         </TabsContent>
         <TabsContent value="server">
           <div class="p-4">
-            <h2 class="text-xl font-bold">Server</h2>
+            <h2 class="text-xl font-bold">{{ $t('settings.server.title') }}</h2>
+            <div v-if="serverVersion" class="flex items-center space-x-4">
+              <span>{{ $t('settings.server.serverVersion') }}</span>
+              <span>{{ serverVersion.latestVersion }}</span>
+              <Button v-if="serverVersion.updateAvailable" @click="updateServer">
+                {{ $t('settings.server.update') }}
+              </Button>
+            </div>
           </div>
         </TabsContent>
       </Tabs>

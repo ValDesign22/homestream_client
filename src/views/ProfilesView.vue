@@ -91,10 +91,14 @@ onMounted(async () => {
 <template>
   <NavBar />
   <div class="flex flex-col items-center justify-center h-screen gap-4">
-    <h1 class="text-4xl font-bold">Profiles</h1>
+    <h1 class="text-4xl font-bold">
+      {{ $t('pages.profiles.title') }}
+    </h1>
 
     <div class="flex flex-col items-center gap-2">
-      <span v-if="profiles.length === 0">No profiles found</span>
+      <span v-if="profiles.length === 0">
+        {{ $t('pages.profiles.noProfiles') }}
+      </span>
       <div v-else class="flex justify-center flex-wrap gap-2">
         <div
           v-for="profile in profiles"
@@ -114,23 +118,31 @@ onMounted(async () => {
         </div>
       </div>
       <div class="flex gap-4">
-        <Button variant="ghost" @click="$router.push({ path: '/' })">Back</Button>
+        <Button variant="ghost" @click="$router.push({ path: '/' })">
+          {{ $t('pages.profiles.back') }}
+        </Button>
         <Dialog>
           <DialogTrigger as-child>
-            <Button variant="outline">Add profile</Button>
+            <Button variant="outline">
+              {{ $t('pages.profiles.addProfile') }}
+            </Button>
           </DialogTrigger>
           <DialogContent class="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Add profile</DialogTitle>
+              <DialogTitle>
+                {{ $t('pages.profiles.dialog.title') }}
+              </DialogTitle>
               <DialogDescription>
-                Add new profile to HomeStream
+                {{ $t('pages.profiles.dialog.description') }}
               </DialogDescription>
             </DialogHeader>
   
             <Form :validation-schema="formSchema" @submit="onSubmit" class="flex flex-col gap-4">
               <FormField v-slot="{ componentField }" name="name">
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>
+                    {{ $t('pages.profiles.dialog.name') }}
+                  </FormLabel>
                   <FormControl>
                     <Input type="text" placeholder="ValDesign" v-bind="componentField" />
                   </FormControl>
@@ -140,7 +152,9 @@ onMounted(async () => {
   
               <FormField v-slot="{ componentField }" name="password">
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>
+                    {{ $t('pages.profiles.dialog.password') }}
+                  </FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="********" v-bind="componentField" />
                   </FormControl>
@@ -150,7 +164,9 @@ onMounted(async () => {
   
               <FormField v-slot="{ componentField }" name="role">
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>
+                    {{ $t('pages.profiles.dialog.role') }}
+                  </FormLabel>
                   <FormControl>
                     <Input type="text" placeholder="admin" v-bind="componentField" />
                   </FormControl>
@@ -160,10 +176,14 @@ onMounted(async () => {
   
               <DialogFooter>
                 <DialogClose as-child>
-                  <Button variant="outline">Cancel</Button>
+                  <Button variant="outline">
+                    {{ $t('pages.profiles.dialog.cancel') }}
+                  </Button>
                 </DialogClose>
                 <DialogClose as-child>
-                  <Button type="submit">Add</Button>
+                  <Button type="submit">
+                    {{ $t('pages.profiles.dialog.add') }}
+                  </Button>
                 </DialogClose>
               </DialogFooter>
             </Form>
@@ -174,6 +194,8 @@ onMounted(async () => {
   </div>
 
   <div class="absolute bottom-0 right-0 p-4 ">
-    <span v-if="version" class="text-sm text-gray-500">HomeStream v{{ version }}</span>
+    <span v-if="version" class="text-sm text-gray-500">
+      {{ $t('app.footerVersion', { version }) }}
+    </span>
   </div>
 </template>
