@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Settings, Search, Users } from 'lucide-vue-next';
 import { computed, HTMLAttributes, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useStore } from '@/lib/stores';
-import { IConfig, IProfile } from '@/utils/types';
+import { IProfile } from '@/utils/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,44 +17,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { fetch } from '@tauri-apps/plugin-http';
-import { invoke } from '@tauri-apps/api/core';
-import { VisuallyHidden } from 'radix-vue';
+import { SettingsMenu } from '@/components/settings';
 
 interface NavBarProps {
   full?: boolean;
+  toggleSettings?: () => void;
 }
 
 const props = defineProps<NavBarProps & { class?: HTMLAttributes['class'] }>();
 
 const router = useRouter();
 const route = useRoute();
-const config = ref<IConfig | null>(null);
 const store = useStore;
 const { y } = useWindowScroll({ behavior: 'smooth' });
-
 const settingsOpened = ref(false);
-
-const serverVersion = ref<{ updateAvailable: boolean, latestVersion: string } | null>(null);
-
-const getServerVersion = async () => {
-  if (!config.value) return;
-
-  const response = await fetch(`${config.value.http_server}/update`);
-  if (response.ok) serverVersion.value = await response.json();
-};
-
-const updateServer = async () => {
-  if (!config.value) return;
-
-  await fetch(`${config.value.http_server}/update`, {
-    method: 'POST',
-  });
-
-  getServerVersion();
-};
 
 const user = ref<IProfile | null>(null);
 const searchInput = ref<HTMLInputElement | null>(null);
@@ -63,6 +39,10 @@ const searchContent = ref<string>(route.query.q as string || '');
 
 const { isSupported, gamepads } = useGamepad();
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
+
+const toggleSettings = () => {
+  settingsOpened.value = !settingsOpened.value;
+};
 
 const gamepadInterval = setInterval(() => {
   if (!isSupported.value) return;
@@ -84,12 +64,6 @@ watch(searchContent, () => {
 });
 
 onMounted(async () => {
-  const configRes = await invoke<IConfig | null>("get_config");
-  if (configRes) {
-    config.value = configRes;
-    getServerVersion();
-  }
-
   user.value = await store.getProfile();
   if (!user.value) return router.push({ path: '/' });
 });
@@ -148,7 +122,7 @@ onUnmounted(() => clearInterval(gamepadInterval));
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem class="cursor-pointer" @click="settingsOpened = true">
+            <DropdownMenuItem class="cursor-pointer" @click="(props.toggleSettings || toggleSettings)()">
               <Settings class="mr-2 h-4 w-4" />
               <span>{{ $t('components.navbar.settings') }}</span>
             </DropdownMenuItem>
@@ -157,38 +131,5 @@ onUnmounted(() => clearInterval(gamepadInterval));
       </DropdownMenu>
     </div>
   </nav>
-  <Dialog v-model:open="settingsOpened">
-    <DialogContent class="min-w-[80vw] max-w-[80vw] h-[80vh]">
-      <VisuallyHidden>
-        <DialogTitle>{{ $t('settings.title') }}</DialogTitle>
-      </VisuallyHidden>
-      <Tabs default-value="general" class="w-full p-4">
-        <TabsList class="w-full">
-          <TabsTrigger value="general" class="w-full">
-            {{ $t('settings.tabs.general') }}
-          </TabsTrigger>
-          <TabsTrigger value="server" class="w-full">
-            {{ $t('settings.tabs.server') }}
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="general">
-          <div class="p-4">
-            <h2 class="text-xl font-bold">{{ $t('settings.general.title') }}</h2>
-          </div>
-        </TabsContent>
-        <TabsContent value="server">
-          <div class="p-4">
-            <h2 class="text-xl font-bold">{{ $t('settings.server.title') }}</h2>
-            <div v-if="serverVersion" class="flex items-center space-x-4">
-              <span>{{ $t('settings.server.serverVersion') }}</span>
-              <span>{{ serverVersion.latestVersion }}</span>
-              <Button v-if="serverVersion.updateAvailable" @click="updateServer">
-                {{ $t('settings.server.update') }}
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </DialogContent>
-  </Dialog>
+  <SettingsMenu v-if="props.full" :opened="settingsOpened" :toggleSettings="toggleSettings" />
 </template>

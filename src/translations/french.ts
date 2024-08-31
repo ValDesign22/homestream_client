@@ -1,4 +1,8 @@
 export default {
+  languages: {
+    en: 'Anglais',
+    fr: 'Français',
+  },
   app: {
     name: 'HomeStream',
     footerVersion: 'HomeStream v{version}',
@@ -100,10 +104,16 @@ export default {
     title: 'Paramètres',
     tabs: {
       general: 'Général',
+      appearance: 'Apparence',
       server: 'Serveur',
     },
     general: {
       title: 'Général',
+    },
+    appearance: {
+      title: 'Apparence',
+      language: 'Langue :',
+      selectLanguage: 'Sélectionner une langue',
     },
     server: {
       title: 'Serveur',

@@ -14,6 +14,15 @@ class StoreService {
     await this.store.save();
   }
 
+  async getLocale(): Promise<string> {
+    return await this.store.get('locale') as string;
+  }
+
+  async setLocale(language: string) {
+    await this.store.set('locale', language);
+    await this.save();
+  }
+
   async getProfile(): Promise<IProfile | null> {
     return await this.store.get('profile') as IProfile | null;
   }
