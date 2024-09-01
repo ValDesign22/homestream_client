@@ -278,7 +278,7 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
                     @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
                   />
                 </div>
@@ -310,7 +310,7 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
                     @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
                   />
                 </div>
@@ -342,7 +342,7 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
                     @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
                   />
                 </div>
@@ -378,7 +378,7 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
                     @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
                   />
                 </div>
@@ -413,7 +413,7 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
                     @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
                   />
                 </div>

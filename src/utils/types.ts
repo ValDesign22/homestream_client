@@ -118,3 +118,6 @@ export interface IHistory {
   watched: boolean,
   progress: number,
 }
+
+export const colors = ['slate', 'zinc'] as const;
+export type Color = typeof colors[number];

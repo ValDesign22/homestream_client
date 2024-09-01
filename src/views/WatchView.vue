@@ -260,7 +260,7 @@ const loadData = async () => {
             progressValue.value = [videoElem.value.currentTime / videoElem.value.duration * 100];
             const currentTime = Math.floor(videoElem.value.currentTime);
             const lastTime = await store.getProgress(videoItem.value);
-            if (currentTime % 5 === 0 && currentTime !== lastTime) await store.saveProgress(videoItem.value, currentTime);
+            if (currentTime !== 0 && currentTime >= lastTime && currentTime % 5 === 0) await store.saveProgress(videoItem.value, currentTime);
           };
 
           videoElem.value.onended = async () => {

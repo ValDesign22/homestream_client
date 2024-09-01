@@ -3,6 +3,7 @@ import { TMDBImage } from '@/components/image';
 import { NavBar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useStore } from '@/lib/stores';
@@ -44,6 +45,14 @@ const videoKey = ref<string>('');
 const videoPlayer = ref();
 const videoPlaying = ref(false);
 const videoError = ref(false);
+
+const calculateProgress = (id: number, duration: number) => {
+  if (!profile.value) return 0;
+  const item = profile.value.history.find((item) => item.id === id);
+  if (!item) return 0;
+  const minutes = Math.floor(item.progress / 60);
+  return Math.floor((minutes / duration) * 100);
+};
 
 const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
   playerVars: {
@@ -286,13 +295,18 @@ onUnmounted(() => clearInterval(interval));
                 :alt="episode.title"
                 type="still"
                 size="w300"
-                class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
                 @click="() => $router.push({ path: `/watch/${episode.id}`, replace: true })"
               />
               <div class="absolute top-0 left-0 w-full h-full pointer-events-none bg-gradient-to-tr from-background from-10% to-transparent">
-                <div class="absolute bottom-0 left-0 bg-gradient-to-tr flex flex-col p-2 gap-2 w-full">
+                <div class="absolute bottom-0 left-0 flex flex-col p-2 gap-2 w-full">
                   <p class="text-sm">{{ $t('pages.details.episode', { episode: episode.episode_number }) }}</p>
                   <p class="text-sm">{{ episode.title }}</p>
+                  <Progress
+                    v-if="profile && profile.history.find((item) => item.id === episode.id)"
+                    class="h-2"
+                    :modelValue="calculateProgress(episode.id, episode.runtime)"
+                  />
                 </div>
               </div>
             </div>
@@ -323,7 +337,7 @@ onUnmounted(() => clearInterval(interval));
                   :alt="movie.title"
                   type="poster"
                   size="w185"
-                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
                   @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
                 />
               </div>
@@ -355,7 +369,7 @@ onUnmounted(() => clearInterval(interval));
                   :alt="movie.title"
                   type="poster"
                   size="w185"
-                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
                   @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
                 />
               </div>

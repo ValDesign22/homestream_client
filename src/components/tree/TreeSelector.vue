@@ -55,7 +55,7 @@ const searchItem = (event: InputEvent) => {
 <template>
   <div
     ref="target"
-    class="flex flex-col justify-center p-4 gap-4 border rounded-md fixed top-1/2 left-1/2 transform -translate-x-1/2 bg-background dark:bg-background-dark shadow-lg duration-300 transition-transform"
+    class="flex flex-col justify-center p-4 gap-4 border rounded-md fixed top-1/2 left-1/2 transform -translate-x-1/2 bg-background dark:bg-background-dark shadow-lg transition-transform"
     :class="props.open ?
       'visible z-10 -translate-y-1/2' :
       'invisible z-[-1] -translate-y-1/3 pointer-events-none'"

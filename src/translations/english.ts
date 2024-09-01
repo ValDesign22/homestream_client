@@ -3,6 +3,10 @@ export default {
     en: 'English',
     fr: 'French',
   },
+  themes: {
+    slate: 'Slate',
+    zinc: 'Zinc',
+  },
   app: {
     name: 'HomeStream',
     footerVersion: 'HomeStream v{version}',
@@ -114,6 +118,8 @@ export default {
       title: 'Appearance',
       language: 'Language:',
       selectLanguage: 'Select a language',
+      theme: 'Theme:',
+      selectTheme: 'Select a theme',
     },
     server: {
       title: 'Server',

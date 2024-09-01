@@ -73,7 +73,7 @@ onUnmounted(() => clearInterval(gamepadInterval));
 
 <template>
   <nav
-    class="flex justify-between items-center p-4 fixed top-0 left-0 w-full z-20 transition-all duration-300 bg-gradient-to-b from-background"
+    class="flex justify-between items-center p-4 fixed top-0 left-0 w-full z-20 transition-all bg-gradient-to-b from-background"
     :class="{
       'from-5% to-transparent': y === 0,
       'to-transparent backdrop-blur': y > 0

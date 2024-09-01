@@ -4,8 +4,10 @@ import { invoke } from "@tauri-apps/api/core";
 import { check } from '@tauri-apps/plugin-updater';
 import { useRouter } from "vue-router";
 import { IConfig } from "@/utils/types";
+import { useStore } from "./lib/stores";
 
 const router = useRouter();
+const store = useStore;
 
 onBeforeMount(async () => {
   if (!import.meta.env.DEV) {
@@ -17,6 +19,8 @@ onBeforeMount(async () => {
   console.log("Checking if the app is registered");
   const config = await invoke<IConfig | null>("get_config");
   if (!config) return router.push({ path: "/register", replace: true });
+
+  document.documentElement.classList.add(`theme-${await store.getTheme()}`);
 });
 </script>
 

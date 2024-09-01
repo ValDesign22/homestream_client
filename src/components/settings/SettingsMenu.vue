@@ -6,7 +6,7 @@ import { VisuallyHidden } from 'radix-vue';
 import { onMounted, ref, watch } from 'vue';
 import { fetch } from '@tauri-apps/plugin-http';
 import { invoke } from '@tauri-apps/api/core';
-import { IConfig } from '@/utils/types';
+import { Color, colors, IConfig } from '@/utils/types';
 import { X } from 'lucide-vue-next'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useI18n } from 'vue-i18n';
@@ -21,6 +21,8 @@ const props = defineProps<SettingsMenuProps>();
 
 const i18n = useI18n();
 const store = useStore;
+
+const theme = ref<Color>('slate');
 
 const config = ref<IConfig | null>(null);
 const serverVersion = ref<{ updateAvailable: boolean, latestVersion: string } | null>(null);
@@ -46,12 +48,22 @@ watch(i18n.locale, async (value) => {
   await store.setLocale(value);
 });
 
+watch(theme, async (value) => {
+  if (value) {
+    document.documentElement.classList.remove(...colors.map((c) => `theme-${c}`));
+    document.documentElement.classList.add(`theme-${value}`);
+    return await store.setTheme(value)
+  };
+});
+
 onMounted(async () => {
   const configRes = await invoke<IConfig | null>("get_config");
   if (configRes) {
     config.value = configRes;
     getServerVersion();
   }
+
+  theme.value = await store.getTheme();
 });
 </script>
 
@@ -83,7 +95,7 @@ onMounted(async () => {
           </div>
         </TabsContent>
         <TabsContent value="appearance">
-          <div class="flex flex-col p-4">
+          <div class="flex flex-col p-4 gap-4">
             <h2 class="text-xl font-bold">{{ $t('settings.appearance.title') }}</h2>
             <div class="flex items-center space-x-4">
               <span>{{ $t('settings.appearance.language') }}</span>
@@ -95,6 +107,21 @@ onMounted(async () => {
                   <SelectGroup>
                     <SelectItem v-for="lang in $i18n.availableLocales" :key="lang" :value="lang">
                       {{ $t(`languages.${lang}`) }}
+                    </SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div class="flex items-center space-x-4">
+              <span>{{ $t('settings.appearance.theme') }}</span>
+              <Select :defaultValue="theme" v-model="theme">
+                <SelectTrigger class="w-[180px]">
+                  <SelectValue :placeholder="$t('settings.appearance.selectTheme')" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem v-for="color in colors" :key="color" :value="color">
+                      {{ $t(`themes.${color}`) }}
                     </SelectItem>
                   </SelectGroup>
                 </SelectContent>
