@@ -292,11 +292,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-full h-screen flex flex-col justify-center items-center bg-black relative" :class="{ 'cursor-none': !showControls }">
+  <div class="w-full h-screen flex flex-col justify-center items-center relative" :class="{ 'cursor-none': !showControls }">
     <video ref="videoElem" class="w-full h-full">
       <source ref="sourceElem" type="video/mp4" />
     </video>
-    <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 bg-black bg-opacity-50">
+    <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 bg-opacity-50">
       <div v-if="showControls" class="flex">
         <ChevronLeft class="cursor-pointer" @click="router.push({ path: '/browse' })" />
       </div>

@@ -201,7 +201,7 @@ onUnmounted(() => {
   <div class="flex flex-col justify-center">
     <div v-if="Object.keys(stores).length === 0" class="w-full h-auto">
       <div v-for="(_, index) in 10" :key="index" class="w-full relative">
-        <div class="flex flex-col gap-8 p-16 bg-black">
+        <div class="flex flex-col gap-8 p-16">
           <Carousel class="relative w-full" :opts="{ align: 'center' }">
             <CarouselContent>
               <CarouselItem v-for="(_, index) in 25" :key="index" class="flex-grow p-1 basis-auto">
@@ -226,7 +226,7 @@ onUnmounted(() => {
           class="w-full h-full object-center object-cover relative"
           :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
         />
-        <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
+        <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-tr from-background from-10% to-transparent">
           <TMDBImage
             v-if="randomSelected.logo_path"
             :image="randomSelected.logo_path"
@@ -255,7 +255,7 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-      <div class="flex flex-col gap-8 p-16 bg-black">
+      <div class="flex flex-col gap-8 p-16">
         <div v-if="user && history.length !== 0" class="flex flex-col gap-4">
           <h2 class="text-2xl font-bold">
             {{ $t('pages.browse.continue') }}

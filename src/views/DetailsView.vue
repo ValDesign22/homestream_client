@@ -191,7 +191,7 @@ onUnmounted(() => clearInterval(interval));
         class="w-full h-full object-center object-cover relative"
         :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
       />
-      <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
+      <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-tr from-background from-10% to-transparent">
         <TMDBImage
           v-if="item.logo_path"
           :image="item.logo_path"
@@ -249,7 +249,7 @@ onUnmounted(() => clearInterval(interval));
         </div>
       </div>
     </div>
-    <div v-if="'seasons' in item" class="flex flex-col gap-4 py-4 px-16 bg-black">
+    <div v-if="'seasons' in item" class="flex flex-col gap-4 py-4 px-16">
       <Select v-model="currentSeason">
         <SelectTrigger class="max-w-[200px]">
            <SelectValue :placeholder="$t('pages.details.season', { season: item.seasons[parseInt(currentSeason)].season_number })" />
@@ -283,9 +283,11 @@ onUnmounted(() => clearInterval(interval));
                 class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
                 @click="() => $router.push({ path: `/watch/${episode.id}`, replace: true })"
               />
-              <div class="absolute bottom-0 left-0 w-full h-auto pointer-events-none bg-gradient-to-t from-black from-10% to-transparent p-4">
-                <p class="text-sm">{{ $t('pages.details.episode', { episode: episode.episode_number }) }}</p>
-                <p class="text-sm">{{ episode.title }}</p>
+              <div class="absolute top-0 left-0 w-full h-full pointer-events-none bg-gradient-to-tr from-background from-10% to-transparent">
+                <div class="absolute bottom-0 left-0 bg-gradient-to-tr flex flex-col p-2 gap-2 w-full">
+                  <p class="text-sm">{{ $t('pages.details.episode', { episode: episode.episode_number }) }}</p>
+                  <p class="text-sm">{{ episode.title }}</p>
+                </div>
               </div>
             </div>
           </CarouselItem>
@@ -294,7 +296,7 @@ onUnmounted(() => clearInterval(interval));
         <CarouselNext />
       </Carousel>
     </div>
-    <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 py-4 px-16 bg-black">
+    <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 py-4 px-16">
       <div v-if="collection.length > 0" class="w-full h-auto flex flex-col p-4">
         <h3 class="text-2xl font-bold">{{ $t('pages.details.collection') }}</h3>
         <Carousel
@@ -326,7 +328,7 @@ onUnmounted(() => clearInterval(interval));
         </Carousel>
       </div>
     </div>
-    <div v-if="recommendations.length > 0" class="flex flex-col gap-8 py-4 px-16 bg-black">
+    <div v-if="recommendations.length > 0" class="flex flex-col gap-8 py-4 px-16">
       <div class="w-full h-auto flex flex-col gap-4">
         <h3 class="text-2xl font-bold">{{ $t('pages.details.recommendations') }}</h3>
         <Carousel
