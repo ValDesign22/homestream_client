@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useStore } from '@/lib/stores';
 import getRecommendations from '@/utils/recommendations';
-import { IConfig, IEpisode, IMovie, ITvShow } from '@/utils/types';
+import { IConfig, IEpisode, IMovie, IProfile, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { fetch } from '@tauri-apps/plugin-http';
@@ -24,6 +24,8 @@ const route = useRoute();
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 const store = useStore;
+
+const profile = ref<IProfile | null>(null);
 
 const item = ref<IMovie | ITvShow | null>(null);
 const isInFavorites = ref(false);
@@ -94,6 +96,10 @@ const interval = setInterval(async () => {
 }, 1000);
 
 const loadData = async () => {
+  const profileRes = await store.getProfile();
+  if (!profileRes) router.push({ path: '/', replace: true });
+  profile.value = profileRes;
+
   const config = await invoke<IConfig | null>('get_config');
   if (config) {
     const itemId = route.params.id;
