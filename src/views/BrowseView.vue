@@ -133,7 +133,7 @@ async function parseHistory() {
   const userHistory = await store.getHistory();
   if (!userHistory) return;
   userHistory.forEach(async (item) => {
-    if (item.media_type === EMediaType.ITvShow) {
+    if (item.media_type === EMediaType.TvShow) {
       const tvShow = await getTvShowFromEpisode(item.id);
       if (tvShow && !history.value.find((h) => h.id === tvShow.id)) history.value.push(tvShow);
     } else {

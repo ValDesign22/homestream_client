@@ -18,7 +18,7 @@ export interface IFolder {
 
 export enum EMediaType {
   Movie,
-  ITvShow,
+  TvShow,
 }
 
 export interface IMovie {

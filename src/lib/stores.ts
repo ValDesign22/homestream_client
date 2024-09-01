@@ -177,7 +177,7 @@ class StoreService {
       id: item.id,
       date: new Date().toISOString(),
       title: item.title,
-      media_type: 'episode_number' in item ? EMediaType.ITvShow : EMediaType.Movie,
+      media_type: 'episode_number' in item ? EMediaType.TvShow : EMediaType.Movie,
       watched,
       progress,
     });
