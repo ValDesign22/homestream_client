@@ -121,6 +121,7 @@ async function onSubmit(values: GenericObject) {
 
   await writeTextFile("config.json", JSON.stringify({
     http_server: values.httpServer,
+    ws_url: httpServer.value.replace(/^http/, 'ws').replace(/:\d+$/, ':8080'),
   }), { baseDir: BaseDirectory.AppConfig });
 
   const foldersToSend: IFolder[] = values.folders ? values.folders.map((folder: { media_type: string, name: string, path: string }, index: number) => ({

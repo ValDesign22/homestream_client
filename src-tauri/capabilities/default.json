@@ -65,6 +65,8 @@
     "store:allow-set",
     "store:allow-save",
     "store:allow-load",
-    "notification:default"
+    "notification:default",
+    "websocket:allow-connect",
+    "websocket:allow-send"
   ]
 }

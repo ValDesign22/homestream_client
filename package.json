@@ -16,6 +16,7 @@
     "@tauri-apps/plugin-notification": "2.0.0-rc.1",
     "@tauri-apps/plugin-store": "2.0.0-rc.1",
     "@tauri-apps/plugin-updater": "2.0.0-rc.1",
+    "@tauri-apps/plugin-websocket": "2.0.0-rc.1",
     "@tauri-apps/plugin-window-state": "2.0.0-rc.1",
     "@vee-validate/zod": "^4.13.2",
     "@vue-youtube/component": "^0.0.6",

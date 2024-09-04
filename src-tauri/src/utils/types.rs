@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub http_server: String,
+    pub ws_url: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
