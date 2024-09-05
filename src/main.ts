@@ -7,9 +7,9 @@ import { createApp } from 'vue';
 import { createManager } from '@vue-youtube/core';
 import { createI18n } from 'vue-i18n';
 import { useStore } from './lib/stores';
-import WebSocket from '@tauri-apps/plugin-websocket';
-import { invoke } from '@tauri-apps/api/core';
-import { IConfig } from './utils/types';
+// import WebSocket from '@tauri-apps/plugin-websocket';
+// import { invoke } from '@tauri-apps/api/core';
+// import { IConfig } from './utils/types';
 
 export type MessageFormat = {
   [key: string]: string | MessageFormat;
@@ -17,14 +17,15 @@ export type MessageFormat = {
 
 const app = createApp(App);
 
-const config = await invoke<IConfig | null>("get_config");
-if (config) {
-  const ws = await WebSocket.connect(config.ws_url);
+// const config = await invoke<IConfig | null>("get_config");
+// if (config) {
+//   console.log(config.ws_url);
+//   const ws = await WebSocket.connect(config.ws_url);
 
-  ws.addListener((msg) => {
+//   ws.addListener((msg) => {
 
-  });
-}
+//   });
+// }
 
 const store = useStore;
 
