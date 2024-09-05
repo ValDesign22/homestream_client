@@ -24,8 +24,8 @@ importers:
         specifier: 2.0.0-rc.1
         version: 2.0.0-rc.1
       '@tauri-apps/plugin-updater':
-        specifier: 2.0.0-rc.1
-        version: 2.0.0-rc.1
+        specifier: 2.0.0-rc.2
+        version: 2.0.0-rc.2
       '@tauri-apps/plugin-websocket':
         specifier: 2.0.0-rc.1
         version: 2.0.0-rc.1
@@ -585,8 +585,8 @@ packages:
   '@tauri-apps/plugin-store@2.0.0-rc.1':
     resolution: {integrity: sha512-rW71Tkr7OifxoL8NkWgPy5Os4Gn3oJTbv/j/nJ03HDuYsq+F4+8kU8o4epRFJnr6VKmgB/2CtiacSC3dnSSRnA==}
 
-  '@tauri-apps/plugin-updater@2.0.0-rc.1':
-    resolution: {integrity: sha512-SwQhDad/jnGIUe4eFfVBZ+0wRZthPSLwrFAl/K0Fyuu7dD/uGHS/jbATxZzwFDGfcpWOGLOsS8+LqSmY5zufHw==}
+  '@tauri-apps/plugin-updater@2.0.0-rc.2':
+    resolution: {integrity: sha512-Ngvpa/km/00KASvOsFqRQbVf/6BaAX/gYwQs9eFxjygDpxxlZkZDVP1Fg0urW8s5dY7ELD6UAFB/ZI/g8D0QvQ==}
 
   '@tauri-apps/plugin-websocket@2.0.0-rc.1':
     resolution: {integrity: sha512-TPLKdDQS2aS7TaYdW5lzNiKCapTc9OKJaKAJKZu+waGyHMWCx5otKCeZyEQNlc1B3QMTwXyu8S4TPjRowl2qOQ==}
@@ -2172,7 +2172,7 @@ snapshots:
     dependencies:
       '@tauri-apps/api': 2.0.0-rc.4
 
-  '@tauri-apps/plugin-updater@2.0.0-rc.1':
+  '@tauri-apps/plugin-updater@2.0.0-rc.2':
     dependencies:
       '@tauri-apps/api': 2.0.0-rc.4
 
