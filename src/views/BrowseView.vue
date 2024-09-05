@@ -222,7 +222,7 @@ onUnmounted(() => {
           :image="randomSelected.backdrop_path"
           :alt="randomSelected.id.toString()"
           type="backdrop"
-          size="w1280"
+          size="original"
           class="w-full h-full object-center object-cover relative"
           :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
         />

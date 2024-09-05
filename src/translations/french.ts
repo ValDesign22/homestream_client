@@ -73,6 +73,8 @@ export default {
     watch: {
       subtitles: 'Sous-titres',
       season: 'Saison {season}',
+      episode: 'Saison {season}, Épisode {episode} : {title}',
+      next: 'Épisode suivant',
     },
   },
   settings: {

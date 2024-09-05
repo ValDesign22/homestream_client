@@ -28,6 +28,7 @@ const movieLogo = ref<string | null>(null);
 
 const tvShow = ref<ITvShow | null>(null);
 const currentSeason = ref<ISeason | null>(null);
+const nextEpisode = ref<IEpisode | null>(null);
 
 const videoItem = ref<IMovie | IEpisode | null>(null);
 const videoElem = ref<HTMLVideoElement>();
@@ -203,13 +204,19 @@ const loadData = async () => {
       videoItem.value = video;
 
       if (videoItem.value) {
-        if ('logo_path' in videoItem.value) movieLogo.value = `https://image.tmdb.org/t/p/w300${videoItem.value.logo_path}`;
+        if ('logo_path' in videoItem.value) movieLogo.value = videoItem.value.logo_path;
         if ('episode_number' in videoItem.value) {
           const tvShowResult = await getTvShowFromEpisode(videoItem.value.id);
           if (tvShowResult) {
             tvShow.value = tvShowResult;
+            movieLogo.value = tvShowResult.logo_path;
             const season = tvShow.value.seasons.find(season => season.episodes.find(episode => episode.id === videoItem.value!.id));
             if (season) currentSeason.value = season;
+            if (currentSeason.value && videoItem.value) {
+              const videoItemId = videoItem.value.id;
+              const episodeIndex = currentSeason.value.episodes.findIndex(episode => episode.id === videoItemId);
+              if (episodeIndex !== -1 && episodeIndex < currentSeason.value.episodes.length - 1) nextEpisode.value = currentSeason.value.episodes[episodeIndex + 1];
+            }
           }
         };
 
@@ -263,6 +270,12 @@ const loadData = async () => {
             if (currentTime !== 0 && currentTime >= lastTime && currentTime % 5 === 0) await store.saveProgress(videoItem.value, currentTime);
           };
 
+          videoElem.value.onplaying = () => {
+            if (!videoElem.value) return;
+            playing.value = true;
+            startHideControlsTimer();
+          };
+
           videoElem.value.onended = async () => {
             if (!videoElem.value || !videoItem.value) return;
             await store.saveProgress(videoItem.value, videoElem.value.duration, true);
@@ -309,9 +322,25 @@ onUnmounted(() => {
           size="original"
           class="w-[20vw] h-auto object-cover"
         />
-        <h1 v-else class="text-4xl">{{ videoItem.title }}</h1>
+        <h1 v-else class="drop-shadow-lg text-4xl font-bold">
+          {{ ('episode_number' in videoItem && tvShow) ? tvShow.title : videoItem.title }}
+        </h1>
+        <h2 v-if="tvShow && currentSeason && ('episode_number' in videoItem)" class="drop-shadow-lg text-2xl">
+          {{ 
+            $t('pages.watch.episode', {
+              season: currentSeason.season_number,
+              episode: videoItem.episode_number,
+              title: videoItem.title
+            })
+          }}
+        </h2>
       </div>
       <div v-if="showControls" ref="controlsBox" class="flex flex-col gap-4">
+        <div v-if="tvShow" class="flex justify-end">
+          <Button v-if="nextEpisode" @click="() => router.push({ path: `/watch/${nextEpisode!.id}`, replace: true })">
+            <span>{{ $t('pages.watch.next') }}</span>
+          </Button>
+        </div>
         <Slider
           v-model="progressValue"
           ref="slider"
