@@ -132,15 +132,17 @@ async function parseHistory() {
   if (!user.value) return;
   const userHistory = await store.getHistory();
   if (!userHistory) return;
-  userHistory.forEach(async (item) => {
-    if (item.media_type === EMediaType.TvShow) {
-      const tvShow = await getTvShowFromEpisode(item.id);
-      if (tvShow && !history.value.find((h) => h.id === tvShow.id)) history.value.push(tvShow);
-    } else {
-      const movie = await getMovieFromId(item.id);
-      if (movie) history.value.push(movie);
-    }
-  });
+  userHistory
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .forEach(async (item) => {
+      if (item.media_type === EMediaType.TvShow) {
+        const tvShow = await getTvShowFromEpisode(item.id);
+        if (tvShow && !history.value.find((h) => h.id === tvShow.id)) history.value.push(tvShow);
+      } else {
+        const movie = await getMovieFromId(item.id);
+        if (movie) history.value.push(movie);
+      }
+    });
 }
 
 const interval = setInterval(async () => {
@@ -267,7 +269,7 @@ onUnmounted(() => {
           >
             <CarouselContent>
               <CarouselItem
-                v-for="item in history.slice(0, 25)"
+                v-for="item in history"
                 :key="item.id"
                 class="flex-grow p-1 basis-auto"
               >
@@ -299,7 +301,7 @@ onUnmounted(() => {
           >
             <CarouselContent>
               <CarouselItem
-                v-for="item in user.watchlist.slice(0, 25)"
+                v-for="item in user.watchlist"
                 :key="item.id"
                 class="flex-grow p-1 basis-auto"
               >
@@ -331,7 +333,7 @@ onUnmounted(() => {
           >
             <CarouselContent>
               <CarouselItem
-                v-for="item in user.favorites.slice(0, 25)"
+                v-for="item in user.favorites"
                 :key="item.id"
                 class="flex-grow p-1 basis-auto"
               >

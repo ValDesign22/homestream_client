@@ -45,6 +45,7 @@ const audioTracks = ref<IAudioTrack[]>([]); // Here but currently not supported 
 const subtitles = ref<ISubtitleTrack[]>([]);
 const isHoveringTracks = ref(false);
 const isHoveringSeasons = ref(false);
+const isEnding = ref(false);
 
 const { isSupported, gamepads } = useGamepad();
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
@@ -268,6 +269,9 @@ const loadData = async () => {
             const currentTime = Math.floor(videoElem.value.currentTime);
             const lastTime = await store.getProgress(videoItem.value);
             if (currentTime !== 0 && currentTime >= lastTime && currentTime % 5 === 0) await store.saveProgress(videoItem.value, currentTime);
+
+            if (videoElem.value.duration - videoElem.value.currentTime <= 30) isEnding.value = true;
+            else isEnding.value = false;
           };
 
           videoElem.value.onplaying = () => {
@@ -337,7 +341,7 @@ onUnmounted(() => {
       </div>
       <div v-if="showControls" ref="controlsBox" class="flex flex-col gap-4">
         <div v-if="tvShow" class="flex justify-end">
-          <Button v-if="nextEpisode" @click="() => router.push({ path: `/watch/${nextEpisode!.id}`, replace: true })">
+          <Button v-if="nextEpisode && isEnding" @click="() => router.push({ path: `/watch/${nextEpisode!.id}` })">
             <span>{{ $t('pages.watch.next') }}</span>
           </Button>
         </div>
