@@ -3,6 +3,7 @@ import { TMDBImage } from '@/components/image';
 import { NavBar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -13,7 +14,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { fetch } from '@tauri-apps/plugin-http';
 import { PlayerState, usePlayer } from '@vue-youtube/core';
-import { PlayIcon, SquareCheck, SquarePlus, Star, StarOff } from 'lucide-vue-next';
+import { EllipsisVertical, PlayIcon, SquareCheck, SquarePlus, Star, StarOff } from 'lucide-vue-next';
 import { watch } from 'vue';
 import { onUnmounted } from 'vue';
 import { onMounted, ref } from 'vue';
@@ -261,6 +262,11 @@ onUnmounted(() => clearInterval(interval));
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <EllipsisVertical />
+            </DropdownMenuTrigger>
+          </DropdownMenu>
         </div>
       </div>
     </div>
@@ -287,7 +293,7 @@ onUnmounted(() => clearInterval(interval));
           <CarouselItem
             v-for="episode in item.seasons[parseInt(currentSeason)].episodes"
             :key="episode.id"
-            class="flex-grow p1 basis-auto"
+            class="flex-grow basis-auto"
           >
             <div class="p-1 relative overflow-hidden rounded-lg">
               <TMDBImage
@@ -317,7 +323,7 @@ onUnmounted(() => clearInterval(interval));
       </Carousel>
     </div>
     <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 py-4 px-16">
-      <div v-if="collection.length > 0" class="w-full h-auto flex flex-col p-4">
+      <div class="w-full h-auto flex flex-col gap-4">
         <h3 class="text-2xl font-bold">{{ $t('pages.details.collection') }}</h3>
         <Carousel
           class="relative w-full"
@@ -329,7 +335,7 @@ onUnmounted(() => clearInterval(interval));
             <CarouselItem
               v-for="movie in collection"
               :key="movie.id"
-              class="flex-grow p1 basis-auto"
+              class="flex-grow basis-auto"
             >
               <div class="p-1 overflow-hidden rounded-lg">
                 <TMDBImage
@@ -361,7 +367,7 @@ onUnmounted(() => clearInterval(interval));
             <CarouselItem
               v-for="movie in recommendations"
               :key="movie.id"
-              class="flex-grow p1 basis-auto"
+              class="flex-grow basis-auto"
             >
               <div class="p-1 overflow-hidden rounded-lg">
                 <TMDBImage

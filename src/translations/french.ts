@@ -86,6 +86,7 @@ export default {
     },
     general: {
       title: 'Général',
+      version: 'Version :',
     },
     appearance: {
       title: 'Apparence',
@@ -98,6 +99,7 @@ export default {
       title: 'Serveur',
       serverVersion: 'Version du serveur:',
       update: 'Mettre à jour',
+      noConnection: 'Pas de connexion au serveur',
     },
   },
   register: {

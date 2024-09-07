@@ -11,6 +11,7 @@ import { X } from 'lucide-vue-next'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useI18n } from 'vue-i18n';
 import { useStore } from '@/lib/stores';
+import { getVersion } from '@tauri-apps/api/app';
 
 interface SettingsMenuProps {
   opened: boolean;
@@ -25,6 +26,15 @@ const store = useStore;
 const theme = ref<Color>('slate');
 
 const config = ref<IConfig | null>(null);
+
+// General
+const version = ref<string | null>(null);
+
+const getAppVersion = async () => {
+  version.value = await getVersion();
+};
+
+// Server
 const serverVersion = ref<{ updateAvailable: boolean, latestVersion: string } | null>(null);
 
 const getServerVersion = async () => {
@@ -52,7 +62,7 @@ watch(theme, async (value) => {
   if (value) {
     document.documentElement.classList.remove(...colors.map((c) => `theme-${c}`));
     document.documentElement.classList.add(`theme-${value}`);
-    return await store.setTheme(value)
+    return await store.setTheme(value);
   };
 });
 
@@ -60,7 +70,9 @@ onMounted(async () => {
   const configRes = await invoke<IConfig | null>("get_config");
   if (configRes) {
     config.value = configRes;
-    getServerVersion();
+
+    await getAppVersion();
+    await getServerVersion();
   }
 
   theme.value = await store.getTheme();
@@ -90,8 +102,12 @@ onMounted(async () => {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="general">
-          <div class="p-4">
+          <div class="flex flex-col p-4 gap-4">
             <h2 class="text-xl font-bold">{{ $t('settings.general.title') }}</h2>
+            <div class="flex items-center space-x-4">
+              <span>{{ $t('settings.general.version') }}</span>
+              <span>{{ version }}</span>
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="appearance">
@@ -130,7 +146,7 @@ onMounted(async () => {
           </div>
         </TabsContent>
         <TabsContent value="server">
-          <div class="p-4">
+          <div class="flex flex-col p-4 gap-4">
             <h2 class="text-xl font-bold">{{ $t('settings.server.title') }}</h2>
             <div v-if="serverVersion" class="flex items-center space-x-4">
               <span>{{ $t('settings.server.serverVersion') }}</span>
@@ -138,6 +154,9 @@ onMounted(async () => {
               <Button v-if="serverVersion.updateAvailable" @click="updateServer">
                 {{ $t('settings.server.update') }}
               </Button>
+            </div>
+            <div v-else>
+              <span>{{ $t('settings.server.noConnection') }}</span>
             </div>
           </div>
         </TabsContent>
