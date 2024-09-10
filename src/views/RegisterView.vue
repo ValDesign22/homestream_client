@@ -142,7 +142,7 @@ async function onSubmit(values: GenericObject) {
     },
   });
 
-  if (response.ok) router.push({ path: "/", replace: true });
+  if (response.ok) router.push({ path: "/" });
   else console.error('An error occurred while saving the configuration', await response.text());
 }
 </script>

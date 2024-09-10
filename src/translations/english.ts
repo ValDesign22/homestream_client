@@ -75,6 +75,7 @@ export default {
       season: 'Season {season}',
       episode: 'Season {season}, Episode {episode}: {title}',
       next: 'Next episode',
+      track_none: 'None'
     },
   },
   settings: {

@@ -18,7 +18,7 @@ onBeforeMount(async () => {
 
   console.log("Checking if the app is registered");
   const config = await invoke<IConfig | null>("get_config");
-  if (!config) return router.push({ path: "/register", replace: true });
+  if (!config) return router.push({ path: "/register" });
 
   document.documentElement.classList.add(`theme-${await store.getTheme()}`);
 });

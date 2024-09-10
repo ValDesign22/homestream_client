@@ -1,4 +1,4 @@
-const iso6392 = [
+const iso639 = [
   {
     name: 'Afar',
     iso6392B: 'aar',
@@ -2154,6 +2154,11 @@ const iso6392 = [
 ];
 
 export const getNameByISO6392B = (iso: string) => {
-  const language = iso6392.filter((item) => item.iso6392B === iso);
+  const language = iso639.filter((item) => item.iso6392B === iso);
+  return language.length > 0 ? language[0].name : iso
+}
+
+export const getNameByISO6391 = (iso: string) => {
+  const language = iso639.filter((item) => item.iso6391 === iso);
   return language.length > 0 ? language[0].name : iso
 }

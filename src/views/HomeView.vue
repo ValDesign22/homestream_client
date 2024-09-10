@@ -30,7 +30,7 @@ const toggleSettings = () => {
 
 onMounted(async () => {
   const config = await invoke<IConfig | null>("get_config");
-  if (!config) return router.push({ path: "/register", replace: true });
+  if (!config) return router.push({ path: "/register" });
 
   version.value = await getVersion();
 

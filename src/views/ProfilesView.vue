@@ -32,7 +32,7 @@ const formSchema = toTypedSchema(
 
 async function onSubmit(values: GenericObject) {
   const config = await invoke<IConfig | null>("get_config");
-  if (!config) return router.push({ path: "/register", replace: true });
+  if (!config) return router.push({ path: "/register" });
 
   const newProfile: IProfile = {
     id: Math.floor(Date.now() + Math.random() * 1000),
@@ -58,7 +58,7 @@ async function onSubmit(values: GenericObject) {
 
 async function deleteProfile(id: number) {
   const config = await invoke<IConfig | null>("get_config");
-  if (!config) return router.push({ path: "/register", replace: true });
+  if (!config) return router.push({ path: "/register" });
 
   const res = await fetch(`${config.http_server}/profiles?id=${id}`, {
     method: 'DELETE',
@@ -73,7 +73,7 @@ async function deleteProfile(id: number) {
 
 onMounted(async () => {
   const config = await invoke<IConfig | null>("get_config");
-  if (!config) return router.push({ path: "/register", replace: true });
+  if (!config) return router.push({ path: "/register" });
 
   version.value = await getVersion();
 

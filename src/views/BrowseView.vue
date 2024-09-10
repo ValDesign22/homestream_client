@@ -242,13 +242,13 @@ onUnmounted(() => {
             {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
           </span>
           <div class="flex gap-4">
-            <Button tabindex="0" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}`, replace: true })">
+            <Button tabindex="0" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}` })">
               <PlayIcon class="w-6 h-6" />
               <span>
                 {{ $t('pages.browse.watch') }}
               </span>
             </Button>
-            <Button tabindex="0" variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}`, replace: true })">
+            <Button tabindex="0" variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}` })">
               <InfoIcon class="w-6 h-6" />
               <span>
                 {{ $t('pages.browse.details') }}
@@ -283,7 +283,7 @@ onUnmounted(() => {
                     type="poster"
                     size="w185"
                     class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>
@@ -315,7 +315,7 @@ onUnmounted(() => {
                     type="poster"
                     size="w185"
                     class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>
@@ -347,7 +347,7 @@ onUnmounted(() => {
                     type="poster"
                     size="w185"
                     class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>
@@ -383,7 +383,7 @@ onUnmounted(() => {
                     type="poster"
                     size="w185"
                     class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>
@@ -418,7 +418,7 @@ onUnmounted(() => {
                     type="poster"
                     size="w185"
                     class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>

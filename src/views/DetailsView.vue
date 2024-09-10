@@ -107,7 +107,7 @@ const interval = setInterval(async () => {
 
 const loadData = async () => {
   const profileRes = await store.getProfile();
-  if (!profileRes) router.push({ path: '/', replace: true });
+  if (!profileRes) router.push({ path: '/' });
   profile.value = profileRes;
 
   const config = await invoke<IConfig | null>('get_config');
@@ -168,7 +168,7 @@ const loadData = async () => {
     }
     else router.push({ path: '/browse' });
   }
-  else router.push({ path: '/register', replace: true });
+  else router.push({ path: '/register' });
 };
 
 onMounted(loadData);
@@ -221,7 +221,7 @@ onUnmounted(() => clearInterval(interval));
           {{ showFullOverview ? item.overview : item.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
         </span>
         <div class="flex gap-4 items-center" v-if="videoItem">
-          <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}`, replace: true })">
+          <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}` })">
             <PlayIcon class="w-6 h-6" />
             <span>
               {{ $t('pages.details.watch') }}
@@ -302,7 +302,7 @@ onUnmounted(() => clearInterval(interval));
                 type="still"
                 size="w300"
                 class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                @click="() => $router.push({ path: `/watch/${episode.id}`, replace: true })"
+                @click="() => $router.push({ path: `/watch/${episode.id}` })"
               />
               <div class="absolute top-0 left-0 w-full h-full pointer-events-none bg-gradient-to-tr from-background from-10% to-transparent">
                 <div class="absolute bottom-0 left-0 flex flex-col p-2 gap-2 w-full">
@@ -344,7 +344,7 @@ onUnmounted(() => clearInterval(interval));
                   type="poster"
                   size="w185"
                   class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                  @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
+                  @click="() => $router.push({ path: `/details/${movie.id}` })"
                 />
               </div>
             </CarouselItem>
@@ -376,7 +376,7 @@ onUnmounted(() => clearInterval(interval));
                   type="poster"
                   size="w185"
                   class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                  @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
+                  @click="() => $router.push({ path: `/details/${movie.id}` })"
                 />
               </div>
             </CarouselItem>
