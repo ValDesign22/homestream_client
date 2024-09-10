@@ -5,6 +5,7 @@ use commands::setup::setup;
 use tauri::Manager;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use tauri_plugin_window_state::{AppHandleExt, StateFlags, WindowExt};
+use tauri_plugin_notification::NotificationExt;
 
 pub mod commands;
 pub mod utils;
@@ -15,12 +16,14 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![get_config, save_config, setup]);
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
         builder = builder
             .plugin(tauri_plugin_updater::Builder::new().build())
+            .plugin(tauri_plugin_websocket::init())
             .plugin(tauri_plugin_window_state::Builder::default().build());
     }
 
@@ -37,17 +40,23 @@ pub fn run() {
                 }
             }
 
+            app.notification()
+                .builder()
+                .title("Homestream")
+                .body("Homestream is running")
+                .show()
+                .unwrap();
             
-                if let Some(window) = app.get_webview_window("main") {
-                    #[cfg(not(any(target_os = "android", target_os = "ios")))]
-                    {
-                        let _ = window.restore_state(StateFlags::all());
-                    }
-                    #[cfg(debug_assertions)]
-                    {
-                        let _ = window.open_devtools();
-                    }
+            if let Some(window) = app.get_webview_window("main") {
+                #[cfg(not(any(target_os = "android", target_os = "ios")))]
+                {
+                    let _ = window.restore_state(StateFlags::all());
                 }
+                #[cfg(debug_assertions)]
+                {
+                    let _ = window.open_devtools();
+                }
+            }
 
             Ok(())
         })

@@ -1,5 +1,6 @@
 export interface IConfig {
   http_server: string,
+  ws_url: string,
 }
 
 export interface IRemoteFolder {
@@ -18,7 +19,7 @@ export interface IFolder {
 
 export enum EMediaType {
   Movie,
-  ITvShow,
+  TvShow,
 }
 
 export interface IMovie {
@@ -118,3 +119,18 @@ export interface IHistory {
   watched: boolean,
   progress: number,
 }
+
+export interface INotification {
+  profile_id: number,
+  media_type: EMediaType,
+  notification_type: ENotificationType,
+  data: IMovie | ITvShow,
+}
+
+export enum ENotificationType {
+  Watchlist,
+  Favorites,
+}
+
+export const colors = ['slate', 'zinc'] as const;
+export type Color = typeof colors[number];

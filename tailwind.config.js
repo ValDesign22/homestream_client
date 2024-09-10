@@ -1,10 +1,10 @@
 import animate from "tailwindcss-animate"
+import plugin from "tailwindcss/plugin"
 
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
   safelist: ["dark"],
-  prefix: "",
   
   content: [
     './pages/**/*.{ts,tsx,vue}',
@@ -89,5 +89,11 @@ export default {
       },
     },
   },
-  plugins: [animate],
+  plugins: [
+    animate,
+    plugin(function({ addVariant }) {
+      addVariant("theme-slate","&:is(.theme-slate *)")
+      addVariant("theme-zinc","&:is(.theme-zinc *)")
+    }),
+  ],
 }

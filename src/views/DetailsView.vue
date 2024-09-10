@@ -3,16 +3,18 @@ import { TMDBImage } from '@/components/image';
 import { NavBar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useStore } from '@/lib/stores';
 import getRecommendations from '@/utils/recommendations';
-import { IConfig, IEpisode, IMovie, ITvShow } from '@/utils/types';
+import { IConfig, IEpisode, IMovie, IProfile, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { fetch } from '@tauri-apps/plugin-http';
 import { PlayerState, usePlayer } from '@vue-youtube/core';
-import { PlayIcon, SquareCheck, SquarePlus, Star, StarOff } from 'lucide-vue-next';
+import { EllipsisVertical, PlayIcon, SquareCheck, SquarePlus, Star, StarOff } from 'lucide-vue-next';
 import { watch } from 'vue';
 import { onUnmounted } from 'vue';
 import { onMounted, ref } from 'vue';
@@ -24,6 +26,8 @@ const route = useRoute();
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 const store = useStore;
+
+const profile = ref<IProfile | null>(null);
 
 const item = ref<IMovie | ITvShow | null>(null);
 const isInFavorites = ref(false);
@@ -42,6 +46,14 @@ const videoKey = ref<string>('');
 const videoPlayer = ref();
 const videoPlaying = ref(false);
 const videoError = ref(false);
+
+const calculateProgress = (id: number, duration: number) => {
+  if (!profile.value) return 0;
+  const item = profile.value.history.find((item) => item.id === id);
+  if (!item) return 0;
+  const minutes = Math.floor(item.progress / 60);
+  return Math.floor((minutes / duration) * 100);
+};
 
 const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
   playerVars: {
@@ -94,6 +106,10 @@ const interval = setInterval(async () => {
 }, 1000);
 
 const loadData = async () => {
+  const profileRes = await store.getProfile();
+  if (!profileRes) router.push({ path: '/' });
+  profile.value = profileRes;
+
   const config = await invoke<IConfig | null>('get_config');
   if (config) {
     const itemId = route.params.id;
@@ -152,7 +168,7 @@ const loadData = async () => {
     }
     else router.push({ path: '/browse' });
   }
-  else router.push({ path: '/register', replace: true });
+  else router.push({ path: '/register' });
 };
 
 onMounted(loadData);
@@ -191,7 +207,7 @@ onUnmounted(() => clearInterval(interval));
         class="w-full h-full object-center object-cover relative"
         :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
       />
-      <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
+      <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-tr from-background from-10% to-transparent">
         <TMDBImage
           v-if="item.logo_path"
           :image="item.logo_path"
@@ -205,7 +221,7 @@ onUnmounted(() => clearInterval(interval));
           {{ showFullOverview ? item.overview : item.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
         </span>
         <div class="flex gap-4 items-center" v-if="videoItem">
-          <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}`, replace: true })">
+          <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}` })">
             <PlayIcon class="w-6 h-6" />
             <span>
               {{ $t('pages.details.watch') }}
@@ -246,10 +262,15 @@ onUnmounted(() => clearInterval(interval));
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <EllipsisVertical />
+            </DropdownMenuTrigger>
+          </DropdownMenu>
         </div>
       </div>
     </div>
-    <div v-if="'seasons' in item" class="flex flex-col gap-4 py-4 px-16 bg-black">
+    <div v-if="'seasons' in item" class="flex flex-col gap-4 py-4 px-16">
       <Select v-model="currentSeason">
         <SelectTrigger class="max-w-[200px]">
            <SelectValue :placeholder="$t('pages.details.season', { season: item.seasons[parseInt(currentSeason)].season_number })" />
@@ -272,7 +293,7 @@ onUnmounted(() => clearInterval(interval));
           <CarouselItem
             v-for="episode in item.seasons[parseInt(currentSeason)].episodes"
             :key="episode.id"
-            class="flex-grow p1 basis-auto"
+            class="flex-grow basis-auto"
           >
             <div class="p-1 relative overflow-hidden rounded-lg">
               <TMDBImage
@@ -280,12 +301,19 @@ onUnmounted(() => clearInterval(interval));
                 :alt="episode.title"
                 type="still"
                 size="w300"
-                class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
-                @click="() => $router.push({ path: `/watch/${episode.id}`, replace: true })"
+                class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                @click="() => $router.push({ path: `/watch/${episode.id}` })"
               />
-              <div class="absolute bottom-0 left-0 w-full h-auto pointer-events-none bg-gradient-to-t from-black from-10% to-transparent p-4">
-                <p class="text-sm">{{ $t('pages.details.episode', { episode: episode.episode_number }) }}</p>
-                <p class="text-sm">{{ episode.title }}</p>
+              <div class="absolute top-0 left-0 w-full h-full pointer-events-none bg-gradient-to-tr from-background from-10% to-transparent">
+                <div class="absolute bottom-0 left-0 flex flex-col p-2 gap-2 w-full">
+                  <p class="text-sm">{{ $t('pages.details.episode', { episode: episode.episode_number }) }}</p>
+                  <p class="text-sm">{{ episode.title }}</p>
+                  <Progress
+                    v-if="profile && profile.history.find((item) => item.id === episode.id)"
+                    class="h-2"
+                    :modelValue="calculateProgress(episode.id, episode.runtime)"
+                  />
+                </div>
               </div>
             </div>
           </CarouselItem>
@@ -294,8 +322,8 @@ onUnmounted(() => clearInterval(interval));
         <CarouselNext />
       </Carousel>
     </div>
-    <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 py-4 px-16 bg-black">
-      <div v-if="collection.length > 0" class="w-full h-auto flex flex-col p-4">
+    <div v-if="collection.length > 0 && collection.length !== 1" class="flex flex-col gap-8 py-4 px-16">
+      <div class="w-full h-auto flex flex-col gap-4">
         <h3 class="text-2xl font-bold">{{ $t('pages.details.collection') }}</h3>
         <Carousel
           class="relative w-full"
@@ -307,7 +335,7 @@ onUnmounted(() => clearInterval(interval));
             <CarouselItem
               v-for="movie in collection"
               :key="movie.id"
-              class="flex-grow p1 basis-auto"
+              class="flex-grow basis-auto"
             >
               <div class="p-1 overflow-hidden rounded-lg">
                 <TMDBImage
@@ -315,8 +343,8 @@ onUnmounted(() => clearInterval(interval));
                   :alt="movie.title"
                   type="poster"
                   size="w185"
-                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
-                  @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
+                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                  @click="() => $router.push({ path: `/details/${movie.id}` })"
                 />
               </div>
             </CarouselItem>
@@ -326,7 +354,7 @@ onUnmounted(() => clearInterval(interval));
         </Carousel>
       </div>
     </div>
-    <div v-if="recommendations.length > 0" class="flex flex-col gap-8 py-4 px-16 bg-black">
+    <div v-if="recommendations.length > 0" class="flex flex-col gap-8 py-4 px-16">
       <div class="w-full h-auto flex flex-col gap-4">
         <h3 class="text-2xl font-bold">{{ $t('pages.details.recommendations') }}</h3>
         <Carousel
@@ -339,7 +367,7 @@ onUnmounted(() => clearInterval(interval));
             <CarouselItem
               v-for="movie in recommendations"
               :key="movie.id"
-              class="flex-grow p1 basis-auto"
+              class="flex-grow basis-auto"
             >
               <div class="p-1 overflow-hidden rounded-lg">
                 <TMDBImage
@@ -347,8 +375,8 @@ onUnmounted(() => clearInterval(interval));
                   :alt="movie.title"
                   type="poster"
                   size="w185"
-                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
-                  @click="() => $router.push({ path: `/details/${movie.id}`, replace: true })"
+                  class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                  @click="() => $router.push({ path: `/details/${movie.id}` })"
                 />
               </div>
             </CarouselItem>

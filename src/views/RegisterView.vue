@@ -121,6 +121,7 @@ async function onSubmit(values: GenericObject) {
 
   await writeTextFile("config.json", JSON.stringify({
     http_server: values.httpServer,
+    ws_url: httpServer.value.replace(/^http/, 'ws').replace(/:\d+$/, ':8080'),
   }), { baseDir: BaseDirectory.AppConfig });
 
   const foldersToSend: IFolder[] = values.folders ? values.folders.map((folder: { media_type: string, name: string, path: string }, index: number) => ({
@@ -141,7 +142,7 @@ async function onSubmit(values: GenericObject) {
     },
   });
 
-  if (response.ok) router.push({ path: "/", replace: true });
+  if (response.ok) router.push({ path: "/" });
   else console.error('An error occurred while saving the configuration', await response.text());
 }
 </script>

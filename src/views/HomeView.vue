@@ -3,27 +3,34 @@ import { NavBar } from '@/components/navbar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/lib/stores';
+import { Settings } from 'lucide-vue-next';
 import { IConfig, IProfile } from '@/utils/types';
 import { getVersion } from '@tauri-apps/api/app';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { SettingsMenu } from '@/components/settings';
 
 const router = useRouter();
 const store = useStore;
 
 const version = ref<string | null>(null);
 const profiles = ref<IProfile[]>([]);
+const settingsOpened = ref(false);
 
 const selectProfile = async (selectedProfile: IProfile) => {
   await store.setProfile(selectedProfile);
   router.push({ path: '/browse' });
 };
 
+const toggleSettings = () => {
+  settingsOpened.value = !settingsOpened.value;
+};
+
 onMounted(async () => {
   const config = await invoke<IConfig | null>("get_config");
-  if (!config) return router.push({ path: "/register", replace: true });
+  if (!config) return router.push({ path: "/register" });
 
   version.value = await getVersion();
 
@@ -39,7 +46,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <NavBar />
+  <NavBar :toggleSettings="toggleSettings" />
   <div class="flex flex-col items-center justify-center h-screen gap-4">
     <h2 class="text-2xl font-bold">
       {{ $t('pages.home.selectProfile') }}
@@ -64,9 +71,11 @@ onMounted(async () => {
       </Button>
     </div>
   </div>
-  <div class="absolute bottom-0 right-0 p-4 ">
+  <div class="absolute bottom-0 right-0 flex items-center justify-between w-full p-4">
+    <Settings class="cursor-pointer w-6 h-6" @click="toggleSettings" />
     <span v-if="version" class="text-sm text-gray-500">
       {{ $t('app.footerVersion', { version }) }}
     </span>
   </div>
+  <SettingsMenu :opened="settingsOpened" :toggleSettings="toggleSettings" />
 </template>

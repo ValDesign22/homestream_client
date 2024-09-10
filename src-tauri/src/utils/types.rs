@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub http_server: String,
+    pub ws_url: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -64,10 +65,11 @@ pub struct Season {
 pub struct Episode {
     pub id: i32,
     pub episode_number: i32,
-    pub name: String,
+    pub title: String,
     pub overview: String,
     pub air_date: String,
     pub still_path: Option<String>,
+    pub runtime: i32,
     pub path: Option<String>,
 }
 
@@ -81,4 +83,31 @@ pub struct ImagesResponse {
     pub backdrop: Option<String>,
     pub logo: Option<String>,
     pub poster: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Profile {
+    pub id: i32,
+    pub name: String,
+    pub password: Option<String>,
+    pub role: Role,
+    pub history: Option<Vec<History>>,
+    pub watchlist: Option<Vec<Folder>>,
+    pub favorites: Option<Vec<Folder>>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum Role {
+    Admin,
+    User,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct History {
+    pub id: i32,
+    pub date: String,
+    pub title: String,
+    pub media_type: MediaType,
+    pub watched: bool,
+    pub progress: i32,
 }

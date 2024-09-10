@@ -13,7 +13,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Input } from '@/components/ui/input';
 import { GenericObject } from 'vee-validate';
 import { NavBar } from '@/components/navbar';
-import { Trash2 } from 'lucide-vue-next';
+import { Trash2, X } from 'lucide-vue-next';
 import { getVersion } from '@tauri-apps/api/app';
 
 const router = useRouter();
@@ -32,7 +32,7 @@ const formSchema = toTypedSchema(
 
 async function onSubmit(values: GenericObject) {
   const config = await invoke<IConfig | null>("get_config");
-  if (!config) return router.push({ path: "/register", replace: true });
+  if (!config) return router.push({ path: "/register" });
 
   const newProfile: IProfile = {
     id: Math.floor(Date.now() + Math.random() * 1000),
@@ -58,7 +58,7 @@ async function onSubmit(values: GenericObject) {
 
 async function deleteProfile(id: number) {
   const config = await invoke<IConfig | null>("get_config");
-  if (!config) return router.push({ path: "/register", replace: true });
+  if (!config) return router.push({ path: "/register" });
 
   const res = await fetch(`${config.http_server}/profiles?id=${id}`, {
     method: 'DELETE',
@@ -73,7 +73,7 @@ async function deleteProfile(id: number) {
 
 onMounted(async () => {
   const config = await invoke<IConfig | null>("get_config");
-  if (!config) return router.push({ path: "/register", replace: true });
+  if (!config) return router.push({ path: "/register" });
 
   version.value = await getVersion();
 
@@ -187,6 +187,13 @@ onMounted(async () => {
                 </DialogClose>
               </DialogFooter>
             </Form>
+
+            <DialogClose
+              class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+            >
+              <X class="w-4 h-4" />
+              <span class="sr-only">Close</span>
+            </DialogClose>
           </DialogContent>
         </Dialog>
       </div>

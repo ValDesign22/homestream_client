@@ -1,4 +1,4 @@
-import { EMediaType, IConfig, IEpisode, IMovie, IProfile, ITvShow } from '@/utils/types';
+import { Color, EMediaType, IConfig, IEpisode, IMovie, IProfile, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { Store } from '@tauri-apps/plugin-store';
@@ -12,6 +12,27 @@ class StoreService {
 
   async save() {
     await this.store.save();
+  }
+
+  async getLocale(): Promise<string> {
+    return await this.store.get('locale') as string;
+  }
+
+  async setLocale(language: string) {
+    await this.store.set('locale', language);
+    await this.save();
+  }
+
+  async getTheme(): Promise<Color> {
+    const current = await this.store.get('theme') as Color | null;
+    if (!current) await this.setTheme('zinc');
+    return current || 'zinc';
+  }
+
+  async setTheme(theme: Color) {
+    await this.store.set('theme', theme);
+
+    await this.save();
   }
 
   async getProfile(): Promise<IProfile | null> {
@@ -156,7 +177,7 @@ class StoreService {
       id: item.id,
       date: new Date().toISOString(),
       title: item.title,
-      media_type: 'episode_number' in item ? EMediaType.ITvShow : EMediaType.Movie,
+      media_type: 'episode_number' in item ? EMediaType.TvShow : EMediaType.Movie,
       watched,
       progress,
     });

@@ -132,15 +132,17 @@ async function parseHistory() {
   if (!user.value) return;
   const userHistory = await store.getHistory();
   if (!userHistory) return;
-  userHistory.forEach(async (item) => {
-    if (item.media_type === EMediaType.ITvShow) {
-      const tvShow = await getTvShowFromEpisode(item.id);
-      if (tvShow && !history.value.find((h) => h.id === tvShow.id)) history.value.push(tvShow);
-    } else {
-      const movie = await getMovieFromId(item.id);
-      if (movie) history.value.push(movie);
-    }
-  });
+  userHistory
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .forEach(async (item) => {
+      if (item.media_type === EMediaType.TvShow) {
+        const tvShow = await getTvShowFromEpisode(item.id);
+        if (tvShow && !history.value.find((h) => h.id === tvShow.id)) history.value.push(tvShow);
+      } else {
+        const movie = await getMovieFromId(item.id);
+        if (movie) history.value.push(movie);
+      }
+    });
 }
 
 const interval = setInterval(async () => {
@@ -200,12 +202,12 @@ onUnmounted(() => {
   />
   <div class="flex flex-col justify-center">
     <div v-if="Object.keys(stores).length === 0" class="w-full h-auto">
-      <div v-for="(_, index) in 10" :key="index" class="w-full relative">
-        <div class="flex flex-col gap-8 p-16 bg-black">
-          <Carousel class="relative w-full" :opts="{ align: 'center' }">
+      <div v-for="(_, index) in 10" :key="index" class="flex flex-col gap-8 py-4 px-16">
+        <div class="w-full h-auto flex flex-col gap-4">
+          <Carousel class="relative w-full" :opts="{ align: 'start' }">
             <CarouselContent>
-              <CarouselItem v-for="(_, index) in 25" :key="index" class="flex-grow p-1 basis-auto">
-                <div class="p-1">
+              <CarouselItem v-for="(_, index) in 25" :key="index" class="flex-grow basis-auto">
+                <div class="p-1 overflow-hidden rounded-lg">
                   <Skeleton class="w-[185px] h-[278px] rounded-lg" />
                 </div>
               </CarouselItem>
@@ -222,11 +224,11 @@ onUnmounted(() => {
           :image="randomSelected.backdrop_path"
           :alt="randomSelected.id.toString()"
           type="backdrop"
-          size="w1280"
+          size="original"
           class="w-full h-full object-center object-cover relative"
           :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
         />
-        <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-t from-black from-10% to-transparent">
+        <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-tr from-background from-10% to-transparent">
           <TMDBImage
             v-if="randomSelected.logo_path"
             :image="randomSelected.logo_path"
@@ -240,13 +242,13 @@ onUnmounted(() => {
             {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
           </span>
           <div class="flex gap-4">
-            <Button tabindex="0" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}`, replace: true })">
+            <Button tabindex="0" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}` })">
               <PlayIcon class="w-6 h-6" />
               <span>
                 {{ $t('pages.browse.watch') }}
               </span>
             </Button>
-            <Button tabindex="0" variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}`, replace: true })">
+            <Button tabindex="0" variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}` })">
               <InfoIcon class="w-6 h-6" />
               <span>
                 {{ $t('pages.browse.details') }}
@@ -255,21 +257,23 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-      <div class="flex flex-col gap-8 p-16 bg-black">
-        <div v-if="user && history.length !== 0" class="flex flex-col gap-4">
-          <h2 class="text-2xl font-bold">
+      <div class="flex flex-col gap-8 py-4 px-16">
+        <div v-if="user && history.length !== 0" class="w-full h-auto flex flex-col gap-4">
+          <h3 class="text-2xl font-bold">
             {{ $t('pages.browse.continue') }}
-          </h2>
+          </h3>
           <Carousel
             tabindex="-1"
             class="relative w-full"
-            :opts="{ align: 'start' }"
+            :opts="{
+              align: 'start',
+            }"
           >
             <CarouselContent>
               <CarouselItem
-                v-for="item in history.slice(0, 25)"
+                v-for="item in history"
                 :key="item.id"
-                class="flex-grow p-1 basis-auto"
+                class="flex-grow basis-auto"
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
@@ -278,8 +282,8 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>
@@ -288,10 +292,10 @@ onUnmounted(() => {
             <CarouselNext />
           </Carousel>
         </div>
-        <div v-if="user && user.watchlist.length !== 0" class="flex flex-col gap-4">
-          <h2 class="text-2xl font-bold">
+        <div v-if="user && user.watchlist.length !== 0" class="w-full h-auto flex flex-col gap-4">
+          <h3 class="text-2xl font-bold">
             {{ $t('pages.browse.watchlist') }}
-          </h2>
+          </h3>
           <Carousel
             tabindex="-1"
             class="relative w-full"
@@ -299,9 +303,9 @@ onUnmounted(() => {
           >
             <CarouselContent>
               <CarouselItem
-                v-for="item in user.watchlist.slice(0, 25)"
+                v-for="item in user.watchlist"
                 :key="item.id"
-                class="flex-grow p-1 basis-auto"
+                class="flex-grow basis-auto"
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
@@ -310,8 +314,8 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>
@@ -320,10 +324,10 @@ onUnmounted(() => {
             <CarouselNext />
           </Carousel>
         </div>
-        <div v-if="user && user.favorites.length !== 0" class="flex flex-col gap-4">
-          <h2 class="text-2xl font-bold">
+        <div v-if="user && user.favorites.length !== 0" class="w-full h-auto flex flex-col gap-4">
+          <h3 class="text-2xl font-bold">
             {{ $t('pages.browse.favorites') }}
-          </h2>
+          </h3>
           <Carousel
             tabindex="-1"
             class="relative w-full"
@@ -331,9 +335,9 @@ onUnmounted(() => {
           >
             <CarouselContent>
               <CarouselItem
-                v-for="item in user.favorites.slice(0, 25)"
+                v-for="item in user.favorites"
                 :key="item.id"
-                class="flex-grow p-1 basis-auto"
+                class="flex-grow basis-auto"
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
@@ -342,8 +346,8 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>
@@ -355,9 +359,9 @@ onUnmounted(() => {
         <div
           v-for="(store, key) in stores"
           :key="key"
-          class="flex flex-col gap-4"
+          class="w-full h-auto flex flex-col gap-4"
         >
-          <h2 class="text-2xl font-bold">{{ key }}</h2>
+          <h3 class="text-2xl font-bold">{{ key }}</h3>
           <Carousel
             tabindex="-1"
             class="relative w-full"
@@ -369,7 +373,7 @@ onUnmounted(() => {
               <CarouselItem
                 v-for="item in store.slice(0, 25)"
                 :key="item.id"
-                class="flex-grow p-1 basis-auto"
+                class="flex-grow basis-auto"
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
@@ -378,8 +382,8 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>
@@ -390,7 +394,7 @@ onUnmounted(() => {
         </div>
         <div v-for="(genre, key) in genres"
           :key="key"
-          class="flex flex-col gap-4"
+          class="w-full h-auto flex flex-col gap-4"
         >
           <h2 class="text-2xl font-bold">{{ genre.name }}</h2>
           <Carousel
@@ -404,7 +408,7 @@ onUnmounted(() => {
               <CarouselItem
                 v-for="item in genre.items.slice(0, 25)"
                 :key="item.id"
-                class="flex-grow p-1 basis-auto"
+                class="flex-grow basis-auto"
               >
                 <div class="p-1 overflow-hidden rounded-lg">
                   <TMDBImage
@@ -413,8 +417,8 @@ onUnmounted(() => {
                     :alt="item.id.toString()"
                     type="poster"
                     size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
-                    @click="() => $router.push({ path: `/details/${item.id}`, replace: true })"
+                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                    @click="() => $router.push({ path: `/details/${item.id}` })"
                   />
                 </div>
               </CarouselItem>
