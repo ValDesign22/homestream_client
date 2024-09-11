@@ -4,7 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { Input } from '@/components/ui/input';
 import { Settings, Search, Users } from 'lucide-vue-next';
 import { computed, HTMLAttributes, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useStore } from '@/lib/stores';
+import useStore from '@/lib/stores';
 import { IProfile } from '@/utils/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ const props = defineProps<NavBarProps & { class?: HTMLAttributes['class'] }>();
 
 const router = useRouter();
 const route = useRoute();
-const store = useStore;
+const store = useStore();
 const { y } = useWindowScroll({ behavior: 'smooth' });
 const settingsOpened = ref(false);
 
@@ -64,7 +64,8 @@ watch(searchContent, () => {
 });
 
 onMounted(async () => {
-  user.value = await store.getProfile();
+  void store.$tauri.start();
+  user.value = store.profile;
   if (!user.value) return router.push({ path: '/' });
 });
 

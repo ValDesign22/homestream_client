@@ -1664,6 +1664,7 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-http",
  "tauri-plugin-notification",
+ "tauri-plugin-pinia",
  "tauri-plugin-store",
  "tauri-plugin-updater",
  "tauri-plugin-websocket",
@@ -4004,6 +4005,20 @@ dependencies = [
  "thiserror",
  "time",
  "url",
+]
+
+[[package]]
+name = "tauri-plugin-pinia"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf086408f18d6d78e4b7f3f3a8a7bc4fd85bb802a802e34fe2e42e08072771bf"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]

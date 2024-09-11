@@ -2,7 +2,7 @@
 import { NavBar } from '@/components/navbar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { useStore } from '@/lib/stores';
+import useStore from '@/lib/stores';
 import { Settings } from 'lucide-vue-next';
 import { IConfig, IProfile } from '@/utils/types';
 import { getVersion } from '@tauri-apps/api/app';
@@ -13,14 +13,14 @@ import { useRouter } from 'vue-router';
 import { SettingsMenu } from '@/components/settings';
 
 const router = useRouter();
-const store = useStore;
+const store = useStore();
 
 const version = ref<string | null>(null);
 const profiles = ref<IProfile[]>([]);
 const settingsOpened = ref(false);
 
 const selectProfile = async (selectedProfile: IProfile) => {
-  await store.setProfile(selectedProfile);
+  store.setProfile(selectedProfile);
   router.push({ path: '/browse' });
 };
 
@@ -29,6 +29,7 @@ const toggleSettings = () => {
 };
 
 onMounted(async () => {
+  void store.$tauri.start();
   const config = await invoke<IConfig | null>("get_config");
   if (!config) return router.push({ path: "/register" });
 

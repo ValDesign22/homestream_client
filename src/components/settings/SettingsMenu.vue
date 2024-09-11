@@ -6,11 +6,11 @@ import { VisuallyHidden } from 'radix-vue';
 import { onMounted, ref, watch } from 'vue';
 import { fetch } from '@tauri-apps/plugin-http';
 import { invoke } from '@tauri-apps/api/core';
-import { Color, colors, IConfig } from '@/utils/types';
+import { TColor, colors, IConfig } from '@/utils/types';
 import { X } from 'lucide-vue-next'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useI18n } from 'vue-i18n';
-import { useStore } from '@/lib/stores';
+import useStore from '@/lib/stores';
 import { getVersion } from '@tauri-apps/api/app';
 
 interface SettingsMenuProps {
@@ -21,9 +21,9 @@ interface SettingsMenuProps {
 const props = defineProps<SettingsMenuProps>();
 
 const i18n = useI18n();
-const store = useStore;
+const store = useStore();
 
-const theme = ref<Color>('slate');
+const theme = ref<TColor>('slate');
 
 const config = ref<IConfig | null>(null);
 
@@ -54,19 +54,18 @@ const updateServer = async () => {
   getServerVersion();
 };
 
-watch(i18n.locale, async (value) => {
-  await store.setLocale(value);
+watch(store.$state, async (value) => {
+  i18n.locale.value = value.locale;
+  store.setLocale(value.locale);
 });
 
 watch(theme, async (value) => {
-  if (value) {
-    document.documentElement.classList.remove(...colors.map((c) => `theme-${c}`));
-    document.documentElement.classList.add(`theme-${value}`);
-    return await store.setTheme(value);
-  };
+  console.log(value);
+  if (value) store.setTheme(value);
 });
 
 onMounted(async () => {
+  void store.$tauri.start();
   const configRes = await invoke<IConfig | null>("get_config");
   if (configRes) {
     config.value = configRes;
@@ -75,7 +74,7 @@ onMounted(async () => {
     await getServerVersion();
   }
 
-  theme.value = await store.getTheme();
+  theme.value = store.theme;
 });
 </script>
 
@@ -115,7 +114,7 @@ onMounted(async () => {
             <h2 class="text-xl font-bold">{{ $t('settings.appearance.title') }}</h2>
             <div class="flex items-center space-x-4">
               <span>{{ $t('settings.appearance.language') }}</span>
-              <Select :defaultValue="$i18n.locale" v-model="$i18n.locale">
+              <Select :defaultValue="store.locale" v-model="store.locale">
                 <SelectTrigger class="w-[180px]">
                   <SelectValue :placeholder="$t('settings.appearance.selectLanguage')" />
                 </SelectTrigger>

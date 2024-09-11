@@ -1,212 +1,123 @@
-import { Color, EMediaType, IConfig, IEpisode, IMovie, IProfile, ITvShow } from '@/utils/types';
+import { TColor, colors, EMediaType, IConfig, IEpisode, IMovie, IProfile, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
-import { Store } from '@tauri-apps/plugin-store';
+import { defineStore } from 'pinia';
+import { saveAll } from 'tauri-plugin-pinia';
 
-class StoreService {
-  store: Store;
+const patchProfile = async (profile: IProfile) => {
+  const config = await invoke<IConfig | null>('get_config');
+  if (!config) return;
 
-  constructor() {
-    this.store = new Store('store.bin');
-  }
+  const res = await fetch(`${config.http_server}/profiles?id=${profile.id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(profile),
+  });
 
-  async save() {
-    await this.store.save();
-  }
+  return res.ok;
+};
 
-  async getLocale(): Promise<string> {
-    return await this.store.get('locale') as string;
-  }
+const useStore = defineStore('homestream', {
+  state: () => ({
+    locale: 'en',
+    theme: 'zinc' as TColor,
+    profile: null as IProfile | null,
+  }),
+  actions: {
+    setLocale(locale: string) {
+      this.locale = locale;
+      this.save();
+    },
+    setTheme(theme: TColor) {
+      this.theme = theme;
+      document.documentElement.classList.remove(
+        ...colors.map((c) => `theme-${c}`)
+      );
+      document.documentElement.classList.add(`theme-${theme}`);
+      this.save();
+    },
+    addToFavorites(item: IMovie | ITvShow) {
+      if (!this.profile) return;
+      if (this.profile.favorites.some((i) => i.id === item.id)) return;
+      this.profile.favorites.push(item);
 
-  async setLocale(language: string) {
-    await this.store.set('locale', language);
-    await this.save();
-  }
+      this.saveProfile();
+      this.save();
+    },
+    removeFromFavorites(item: IMovie | ITvShow) {
+      if (!this.profile) return;
+      this.profile.favorites = this.profile.favorites.filter((i) => i.id !== item.id);
 
-  async getTheme(): Promise<Color> {
-    const current = await this.store.get('theme') as Color | null;
-    if (!current) await this.setTheme('zinc');
-    return current || 'zinc';
-  }
+      this.saveProfile();
+      this.save();
+    },
+    isInFavorites(item: IMovie | ITvShow) {
+      if (!this.profile) return false;
+      return this.profile.favorites.some((i) => i.id === item.id);
+    },
+    addToWatchlist(item: IMovie | ITvShow) {
+      if (!this.profile) return;
+      if (this.profile.watchlist.some((i) => i.id === item.id)) return;
+      this.profile.watchlist.push(item);
 
-  async setTheme(theme: Color) {
-    await this.store.set('theme', theme);
+      this.saveProfile();
+      this.save();
+    },
+    removeFromWatchlist(item: IMovie | ITvShow) {
+      if (!this.profile) return;
+      this.profile.watchlist = this.profile.watchlist.filter((i) => i.id !== item.id);
 
-    await this.save();
-  }
-
-  async getProfile(): Promise<IProfile | null> {
-    return await this.store.get('profile') as IProfile | null;
-  }
-
-  async setProfile(profile: IProfile | null) {
-    await this.store.set('profile', profile);
-    await this.save();
-  }
-
-  async isInFavorites(item: IMovie | ITvShow): Promise<boolean> {
-    const profile = await this.getProfile();
-    if (!profile) return false;
-    return profile.favorites.some((i) => i.id === item.id);
-  }
-
-  async isInWatchlist(item: IMovie | ITvShow): Promise<boolean> {
-    const profile = await this.getProfile();
-    if (!profile) return false;
-    return profile.watchlist.some((i) => i.id === item.id);
-  }
-
-  async addToFavorites(item: IMovie | ITvShow) {
-    const profile = await this.getProfile();
-    if (!profile) return;
-
-    const config = await invoke<IConfig | null>('get_config');
-    if (!config) return;
-
-    if (await this.isInFavorites(item)) return;
-
-    profile.favorites.push(item);
-
-    const res = await fetch(`${config.http_server}/profiles?id=${profile.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(profile),
-    });
-
-    if (!res.ok) profile.favorites = profile.favorites.filter((i) => i.id !== item.id);
-
-    await this.setProfile(profile);
-  }
-
-  async removeFromFavorites(item: IMovie | ITvShow) {
-    const profile = await this.getProfile();
-    if (!profile) return;
-
-    const config = await invoke<IConfig | null>('get_config');
-    if (!config) return;
-
-    if (!await this.isInFavorites(item)) return;
-
-    profile.favorites = profile.favorites.filter((i) => i.id !== item.id);
-
-    const res = await fetch(`${config.http_server}/profiles?id=${profile.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(profile),
-    });
-
-    if (!res.ok) profile.favorites.push(item);
-
-    await this.setProfile(profile);
-  }
-
-  async addToWatchlist(item: IMovie | ITvShow) {
-    const profile = await this.getProfile();
-    if (!profile) return;
-
-    const config = await invoke<IConfig | null>('get_config');
-    if (!config) return;
-
-    if (await this.isInWatchlist(item)) return;
-
-    profile.watchlist.push(item);
-
-    const res = await fetch(`${config.http_server}/profiles?id=${profile.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(profile),
-    });
-
-    if (!res.ok) profile.watchlist = profile.watchlist.filter((i) => i.id !== item.id);
-
-    await this.setProfile(profile);
-  }
-
-  async removeFromWatchlist(item: IMovie | ITvShow) {
-    const profile = await this.getProfile();
-    if (!profile) return;
-
-    const config = await invoke<IConfig | null>('get_config');
-    if (!config) return;
-
-    if (!await this.isInWatchlist(item)) return;
-
-    profile.watchlist = profile.watchlist.filter((i) => i.id !== item.id);
-
-    const res = await fetch(`${config.http_server}/profiles?id=${profile.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(profile),
-    });
-
-    if (!res.ok) profile.watchlist.push(item);
-
-    await this.setProfile(profile);
-  }
-
-  async getHistory(): Promise<IProfile['history']> {
-    const profile = await this.getProfile();
-    return profile ? profile.history : [];
-  }
-
-  async getProgress(item: IMovie | IEpisode): Promise<number> {
-    const profile = await this.getProfile();
-    if (!profile) return 0;
-
-    const historyItem = profile.history.find((i) => i.id === item.id);
-    return historyItem ? historyItem.progress : 0;
-  }
-
-  async saveProgress(item: IMovie | IEpisode, progress: number, watched: boolean = false) {
-    const profile = await this.getProfile();
-    if (!profile) return;
-
-    const config = await invoke<IConfig | null>('get_config');
-    if (!config) return;
-
-    const itemIndex = profile.history.findIndex((i) => i.id === item.id);
-    if (itemIndex === -1) profile.history.push({
-      id: item.id,
-      date: new Date().toISOString(),
-      title: item.title,
-      media_type: 'episode_number' in item ? EMediaType.TvShow : EMediaType.Movie,
-      watched,
-      progress,
-    });
-    else profile.history[itemIndex] = {
-      ...profile.history[itemIndex],
-      date: new Date().toISOString(),
-      watched,
-      progress,
-    };
-
-    const res = await fetch(`${config.http_server}/profiles?id=${profile.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(profile),
-    });
-
-    if (!res.ok) {
-      if (itemIndex === -1) profile.history = profile.history.filter((i) => i.id !== item.id);
-      else profile.history[itemIndex] = {
-        ...profile.history[itemIndex],
-        watched: !profile.history[itemIndex].watched,
-        progress: profile.history[itemIndex].watched ? 0 : 100,
+      this.saveProfile();
+      this.save();
+    },
+    isInWatchlist(item: IMovie | ITvShow) {
+      if (!this.profile) return false;
+      return this.profile.watchlist.some((i) => i.id === item.id);
+    },
+    getProgress(item: IMovie | IEpisode) {
+      if (!this.profile) return 0;
+      const historyItem = this.profile.history.find((i) => i.id === item.id);
+      return historyItem ? historyItem.progress : 0;
+    },
+    setProgress(item: IMovie | IEpisode, progress: number, watched: boolean = false) {
+      if (!this.profile) return;
+      const itemIndex = this.profile.history.findIndex((i) => i.id === item.id);
+      if (itemIndex === -1) this.profile.history.push({
+        id: item.id,
+        date: new Date().toISOString(),
+        title: item.title,
+        media_type: 'episode_number' in item ? EMediaType.TvShow : EMediaType.Movie,
+        watched,
+        progress,
+      });
+      else this.profile.history[itemIndex] = {
+        ...this.profile.history[itemIndex],
+        date: new Date().toISOString(),
+        watched,
+        progress,
       };
+
+      this.saveProfile();
+      this.save();
+    },
+    setProfile(profile: IProfile | null) {
+      this.profile = profile;
+      this.save();
+    },
+    async saveProfile() {
+      if (!this.profile) return;
+      const ok = await patchProfile(this.profile);
+      if (!ok) throw new Error('Failed to save profile');
+    },
+    async save() {
+      await saveAll();
     }
-
-    await this.setProfile(profile);
+  },
+  tauri: {
+    debounce: 1000,
   }
-}
+});
 
-export const useStore = new StoreService();
+export default useStore;

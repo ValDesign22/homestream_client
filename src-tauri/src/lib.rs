@@ -1,4 +1,4 @@
-use std::{fs::create_dir_all, path::Path};
+use std::{fs::create_dir_all, time::Duration, path::Path};
 
 use commands::config::{get_config, save_config};
 use commands::setup::setup;
@@ -13,10 +13,15 @@ pub mod utils;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default()
-        .plugin(tauri_plugin_store::Builder::new().build())
+        // .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(
+            tauri_plugin_pinia::Builder::new()
+                .autosave(Duration::from_secs(5))
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![get_config, save_config, setup]);
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]

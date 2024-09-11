@@ -6,7 +6,8 @@ import french from '@/translations/french';
 import { createApp } from 'vue';
 import { createManager } from '@vue-youtube/core';
 import { createI18n } from 'vue-i18n';
-import { useStore } from './lib/stores';
+import { createPinia } from 'pinia';
+import { createPlugin } from 'tauri-plugin-pinia';
 // import WebSocket from '@tauri-apps/plugin-websocket';
 // import { invoke } from '@tauri-apps/api/core';
 // import { IConfig } from './utils/types';
@@ -27,13 +28,15 @@ const app = createApp(App);
 //   });
 // }
 
-const store = useStore;
+const pinia = createPinia();
+pinia.use(createPlugin());
 
 app.use(router);
+app.use(pinia);
 app.use(createManager());
+
 app.use(createI18n<[MessageFormat], 'en' | 'fr'>({
   globalInjection: true,
-  locale: (await store.getLocale()) || 'en',
   fallbackLocale: 'en',
   legacy: false,
   messages: {

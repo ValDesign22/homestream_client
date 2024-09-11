@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useStore } from '@/lib/stores';
+import useStore from '@/lib/stores';
 import getRecommendations from '@/utils/recommendations';
 import { IConfig, IEpisode, IMovie, IProfile, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
@@ -25,7 +25,7 @@ const route = useRoute();
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-const store = useStore;
+const store = useStore();
 
 const profile = ref<IProfile | null>(null);
 
@@ -106,7 +106,8 @@ const interval = setInterval(async () => {
 }, 1000);
 
 const loadData = async () => {
-  const profileRes = await store.getProfile();
+  void store.$tauri.start();
+  const profileRes = store.profile;
   if (!profileRes) router.push({ path: '/' });
   profile.value = profileRes;
 
@@ -126,8 +127,8 @@ const loadData = async () => {
       item.value = response;
 
       if (item.value) {
-        isInFavorites.value = await store.isInFavorites(item.value);
-        isInWatchlist.value = await store.isInWatchlist(item.value);
+        isInFavorites.value = store.isInFavorites(item.value);
+        isInWatchlist.value = store.isInWatchlist(item.value);
 
         if ('collection_id' in item.value) {
           const movie = item.value as IMovie;
