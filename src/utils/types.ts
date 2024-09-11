@@ -133,4 +133,4 @@ export enum ENotificationType {
 }
 
 export const colors = ['slate', 'zinc'] as const;
-export type Color = typeof colors[number];
+export type TColor = typeof colors[number];

@@ -13,13 +13,13 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onUnmounted } from 'vue';
 import { vIntersectionObserver } from '@vueuse/components'
 import { PlayerState, usePlayer } from '@vue-youtube/core';
-import { useStore } from '@/lib/stores';
+import useStore from '@/lib/stores';
 import { getMovieFromId, getTvShowFromEpisode } from '@/utils/video';
 import { useGamepad } from '@vueuse/core';
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-const store = useStore;
+const store = useStore();
 const user = ref<IProfile | null>(null);
 
 const stores = ref<Record<string, IMovie[] | ITvShow[]>>({});
@@ -130,7 +130,7 @@ async function selectRandomTopRated(store: Record<string, IMovie[] | ITvShow[]>,
 
 async function parseHistory() {
   if (!user.value) return;
-  const userHistory = await store.getHistory();
+  const userHistory = user.value.history;
   if (!userHistory) return;
   userHistory
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -179,10 +179,11 @@ const gamepadInterval = setInterval(() => {
 }, 200);
 
 onMounted(async () => {
+  void store.$tauri.start();
   const config = await invoke<IConfig | null>("get_config");
   if (config) fetchStores(config.http_server);
 
-  user.value = await store.getProfile();
+  user.value = store.profile;
   parseHistory();
 });
 

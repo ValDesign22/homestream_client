@@ -67,6 +67,7 @@
     "store:allow-load",
     "notification:default",
     "websocket:allow-connect",
-    "websocket:allow-send"
+    "websocket:allow-send",
+    "pinia:default"
   ]
 }
