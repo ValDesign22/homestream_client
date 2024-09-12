@@ -35,7 +35,7 @@ const getAppVersion = async () => {
 };
 
 // Server
-const serverVersion = ref<{ updateAvailable: boolean, latestVersion: string } | null>(null);
+const serverVersion = ref<{ updateAvailable: boolean, version?: string, latestVersion: string } | null>(null);
 
 const getServerVersion = async () => {
   if (!config.value) return;
@@ -149,7 +149,7 @@ onMounted(async () => {
             <h2 class="text-xl font-bold">{{ $t('settings.server.title') }}</h2>
             <div v-if="serverVersion" class="flex items-center space-x-4">
               <span>{{ $t('settings.server.serverVersion') }}</span>
-              <span>{{ serverVersion.latestVersion }}</span>
+              <span>{{ serverVersion.version ?? serverVersion.latestVersion }}</span>
               <Button v-if="serverVersion.updateAvailable" @click="updateServer">
                 {{ $t('settings.server.update') }}
               </Button>

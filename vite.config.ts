@@ -1,4 +1,4 @@
-import path from "node:path"; 
+import path from "node:path";
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { internalIpV4Sync } from "internal-ip";
@@ -26,10 +26,10 @@ export default defineConfig(async () => ({
     host: mobile ? "0.0.0.0" : false,
     hmr: mobile
       ? {
-          protocol: "ws",
-          host: internalIpV4Sync(),
-          port: 1430,
-        }
+        protocol: "ws",
+        host: internalIpV4Sync(),
+        port: 1430,
+      }
       : undefined,
     watch: {
       ignored: ["**/src-tauri/**"],

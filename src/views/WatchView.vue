@@ -3,24 +3,28 @@ import { TMDBImage } from '@/components/image';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Slider } from '@/components/ui/slider';
-import { IConfig, IEpisode, IMovie, ISeason, ITvShow } from '@/utils/types';
+import { IConfig, IEpisode, IMovie, ISeason, ITrack, ITracks, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { useEventListener, useGamepad, useScreenOrientation } from '@vueuse/core';
 import { ChevronLeft, GalleryVerticalEnd, Maximize, MessageSquareText, Minimize, Pause, Play, RotateCcw, RotateCw, Volume1, Volume2, VolumeX } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getNameByISO6391 } from '@/utils/languages';
+import { getNameByISO6392B } from '@/utils/languages';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { computed } from 'vue';
 import { getTvShowFromEpisode } from '@/utils/video';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import useStore from '@/lib/stores';
+import JASSUB from 'jassub';
+import workerUrl from 'jassub/dist/jassub-worker.js?url';
+import wasmUrl from 'jassub/dist/jassub-worker.wasm?url';
 
 const router = useRouter();
 const route = useRoute();
 
 const store = useStore();
+const config = ref<IConfig | null>(null);
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
@@ -42,10 +46,12 @@ const isUserSliding = ref(false);
 const isHoveringVolume = ref(false);
 const playerVolume = ref([1]);
 // const audioTracks = ref([]); // Here but currently not supported https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/audioTracks#browser_compatibility
-const subtitles = ref<TextTrack[]>([]);
+const subtitles = ref<ITrack[]>([]);
 const isHoveringTracks = ref(false);
 const isHoveringSeasons = ref(false);
 const isEnding = ref(false);
+
+const subtitleRenderer = ref<JASSUB | null>(null);
 
 const { isSupported, gamepads } = useGamepad();
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
@@ -92,6 +98,10 @@ const togglePlaying = () => {
     videoElem.value.pause();
     resetControlsTimer();
   }
+
+  if (subtitles.value && subtitles.value.length > 0 && subtitleRenderer.value) {
+    subtitleRenderer.value.setIsPaused(videoElem.value.paused);
+  }
 };
 
 const toggleFullscreen = async (state: boolean) => {
@@ -110,26 +120,12 @@ const toggleFullscreen = async (state: boolean) => {
   }
 };
 
-const useSubtitleTrack = (index: number | string = 'none') => {
-  if (videoElem.value && subtitles.value.length > 0) {
-    // const track = videoElem.value.textTracks[index];
-    // if (track) track.mode = track.mode === 'showing' ? 'hidden' : 'showing';
-    // console.log(`Subtitle index ${index} currently not supported`);
-    if (index === 'none') subtitles.value.forEach(track => track.mode = 'disabled');
+const useSubtitleTrack = (index: number = -1) => {
+  if (videoElem.value && subtitles.value && subtitles.value.length > 0 && subtitleRenderer.value && config.value) {
+    if (index === -1) subtitleRenderer.value.freeTrack();
     else {
-      subtitles.value.forEach((track, i) => {
-        track.mode = i === index ? 'showing' : 'disabled';
-      });
-    }
-  }
-};
-
-const getTracks = () => {
-  if (videoElem.value) {
-    const textTracks = videoElem.value.textTracks;
-    console.log(textTracks);
-    if (textTracks && textTracks.length > 0) {
-      subtitles.value = Array.from(textTracks);
+      subtitleRenderer.value.setTrackByUrl(`${config.value.http_server}${subtitles.value[index as number].url}`);
+      subtitleRenderer.value.setCurrentTime(videoElem.value.paused, videoElem.value.currentTime);
     }
   }
 };
@@ -139,7 +135,7 @@ const nextVideo = async () => {
     store.setProgress(nextEpisode.value, 0, false);
     router.push({ path: `/watch/${nextEpisode.value.id}`, replace: true });
   }
-}
+};
 
 const changeVolume = (delta: number) => {
   playerVolume.value = [Math.min(Math.max(playerVolume.value[0] + delta, 0), 1)];
@@ -212,13 +208,14 @@ const gamepadInterval = setInterval(() => {
 
 const loadData = async () => {
   void store.$tauri.start();
-  const config = await invoke<IConfig | null>("get_config");
-  if (config) {
+  config.value = await invoke<IConfig | null>("get_config");
+
+  if (config.value) {
     const route = router.currentRoute.value;
     const videoId = route.params.id;
     if (!videoId) router.push({ path: '/browse' });
 
-    const details = await fetch(config.http_server + `/details?id=${videoId}`, {
+    const details = await fetch(config.value.http_server + `/details?id=${videoId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -246,12 +243,31 @@ const loadData = async () => {
         };
 
         if (sourceElem.value && videoElem.value) {
-          sourceElem.value.src = config.http_server + `/video?id=${videoId}`;
+          sourceElem.value.src = config.value.http_server + `/video?id=${videoId}`;
+          videoElem.value.setAttribute('crossorigin', 'anonymous');
           videoElem.value.load();
 
           videoElem.value.onloadedmetadata = async () => {
-            if (!videoElem.value || !videoItem.value) return;
-            getTracks();
+            if (!videoElem.value || !videoItem.value || !config.value) return;
+            const tracksRes = await fetch(config.value.http_server + `/tracks?id=${videoId}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            if (tracksRes.ok) {
+              const tracksData = await tracksRes.json();
+              const tracks = tracksData.tracks as ITracks;
+              if (tracks.subtitles) {
+                subtitles.value = tracks.subtitles;
+                subtitleRenderer.value = new JASSUB({
+                  video: videoElem.value,
+                  subUrl: `${config.value.http_server}${subtitles.value[0].url}`,
+                  workerUrl,
+                  wasmUrl,
+                });
+              }
+            }
             // if (isMobile) await toggleFullscreen(true);
             const lastTime = store.getProgress(videoItem.value);
             videoElem.value.currentTime = lastTime ?? 0;
@@ -266,7 +282,9 @@ const loadData = async () => {
             const currentTime = Math.floor(videoElem.value.currentTime);
             const lastTime = store.getProgress(videoItem.value);
             if (currentTime !== 0 && currentTime >= lastTime && currentTime % 5 === 0) store.setProgress(videoItem.value, currentTime);
-
+            if (subtitles.value && subtitles.value.length > 0 && subtitleRenderer.value && currentTime % 1 === 0) {
+              subtitleRenderer.value.setCurrentTime(videoElem.value.paused, videoElem.value.currentTime);
+            }
             if (videoElem.value.duration - videoElem.value.currentTime <= 30) isEnding.value = true;
             else isEnding.value = false;
           };
@@ -306,10 +324,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-full h-screen flex flex-col justify-center items-center relative" :class="{ 'cursor-none': !showControls }">
-    <video ref="videoElem" class="w-full h-full">
-      <source ref="sourceElem" type="video/mp4" />
-    </video>
+  <div class="w-screen h-screen flex flex-col justify-center items-center relative" :class="{ 'cursor-none': !showControls }">
+    <div class="w-full">
+      <video ref="videoElem" class="w-screen h-screen">
+        <source ref="sourceElem" type="video/mp4" />
+      </video>
+    </div>
     <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 bg-opacity-50">
       <div v-if="showControls" class="flex">
         <ChevronLeft class="cursor-pointer" @click="router.go(-1)" />
@@ -376,17 +396,17 @@ onUnmounted(() => {
               />
               <component :is="playerVolume[0] === 0 ? VolumeX : playerVolume[0] < 0.5 ? Volume1 : Volume2" class="cursor-pointer" @click="() => playerVolume[0] = playerVolume[0] === 0 ? 0.5 : 0" />
             </div>
-            <HoverCard v-if="subtitles.length > 0" v-model:open="isHoveringTracks">
+            <HoverCard v-if="subtitles && subtitles.length > 0" v-model:open="isHoveringTracks">
               <HoverCardTrigger as-child>
                 <MessageSquareText class="cursor-pointer" />
               </HoverCardTrigger>
               <HoverCardContent class="flex flex-col gap-4">
                 <span>{{ $t('pages.watch.subtitles') }}</span>
-                <Button variant="ghost" :key="'none'" @click="() => useSubtitleTrack('none')">
+                <Button variant="ghost" :key="'none'" @click="() => useSubtitleTrack(-1)">
                   {{ $t('pages.watch.track_none') }}
                 </Button>
                 <Button variant="ghost" v-for="(track, index) in subtitles" :key="index" @click="() => useSubtitleTrack(index)">
-                  {{ `${getNameByISO6391(track.language)}${track.language ? `- ${track.language}` : ''}` }}
+                  {{ `${getNameByISO6392B(track.language)}${track.language ? `- ${track.language}` : ''}` }}
                 </Button>
               </HoverCardContent>
             </HoverCard>
