@@ -23,6 +23,8 @@ const props = defineProps<SettingsMenuProps>();
 const i18n = useI18n();
 const store = useStore();
 
+i18n.locale.value = store.locale;
+
 const theme = ref<TColor>('slate');
 
 const config = ref<IConfig | null>(null);
@@ -60,7 +62,6 @@ watch(store.$state, async (value) => {
 });
 
 watch(theme, async (value) => {
-  console.log(value);
   if (value) store.setTheme(value);
 });
 

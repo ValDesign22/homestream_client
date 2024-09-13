@@ -144,6 +144,7 @@ export interface ITrack {
   channel_layout?: string,
   language: string,
   handler_name?: string,
+  default?: boolean,
   url: string,
 }
 

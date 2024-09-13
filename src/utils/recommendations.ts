@@ -36,7 +36,7 @@ export default async function getRecommendations(item: IMovie | ITvShow): Promis
     }))
     .filter(({ similarity }) => similarity > 0)
     .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, 10)
+    .slice(0, 25)
     .map(({ item }) => item);
 
   return recommendations;

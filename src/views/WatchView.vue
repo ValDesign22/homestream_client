@@ -3,7 +3,7 @@ import { TMDBImage } from '@/components/image';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Slider } from '@/components/ui/slider';
-import { IConfig, IEpisode, IMovie, ISeason, ITrack, ITracks, ITvShow } from '@/utils/types';
+import { IConfig, IEpisode, IMovie, ISeason, ITracks, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { useEventListener, useGamepad, useScreenOrientation } from '@vueuse/core';
@@ -16,9 +16,6 @@ import { computed } from 'vue';
 import { getTvShowFromEpisode } from '@/utils/video';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import useStore from '@/lib/stores';
-import JASSUB from 'jassub';
-import workerUrl from 'jassub/dist/jassub-worker.js?url';
-import wasmUrl from 'jassub/dist/jassub-worker.wasm?url';
 
 const router = useRouter();
 const route = useRoute();
@@ -46,12 +43,11 @@ const isUserSliding = ref(false);
 const isHoveringVolume = ref(false);
 const playerVolume = ref([1]);
 // const audioTracks = ref([]); // Here but currently not supported https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/audioTracks#browser_compatibility
-const subtitles = ref<ITrack[]>([]);
+const subtitles = ref<TextTrackList>();
+const currentSubtitle = ref(-1);
 const isHoveringTracks = ref(false);
 const isHoveringSeasons = ref(false);
 const isEnding = ref(false);
-
-const subtitleRenderer = ref<JASSUB | null>(null);
 
 const { isSupported, gamepads } = useGamepad();
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
@@ -98,10 +94,6 @@ const togglePlaying = () => {
     videoElem.value.pause();
     resetControlsTimer();
   }
-
-  if (subtitles.value && subtitles.value.length > 0 && subtitleRenderer.value) {
-    subtitleRenderer.value.setIsPaused(videoElem.value.paused);
-  }
 };
 
 const toggleFullscreen = async (state: boolean) => {
@@ -121,11 +113,13 @@ const toggleFullscreen = async (state: boolean) => {
 };
 
 const useSubtitleTrack = (index: number = -1) => {
-  if (videoElem.value && subtitles.value && subtitles.value.length > 0 && subtitleRenderer.value && config.value) {
-    if (index === -1) subtitleRenderer.value.freeTrack();
-    else {
-      subtitleRenderer.value.setTrackByUrl(`${config.value.http_server}${subtitles.value[index as number].url}`);
-      subtitleRenderer.value.setCurrentTime(videoElem.value.paused, videoElem.value.currentTime);
+  if (videoElem.value && subtitles.value && subtitles.value.length > 0) {
+    for (let i = 0; i < subtitles.value.length; i++) {
+      const track = videoElem.value.textTracks[i];
+      if (index === -1) track.mode = 'disabled';
+      else if (i === index) track.mode = 'showing';
+      else track.mode = 'hidden';
+      currentSubtitle.value = index;
     }
   }
 };
@@ -245,30 +239,36 @@ const loadData = async () => {
         if (sourceElem.value && videoElem.value) {
           sourceElem.value.src = config.value.http_server + `/video?id=${videoId}`;
           videoElem.value.setAttribute('crossorigin', 'anonymous');
+
+          const tracksRes = await fetch(config.value.http_server + `/tracks?id=${videoId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          if (tracksRes.ok) {
+            const tracksData = await tracksRes.json();
+            const tracks = tracksData.tracks as ITracks;
+            if (tracks.subtitles) {
+              for (const subtitle of tracks.subtitles) {
+                const trackElement = document.createElement('track');
+                trackElement.className = 'font-bold text-white';
+                trackElement.src = `${config.value.http_server}${subtitle.url}`;
+                trackElement.label = getNameByISO6392B(subtitle.language);
+                trackElement.srclang = subtitle.language;
+                trackElement.default = subtitle.default ?? false;
+                currentSubtitle.value = subtitle.default ? tracks.subtitles.indexOf(subtitle) : -1;
+                trackElement.kind = 'subtitles';
+                videoElem.value.appendChild(trackElement);
+              }
+              subtitles.value = videoElem.value.textTracks;
+            }
+          }
+
           videoElem.value.load();
 
           videoElem.value.onloadedmetadata = async () => {
-            if (!videoElem.value || !videoItem.value || !config.value) return;
-            const tracksRes = await fetch(config.value.http_server + `/tracks?id=${videoId}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            });
-            if (tracksRes.ok) {
-              const tracksData = await tracksRes.json();
-              const tracks = tracksData.tracks as ITracks;
-              if (tracks.subtitles) {
-                subtitles.value = tracks.subtitles;
-                subtitleRenderer.value = new JASSUB({
-                  video: videoElem.value,
-                  subUrl: `${config.value.http_server}${subtitles.value[0].url}`,
-                  workerUrl,
-                  wasmUrl,
-                });
-              }
-            }
-            // if (isMobile) await toggleFullscreen(true);
+            if (!videoElem.value || !videoItem.value) return;
             const lastTime = store.getProgress(videoItem.value);
             videoElem.value.currentTime = lastTime ?? 0;
             videoElem.value.play();
@@ -280,11 +280,7 @@ const loadData = async () => {
             if (!videoElem.value || isUserSliding.value || !videoItem.value) return;
             progressValue.value = [videoElem.value.currentTime / videoElem.value.duration * 100];
             const currentTime = Math.floor(videoElem.value.currentTime);
-            const lastTime = store.getProgress(videoItem.value);
-            if (currentTime !== 0 && currentTime >= lastTime && currentTime % 5 === 0) store.setProgress(videoItem.value, currentTime);
-            if (subtitles.value && subtitles.value.length > 0 && subtitleRenderer.value && currentTime % 1 === 0) {
-              subtitleRenderer.value.setCurrentTime(videoElem.value.paused, videoElem.value.currentTime);
-            }
+            if (currentTime !== 0 && currentTime % 5 === 0) store.setProgress(videoItem.value, currentTime);
             if (videoElem.value.duration - videoElem.value.currentTime <= 30) isEnding.value = true;
             else isEnding.value = false;
           };
@@ -293,12 +289,6 @@ const loadData = async () => {
             if (!videoElem.value) return;
             playing.value = true;
             startHideControlsTimer();
-          };
-
-          videoElem.value.onended = async () => {
-            if (!videoElem.value || !videoItem.value) return;
-            store.setProgress(videoItem.value, videoElem.value.duration, true);
-            router.push({ path: '/browse' });
           };
         }
       }
@@ -326,7 +316,9 @@ onUnmounted(() => {
 <template>
   <div class="w-screen h-screen flex flex-col justify-center items-center relative" :class="{ 'cursor-none': !showControls }">
     <div class="w-full">
-      <video ref="videoElem" class="w-screen h-screen">
+      <video ref="videoElem" class="w-screen h-screen" :class="{
+        'controls-visible': showControls,
+      }">
         <source ref="sourceElem" type="video/mp4" />
       </video>
     </div>
@@ -402,10 +394,13 @@ onUnmounted(() => {
               </HoverCardTrigger>
               <HoverCardContent class="flex flex-col gap-4">
                 <span>{{ $t('pages.watch.subtitles') }}</span>
-                <Button variant="ghost" :key="'none'" @click="() => useSubtitleTrack(-1)">
+                <Button :variant="currentSubtitle === -1 ? 'outline': 'ghost'" :key="'none'" @click="() => useSubtitleTrack(-1)">
                   {{ $t('pages.watch.track_none') }}
                 </Button>
-                <Button variant="ghost" v-for="(track, index) in subtitles" :key="index" @click="() => useSubtitleTrack(index)">
+                <Button
+                  v-for="(track, index) in subtitles" :key="index" @click="() => useSubtitleTrack(index)"
+                  :variant="currentSubtitle === index ? 'outline': 'ghost'"
+                >
                   {{ `${getNameByISO6392B(track.language)}${track.language ? `- ${track.language}` : ''}` }}
                 </Button>
               </HoverCardContent>
