@@ -132,5 +132,21 @@ export enum ENotificationType {
   Favorites,
 }
 
+export interface ITracks {
+  audios: ITrack[],
+  subtitles: ITrack[],
+}
+
+export interface ITrack {
+  index: number,
+  codec_name?: string,
+  codec_type: string,
+  channel_layout?: string,
+  language: string,
+  handler_name?: string,
+  default?: boolean,
+  url: string,
+}
+
 export const colors = ['slate', 'zinc'] as const;
 export type TColor = typeof colors[number];

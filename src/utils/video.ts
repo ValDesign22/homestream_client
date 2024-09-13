@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { IConfig, IMovie, ITvShow } from "./types";
+import { IConfig, IEpisode, IMovie, ITvShow } from "./types";
 
 async function fetchStores(): Promise<Record<string, IMovie[] | ITvShow[]>> {
   const config = await invoke<IConfig | null>("get_config");
@@ -49,4 +49,24 @@ export async function getMovieFromId(movie_id: number): Promise<IMovie | null> {
   }
 
   return null;
+}
+
+export async function getTvShowEpisodes(tvshow_id: number): Promise<IEpisode[]> {
+  const stores = await fetchStores();
+  if (!stores) return [];
+
+  const episodes: IEpisode[] = [];
+
+  for (const store of Object.values(stores)) {
+    if (isTvShowStore(store)) {
+      const tvshow = store.find((item) => item.id === tvshow_id);
+      if (tvshow) {
+        for (const season of tvshow.seasons) {
+          episodes.push(...season.episodes);
+        }
+      }
+    }
+  }
+
+  return episodes;
 }

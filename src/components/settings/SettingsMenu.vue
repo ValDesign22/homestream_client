@@ -23,6 +23,8 @@ const props = defineProps<SettingsMenuProps>();
 const i18n = useI18n();
 const store = useStore();
 
+i18n.locale.value = store.locale;
+
 const theme = ref<TColor>('slate');
 
 const config = ref<IConfig | null>(null);
@@ -35,7 +37,7 @@ const getAppVersion = async () => {
 };
 
 // Server
-const serverVersion = ref<{ updateAvailable: boolean, latestVersion: string } | null>(null);
+const serverVersion = ref<{ updateAvailable: boolean, version?: string, latestVersion: string } | null>(null);
 
 const getServerVersion = async () => {
   if (!config.value) return;
@@ -60,7 +62,6 @@ watch(store.$state, async (value) => {
 });
 
 watch(theme, async (value) => {
-  console.log(value);
   if (value) store.setTheme(value);
 });
 
@@ -149,7 +150,7 @@ onMounted(async () => {
             <h2 class="text-xl font-bold">{{ $t('settings.server.title') }}</h2>
             <div v-if="serverVersion" class="flex items-center space-x-4">
               <span>{{ $t('settings.server.serverVersion') }}</span>
-              <span>{{ serverVersion.latestVersion }}</span>
+              <span>{{ serverVersion.version ?? serverVersion.latestVersion }}</span>
               <Button v-if="serverVersion.updateAvailable" @click="updateServer">
                 {{ $t('settings.server.update') }}
               </Button>

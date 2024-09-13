@@ -30,6 +30,7 @@ const store = useStore();
 const profile = ref<IProfile | null>(null);
 
 const item = ref<IMovie | ITvShow | null>(null);
+const progressItem = ref<{ id: number; progress: number } | null>(null);
 const isInFavorites = ref(false);
 const isInWatchlist = ref(false);
 const videoItem = ref<IMovie | IEpisode | null>(null);
@@ -53,6 +54,33 @@ const calculateProgress = (id: number, duration: number) => {
   if (!item) return 0;
   const minutes = Math.floor(item.progress / 60);
   return Math.floor((minutes / duration) * 100);
+};
+
+const getProgress = (): number => {
+  if (!profile.value || !item.value) return 0;
+  const isTvShow = 'seasons' in item.value;
+  if (isTvShow) {
+    const tvShow = item.value as ITvShow;
+    const lastWatchedEpisode = tvShow.seasons.reduce((acc, season) => {
+      const lastWatched = season.episodes.reduce((acc, episode) => {
+        const progress = profile.value!.history.find((item) => item.id === episode.id);
+        if (progress && progress.id > acc.id) return {
+          id: progress.id,
+          progress: calculateProgress(progress.id, episode.runtime),
+        };
+        return acc;
+      }, { id: 0, progress: 0 });
+      if (lastWatched.id > acc.id) return lastWatched;
+      return acc;
+    }, { id: 0, progress: 0 });
+    progressItem.value = lastWatchedEpisode;
+    return lastWatchedEpisode.progress;
+  } else {
+    const movie = item.value as IMovie;
+    const progress = profile.value.history.find((item) => item.id === movie.id);
+    if (progress) return calculateProgress(progress.id, movie.runtime);
+  }
+  return 0;
 };
 
 const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
@@ -125,6 +153,7 @@ const loadData = async () => {
     if (details.ok) {
       const response = await details.json();
       item.value = response;
+      progressItem.value = { id: response.id, progress: getProgress() };
 
       if (item.value) {
         isInFavorites.value = store.isInFavorites(item.value);
@@ -178,14 +207,14 @@ watch(route, loadData);
 
 watch(isInFavorites, async () => {
   if (!item.value) return;
-  if (isInFavorites.value) await store.addToFavorites(item.value);
-  else await store.removeFromFavorites(item.value);
+  if (isInFavorites.value) store.addToFavorites(item.value);
+  else store.removeFromFavorites(item.value);
 });
 
 watch(isInWatchlist, async () => {
   if (!item.value) return;
-  if (isInWatchlist.value) await store.addToWatchlist(item.value);
-  else await store.removeFromWatchlist(item.value);
+  if (isInWatchlist.value) store.addToWatchlist(item.value);
+  else store.removeFromWatchlist(item.value);
 });
 
 onUnmounted(() => clearInterval(interval));
@@ -268,6 +297,13 @@ onUnmounted(() => clearInterval(interval));
               <EllipsisVertical />
             </DropdownMenuTrigger>
           </DropdownMenu>
+        </div>
+        <div v-if="videoItem" class="flex gap-4 items-center max-w-2xl">
+          <Progress
+            v-if="progressItem && progressItem.id === item.id && progressItem.progress > 0"
+            class="h-2"
+            :modelValue="progressItem.progress"
+          />
         </div>
       </div>
     </div>
