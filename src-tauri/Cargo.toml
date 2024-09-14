@@ -1,6 +1,6 @@
 [package]
 name = "homestream"
-version = "1.0.2"
+version = "1.0.3"
 description = "HomeStream"
 authors = ["you"]
 edition = "2021"

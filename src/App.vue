@@ -25,7 +25,6 @@ onBeforeMount(async () => {
     else console.log("No updates found");
   }
 
-  console.log("Checking if the app is registered");
   const config = await invoke<IConfig | null>("get_config");
   if (!config) return router.push({ path: "/register" });
 });
