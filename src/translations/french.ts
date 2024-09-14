@@ -32,7 +32,9 @@ export default {
     },
     details: {
       watch: 'Regarder',
+      continue: 'Continuer à regarder',
       runtime: '{runtime} minutes',
+      time_left: 'Il reste {time} minutes',
       watchlist: {
         add: 'Ajouter à la liste de lecture',
         remove: 'Retirer de la liste de lecture',

@@ -31,6 +31,7 @@ const profile = ref<IProfile | null>(null);
 
 const item = ref<IMovie | ITvShow | null>(null);
 const progressItem = ref<{ id: number; progress: number } | null>(null);
+const lastWatchedItem = ref<IMovie | IEpisode | null>(null);
 const isInFavorites = ref(false);
 const isInWatchlist = ref(false);
 const videoItem = ref<IMovie | IEpisode | null>(null);
@@ -58,16 +59,19 @@ const calculateProgress = (id: number, duration: number) => {
 
 const getProgress = (): number => {
   if (!profile.value || !item.value) return 0;
-  const isTvShow = 'seasons' in item.value;
-  if (isTvShow) {
+  lastWatchedItem.value = 'seasons' in item.value ? item.value.seasons[0].episodes[0] : item.value; 
+  if ('seasons' in item.value) {
     const tvShow = item.value as ITvShow;
     const lastWatchedEpisode = tvShow.seasons.reduce((acc, season) => {
       const lastWatched = season.episodes.reduce((acc, episode) => {
         const progress = profile.value!.history.find((item) => item.id === episode.id);
-        if (progress && progress.id > acc.id) return {
-          id: progress.id,
-          progress: calculateProgress(progress.id, episode.runtime),
-        };
+        if (progress && progress.id > acc.id) {
+          lastWatchedItem.value = episode;
+          return {
+            id: progress.id,
+            progress: calculateProgress(episode.id, episode.runtime),
+          };
+        }
         return acc;
       }, { id: 0, progress: 0 });
       if (lastWatched.id > acc.id) return lastWatched;
@@ -78,7 +82,10 @@ const getProgress = (): number => {
   } else {
     const movie = item.value as IMovie;
     const progress = profile.value.history.find((item) => item.id === movie.id);
-    if (progress) return calculateProgress(progress.id, movie.runtime);
+    if (progress) {
+      lastWatchedItem.value = movie;
+      return calculateProgress(movie.id, movie.runtime);
+    }
   }
   return 0;
 };
@@ -106,7 +113,7 @@ onStateChange((event) => {
   if (videoError.value) return;
   if (event.data === PlayerState.PLAYING) videoPlaying.value = true;
   if (event.data === PlayerState.ENDED) {
-    videoPlaying.value = false
+    videoPlaying.value = false;
     videoKey.value = '';
   };
   if (event.data === PlayerState.UNSTARTED) videoPlaying.value = false;
@@ -154,6 +161,8 @@ const loadData = async () => {
       const response = await details.json();
       item.value = response;
       progressItem.value = { id: response.id, progress: getProgress() };
+      console.log(progressItem.value);
+      console.log(lastWatchedItem.value);
 
       if (item.value) {
         isInFavorites.value = store.isInFavorites(item.value);
@@ -169,18 +178,13 @@ const loadData = async () => {
                 'Content-Type': 'application/json',
               },
             });
-            if (collectionResponse.ok) {
-              const response = await collectionResponse.json();
-              collection.value = response;
-            }
+            if (collectionResponse.ok) collection.value = await collectionResponse.json();
           }
 
           videoItem.value = item.value;
         } else {
           const tvshow = item.value as ITvShow;
-          if (tvshow.seasons.length > 0) {
-            videoItem.value = tvshow.seasons[0].episodes[0];
-          }
+          if (tvshow.seasons.length > 0) videoItem.value = tvshow.seasons[0].episodes[0];
         }
 
         const recommendationsResponse = await getRecommendations(item.value);
@@ -189,10 +193,7 @@ const loadData = async () => {
         const previewVideoKey = await fetch(`${config.http_server}/preview?id=${item.value.id}`, {
           method: 'GET',
         });
-        if (previewVideoKey.ok) {
-          const response = await previewVideoKey.text();
-          videoKey.value = response || '';
-        }
+        if (previewVideoKey.ok) videoKey.value = await previewVideoKey.text() || '';
       }
       else router.push({ path: '/browse' });
     }
@@ -250,16 +251,14 @@ onUnmounted(() => clearInterval(interval));
         <span v-if="item.overview.length" class="max-w-2xl" @click="showFullOverview = !showFullOverview">
           {{ showFullOverview ? item.overview : item.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
         </span>
-        <div class="flex gap-4 items-center" v-if="videoItem">
-          <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${videoItem!.id}` })">
+        <div class="flex gap-4 items-center" v-if="videoItem || lastWatchedItem">
+          <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${lastWatchedItem ? lastWatchedItem.id : videoItem!.id}` })">
             <PlayIcon class="w-6 h-6" />
-            <span>
-              {{ $t('pages.details.watch') }}
-            </span>
+            <span v-if="lastWatchedItem && progressItem">{{ $t('pages.details.continue') }}</span>
+            <span v-else>{{ $t('pages.details.watch') }}</span>
           </Button>
-          <span>
-            {{ $t('pages.details.runtime', { runtime: videoItem.runtime }) }}
-          </span>
+          <span v-if="lastWatchedItem && progressItem">{{ $t('pages.details.time_left', { time: lastWatchedItem.runtime - (lastWatchedItem.runtime * progressItem.progress / 100) }) }}</span>
+          <span v-else>{{ $t('pages.details.runtime', { runtime: videoItem!.runtime }) }}</span>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger as-child>
@@ -300,7 +299,7 @@ onUnmounted(() => clearInterval(interval));
         </div>
         <div v-if="videoItem" class="flex gap-4 items-center max-w-2xl">
           <Progress
-            v-if="progressItem && progressItem.id === item.id && progressItem.progress > 0"
+            v-if="lastWatchedItem && progressItem && progressItem.id === item.id && progressItem.progress > 0"
             class="h-2"
             :modelValue="progressItem.progress"
           />

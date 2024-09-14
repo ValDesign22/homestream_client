@@ -32,7 +32,9 @@ export default {
     },
     details: {
       watch: 'Watch',
+      continue: 'Continue watching',
       runtime: '{runtime} minutes',
+      time_left: '{time} minutes left',
       watchlist: {
         add: 'Add to watchlist',
         remove: 'Remove from watchlist',

@@ -290,6 +290,15 @@ const loadData = async () => {
             playing.value = true;
             startHideControlsTimer();
           };
+
+          videoElem.value.onended = async () => {
+            if (!videoElem.value || !videoItem.value) return;
+            store.setProgress(videoItem.value, videoElem.value.duration, true);
+            if (nextEpisode.value) {
+              store.setProgress(nextEpisode.value, 0, false);
+              router.push({ path: `/watch/${nextEpisode.value.id}`, replace: true });
+            } else router.push({ path: '/browse' });
+          };
         }
       }
     }
