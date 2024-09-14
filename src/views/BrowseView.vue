@@ -120,10 +120,7 @@ async function selectRandomTopRated(store: Record<string, IMovie[] | ITvShow[]>,
   const previewVideoKey = await fetch(`${http_server}/preview?id=${randomItem.id}`, {
     method: 'GET',
   });
-  if (previewVideoKey.ok) {
-    const response = await previewVideoKey.text();
-    videoKey.value = response || '';
-  }
+  if (previewVideoKey.ok) videoKey.value = await previewVideoKey.text() || '';
 
   return randomItem;
 }
