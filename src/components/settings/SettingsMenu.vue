@@ -23,8 +23,6 @@ const props = defineProps<SettingsMenuProps>();
 const i18n = useI18n();
 const store = useStore();
 
-i18n.locale.value = store.locale;
-
 const theme = ref<TColor>('slate');
 
 const config = ref<IConfig | null>(null);
@@ -32,9 +30,7 @@ const config = ref<IConfig | null>(null);
 // General
 const version = ref<string | null>(null);
 
-const getAppVersion = async () => {
-  version.value = await getVersion();
-};
+const getAppVersion = async () => version.value = await getVersion();
 
 // Server
 const serverVersion = ref<{ updateAvailable: boolean, version?: string, latestVersion: string } | null>(null);
@@ -67,14 +63,13 @@ watch(theme, async (value) => {
 
 onMounted(async () => {
   void store.$tauri.start();
-  const configRes = await invoke<IConfig | null>("get_config");
-  if (configRes) {
-    config.value = configRes;
-
+  config.value = await invoke<IConfig | null>("get_config");
+  if (config.value) {
     await getAppVersion();
     await getServerVersion();
   }
 
+  i18n.locale.value = store.locale;
   theme.value = store.theme;
 });
 </script>
