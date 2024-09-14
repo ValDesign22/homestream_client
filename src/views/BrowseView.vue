@@ -170,8 +170,14 @@ const gamepadInterval = setInterval(() => {
     currentIndex = currentIndex === focusableElements.length - 1 ? 0 : currentIndex + 1;
     (focusableElements[currentIndex] as HTMLElement).focus();
   }
-  if (gamepad.value.axes[3] < -0.5) window.scrollBy(0, -100);
-  if (gamepad.value.axes[3] > 0.5) window.scrollBy(0, 100);
+  if (gamepad.value.axes[3] < -0.5) window.scrollBy({
+    top: -100,
+    behavior: 'smooth',
+  });
+  if (gamepad.value.axes[3] > 0.5) window.scrollBy({
+    top: 100,
+    behavior: 'smooth',
+  });
   if (gamepad.value.buttons[0].pressed) (focusedElement as HTMLElement).click();
 }, 200);
 
