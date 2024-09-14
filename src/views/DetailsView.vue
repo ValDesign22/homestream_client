@@ -161,8 +161,6 @@ const loadData = async () => {
       const response = await details.json();
       item.value = response;
       progressItem.value = { id: response.id, progress: getProgress() };
-      console.log(progressItem.value);
-      console.log(lastWatchedItem.value);
 
       if (item.value) {
         isInFavorites.value = store.isInFavorites(item.value);
@@ -254,10 +252,10 @@ onUnmounted(() => clearInterval(interval));
         <div class="flex gap-4 items-center" v-if="videoItem || lastWatchedItem">
           <Button class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${lastWatchedItem ? lastWatchedItem.id : videoItem!.id}` })">
             <PlayIcon class="w-6 h-6" />
-            <span v-if="lastWatchedItem && progressItem">{{ $t('pages.details.continue') }}</span>
+            <span v-if="lastWatchedItem && progressItem && progressItem.id === item.id && progressItem.progress > 0">{{ $t('pages.details.continue') }}</span>
             <span v-else>{{ $t('pages.details.watch') }}</span>
           </Button>
-          <span v-if="lastWatchedItem && progressItem">{{ $t('pages.details.time_left', { time: lastWatchedItem.runtime - (lastWatchedItem.runtime * progressItem.progress / 100) }) }}</span>
+          <span v-if="lastWatchedItem && progressItem && progressItem.id === item.id && progressItem.progress > 0">{{ $t('pages.details.time_left', { time: lastWatchedItem.runtime - (lastWatchedItem.runtime * progressItem.progress / 100) }) }}</span>
           <span v-else>{{ $t('pages.details.runtime', { runtime: videoItem!.runtime }) }}</span>
           <TooltipProvider>
             <Tooltip>
