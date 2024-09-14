@@ -76,12 +76,16 @@ const resetControlsTimer = () => {
   startHideControlsTimer();
 }
 
-const backward = () => {
-  if (videoElem.value) videoElem.value.currentTime -= 10;
-};
+// const backward = () => {
+//   if (videoElem.value) videoElem.value.currentTime -= 10;
+// };
 
-const forward = () => {
-  if (videoElem.value) videoElem.value.currentTime += 10;
+// const forward = () => {
+//   if (videoElem.value) videoElem.value.currentTime += 10;
+// };
+
+const changeProgress = (delta: number) => {
+  if (videoElem.value) videoElem.value.currentTime += delta;
 };
 
 const togglePlaying = () => {
@@ -154,8 +158,8 @@ useEventListener(document, 'keydown', (event) => {
   if (event.key === 'm') playerVolume.value = [playerVolume.value[0] === 0 ? 1 : 0];
   if (event.key === 'f') toggleFullscreen(!isFullscreen.value);
   if (event.key === 'Escape') toggleFullscreen(false);
-  if (event.key === 'ArrowLeft' || event.key === 'j') backward();
-  if (event.key === 'ArrowRight' || event.key === 'l') forward();
+  if (event.key === 'ArrowLeft' || event.key === 'j') changeProgress(-10);
+  if (event.key === 'ArrowRight' || event.key === 'l') changeProgress(10);
   if (event.key === 'ArrowUp') changeVolume(0.1);
   if (event.key === 'ArrowDown') changeVolume(-0.1);
   if (event.key === '0') videoElem.value.currentTime = 0;
@@ -185,8 +189,8 @@ const gamepadInterval = setInterval(() => {
   if (gamepad.value.buttons[0].pressed) togglePlaying(); // A or Cross
   if (gamepad.value.buttons[1].pressed) playerVolume.value = [playerVolume.value[0] === 0 ? 1 : 0]; // B or Circle
   if (gamepad.value.buttons[3].pressed) toggleFullscreen(!isFullscreen.value); // Y or Triangle
-  if (gamepad.value.buttons[4].pressed || gamepad.value.axes[0] < -0.5) backward(); // L1 or L Stick Left
-  if (gamepad.value.buttons[5].pressed || gamepad.value.axes[0] > 0.5) forward(); // R1 or L Stick Right
+  if (gamepad.value.buttons[4].pressed || gamepad.value.axes[0] < -0.5) changeProgress(-10); // L1 or L Stick Left
+  if (gamepad.value.buttons[5].pressed || gamepad.value.axes[0] > 0.5) changeProgress(10); // R1 or L Stick Right
   const currentVideoTime = videoElem.value.currentTime;
   if (gamepad.value.buttons[6].pressed) { // L2
     const percentageBackward = Math.floor(currentVideoTime / videoElem.value.duration * 10) / 10;
@@ -377,9 +381,9 @@ onUnmounted(() => {
             <span>{{ formatTime(videoElem.currentTime) }} / {{ formatTime(videoElem.duration) }}</span>
           </div>
           <div class="absolute left-1/2 transform -translate-x-1/2 flex gap-4">
-            <RotateCcw @click="backward" class="cursor-pointer" />
+            <RotateCcw @click="changeProgress(-10);" class="cursor-pointer" />
             <component :is="playing ? Pause : Play" class="cursor-pointer" @click="togglePlaying" />
-            <RotateCw @click="forward" class="cursor-pointer" />
+            <RotateCw @click="changeProgress(-10);" class="cursor-pointer" />
           </div>
           <div class="flex gap-4">
             <div
