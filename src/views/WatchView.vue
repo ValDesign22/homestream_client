@@ -331,7 +331,7 @@ onUnmounted(() => {
         <source ref="sourceElem" type="video/mp4" />
       </video>
     </div>
-    <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 bg-opacity-50">
+    <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 transition-colors" :class="{ 'bg-background/25': showControls }">
       <div v-if="showControls" class="flex">
         <ChevronLeft class="cursor-pointer" @click="router.go(-1)" />
       </div>
@@ -395,7 +395,7 @@ onUnmounted(() => {
                 :max="1"
                 :step="0.01"
               />
-              <component :is="playerVolume[0] === 0 ? VolumeX : playerVolume[0] < 0.5 ? Volume1 : Volume2" class="cursor-pointer" @click="() => playerVolume[0] = playerVolume[0] === 0 ? 0.5 : 0" />
+              <component :is="playerVolume[0] === 0 ? VolumeX : playerVolume[0] < 0.5 ? Volume1 : Volume2" class="cursor-pointer" @click="() => playerVolume = [playerVolume[0] === 0 ? 0.5 : 0]" />
             </div>
             <HoverCard v-if="subtitles && subtitles.length > 0" v-model:open="isHoveringTracks">
               <HoverCardTrigger as-child>
@@ -438,16 +438,18 @@ onUnmounted(() => {
                     @click="() => router.push({ path: `/watch/${episode.id}`, replace: true })"
                   >
                     <span>{{ episode.episode_number }}. {{ episode.title }}</span>
-                    <div class="flex gap-4">
+                    <div class="flex gap-4 items-start">
                       <TMDBImage
                         v-if="episode.still_path"
                         :image="episode.still_path"
                         :alt="episode.title"
                         type="still"
                         size="w300"
-                        class="w-48 h-auto object-cover"
+                        class="w-48 h-auto object-cover flex-shrink-0"
                       />
-                      <span>{{ episode.overview }}</span>
+                      <span class="flex-1">
+                        {{ episode.overview }}
+                      </span>
                     </div>
                   </div>
                 </ScrollArea>
