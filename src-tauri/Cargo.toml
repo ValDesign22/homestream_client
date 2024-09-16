@@ -1,6 +1,6 @@
 [package]
 name = "homestream"
-version = "1.0.3"
+version = "1.0.4"
 description = "HomeStream"
 authors = ["you"]
 edition = "2021"
@@ -24,6 +24,7 @@ tauri-plugin-fs = "2.0.0-rc.5"
 tauri-plugin-pinia = { version = "0.5", features = ["async-pinia"] }
 tauri-plugin-store = "2.0.0-rc.3"
 tauri-plugin-notification = "2.0.0-rc.5"
+tauri-plugin-process = "2.0.0-rc.1"
 
 [profile.dev]
 incremental = true

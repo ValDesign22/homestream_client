@@ -90,6 +90,8 @@ export default {
     general: {
       title: 'Général',
       version: 'Version :',
+      update: 'Mettre à jour',
+      restart: 'Redémarrer',
     },
     appearance: {
       title: 'Apparence',
