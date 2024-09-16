@@ -220,8 +220,12 @@ const loadData = async () => {
       },
     });
     if (details.ok) {
-      const video = await details.json();
-      videoItem.value = video;
+      videoItem.value = await details.json();
+
+      if (!isMobile) {
+        const appwindow = getCurrentWindow();
+        isFullscreen.value = await appwindow.isFullscreen();
+      }
 
       if (videoItem.value) {
         if ('logo_path' in videoItem.value) movieLogo.value = videoItem.value.logo_path;
