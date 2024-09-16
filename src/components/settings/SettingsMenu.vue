@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { useI18n } from 'vue-i18n';
 import useStore from '@/lib/stores';
 import { getVersion } from '@tauri-apps/api/app';
+import { check, Update } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
 
 interface SettingsMenuProps {
   opened: boolean;
@@ -23,17 +25,43 @@ const props = defineProps<SettingsMenuProps>();
 const i18n = useI18n();
 const store = useStore();
 
-i18n.locale.value = store.locale;
-
 const theme = ref<TColor>('slate');
+
 
 const config = ref<IConfig | null>(null);
 
 // General
 const version = ref<string | null>(null);
+const updateAvailable = ref<boolean>(false);
+const nextVersion = ref<string | null>(null);
+const updateContent = ref<Update | null>(null);
+const installSize = ref<number>(0);
+const updateProgress = ref<number>(0);
+const downloadFinished = ref<boolean>(false);
 
-const getAppVersion = async () => {
-  version.value = await getVersion();
+const getAppVersion = async () => version.value = await getVersion();
+
+const downloadUpdate = async () => {
+  if (!updateContent.value) return;
+
+  await updateContent.value.downloadAndInstall((event) => {
+    switch (event.event) {
+      case 'Started':
+        installSize.value = event.data.contentLength!;
+        console.log(`Started downloading update with size ${event.data.contentLength} bytes`);
+        break;
+      case 'Progress':
+        updateProgress.value += event.data.chunkLength;
+        console.log(`Downloaded ${event.data.chunkLength} bytes out of ${installSize.value}`);
+        break;
+      case 'Finished':
+        downloadFinished.value = true;
+        console.log('Download finished');
+        break;
+    }
+  });
+
+  console.log('Update installed');
 };
 
 // Server
@@ -67,14 +95,22 @@ watch(theme, async (value) => {
 
 onMounted(async () => {
   void store.$tauri.start();
-  const configRes = await invoke<IConfig | null>("get_config");
-  if (configRes) {
-    config.value = configRes;
 
+  if (!import.meta.env.DEV) {
+    const update = await check();
+    if (update) {
+      updateAvailable.value = true;
+      nextVersion.value = update.version;
+    }
+  }
+
+  config.value = await invoke<IConfig | null>("get_config");
+  if (config.value) {
     await getAppVersion();
     await getServerVersion();
   }
 
+  i18n.locale.value = store.locale;
   theme.value = store.theme;
 });
 </script>
@@ -107,6 +143,12 @@ onMounted(async () => {
             <div class="flex items-center space-x-4">
               <span>{{ $t('settings.general.version') }}</span>
               <span>{{ version }}</span>
+              <Button v-if="updateAvailable && !downloadFinished" @click="downloadUpdate">
+                {{ $t('settings.general.update') }}
+              </Button>
+              <Button v-if="downloadFinished" @click="async () => await relaunch()">
+                {{ $t('settings.general.restart') }}
+              </Button>
             </div>
           </div>
         </TabsContent>

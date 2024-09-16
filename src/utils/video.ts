@@ -61,9 +61,7 @@ export async function getTvShowEpisodes(tvshow_id: number): Promise<IEpisode[]> 
     if (isTvShowStore(store)) {
       const tvshow = store.find((item) => item.id === tvshow_id);
       if (tvshow) {
-        for (const season of tvshow.seasons) {
-          episodes.push(...season.episodes);
-        }
+        for (const season of tvshow.seasons) episodes.push(...season.episodes);
       }
     }
   }

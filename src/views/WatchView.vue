@@ -3,7 +3,7 @@ import { TMDBImage } from '@/components/image';
 import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Slider } from '@/components/ui/slider';
-import { IConfig, IEpisode, IMovie, ISeason, ITracks, ITvShow } from '@/utils/types';
+import { IConfig, IEpisode, IMovie, ISeason, ITrack, ITracks, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { useEventListener, useGamepad, useScreenOrientation } from '@vueuse/core';
@@ -16,6 +16,9 @@ import { computed } from 'vue';
 import { getTvShowFromEpisode } from '@/utils/video';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import useStore from '@/lib/stores';
+import JASSUB from 'jassub';
+import workerUrl from 'jassub/dist/jassub-worker.js?url';
+import wasmUrl from 'jassub/dist/jassub-worker.wasm?url';
 
 const router = useRouter();
 const route = useRoute();
@@ -43,11 +46,12 @@ const isUserSliding = ref(false);
 const isHoveringVolume = ref(false);
 const playerVolume = ref([1]);
 // const audioTracks = ref([]); // Here but currently not supported https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/audioTracks#browser_compatibility
-const subtitles = ref<TextTrackList>();
+const subtitles = ref<ITrack[]>([]);
 const currentSubtitle = ref(-1);
 const isHoveringTracks = ref(false);
 const isHoveringSeasons = ref(false);
 const isEnding = ref(false);
+const jassubRenderer = ref<JASSUB | null>(null);
 
 const { isSupported, gamepads } = useGamepad();
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
@@ -76,12 +80,8 @@ const resetControlsTimer = () => {
   startHideControlsTimer();
 }
 
-const backward = () => {
-  if (videoElem.value) videoElem.value.currentTime -= 10;
-};
-
-const forward = () => {
-  if (videoElem.value) videoElem.value.currentTime += 10;
+const changeProgress = (delta: number) => {
+  if (videoElem.value) videoElem.value.currentTime += delta;
 };
 
 const togglePlaying = () => {
@@ -113,14 +113,31 @@ const toggleFullscreen = async (state: boolean) => {
 };
 
 const useSubtitleTrack = (index: number = -1) => {
-  if (videoElem.value && subtitles.value && subtitles.value.length > 0) {
+  if (config.value && videoElem.value && subtitles.value && subtitles.value.length > 0) {
     for (let i = 0; i < subtitles.value.length; i++) {
-      const track = videoElem.value.textTracks[i];
-      if (index === -1) track.mode = 'disabled';
-      else if (i === index) track.mode = 'showing';
-      else track.mode = 'hidden';
-      currentSubtitle.value = index;
+      const track = subtitles.value[i];
+      const trackElem = videoElem.value.textTracks[i];
+      if (index === -1) {
+        if (jassubRenderer.value) jassubRenderer.value.freeTrack();
+        else trackElem.mode = 'disabled';
+      }
+      else if (i === index) {
+        if (track.codec_name && track.codec_name === 'ass') {
+          if (!jassubRenderer.value) jassubRenderer.value = new JASSUB({
+            video: videoElem.value,
+            subUrl: `${config.value.http_server}${track.url}`,
+            workerUrl,
+            wasmUrl,
+          });
+          else jassubRenderer.value.setTrackByUrl(`${config.value.http_server}${track.url}`);
+        } else trackElem.mode = 'showing';
+      }
+      else {
+        if (jassubRenderer.value) jassubRenderer.value.freeTrack();
+        else trackElem.mode = 'hidden';
+      }
     }
+    currentSubtitle.value = index;
   }
 };
 
@@ -154,8 +171,8 @@ useEventListener(document, 'keydown', (event) => {
   if (event.key === 'm') playerVolume.value = [playerVolume.value[0] === 0 ? 1 : 0];
   if (event.key === 'f') toggleFullscreen(!isFullscreen.value);
   if (event.key === 'Escape') toggleFullscreen(false);
-  if (event.key === 'ArrowLeft' || event.key === 'j') backward();
-  if (event.key === 'ArrowRight' || event.key === 'l') forward();
+  if (event.key === 'ArrowLeft' || event.key === 'j') changeProgress(-10);
+  if (event.key === 'ArrowRight' || event.key === 'l') changeProgress(10);
   if (event.key === 'ArrowUp') changeVolume(0.1);
   if (event.key === 'ArrowDown') changeVolume(-0.1);
   if (event.key === '0') videoElem.value.currentTime = 0;
@@ -185,8 +202,8 @@ const gamepadInterval = setInterval(() => {
   if (gamepad.value.buttons[0].pressed) togglePlaying(); // A or Cross
   if (gamepad.value.buttons[1].pressed) playerVolume.value = [playerVolume.value[0] === 0 ? 1 : 0]; // B or Circle
   if (gamepad.value.buttons[3].pressed) toggleFullscreen(!isFullscreen.value); // Y or Triangle
-  if (gamepad.value.buttons[4].pressed || gamepad.value.axes[0] < -0.5) backward(); // L1 or L Stick Left
-  if (gamepad.value.buttons[5].pressed || gamepad.value.axes[0] > 0.5) forward(); // R1 or L Stick Right
+  if (gamepad.value.buttons[4].pressed || gamepad.value.axes[0] < -0.5) changeProgress(-10); // L1 or L Stick Left
+  if (gamepad.value.buttons[5].pressed || gamepad.value.axes[0] > 0.5) changeProgress(10); // R1 or L Stick Right
   const currentVideoTime = videoElem.value.currentTime;
   if (gamepad.value.buttons[6].pressed) { // L2
     const percentageBackward = Math.floor(currentVideoTime / videoElem.value.duration * 10) / 10;
@@ -216,8 +233,12 @@ const loadData = async () => {
       },
     });
     if (details.ok) {
-      const video = await details.json();
-      videoItem.value = video;
+      videoItem.value = await details.json();
+
+      if (!isMobile) {
+        const appwindow = getCurrentWindow();
+        isFullscreen.value = await appwindow.isFullscreen();
+      }
 
       if (videoItem.value) {
         if ('logo_path' in videoItem.value) movieLogo.value = videoItem.value.logo_path;
@@ -251,6 +272,16 @@ const loadData = async () => {
             const tracks = tracksData.tracks as ITracks;
             if (tracks.subtitles) {
               for (const subtitle of tracks.subtitles) {
+                if (subtitle.codec_name && subtitle.codec_name === 'ass') {
+                  if (!jassubRenderer.value) jassubRenderer.value = new JASSUB({
+                    video: videoElem.value,
+                    subUrl: `${config.value.http_server}${subtitle.url}`,
+                    workerUrl,
+                    wasmUrl,
+                  });
+                  else jassubRenderer.value.setTrackByUrl(`${config.value.http_server}${subtitle.url}`);
+                }
+
                 const trackElement = document.createElement('track');
                 trackElement.className = 'font-bold text-white';
                 trackElement.src = `${config.value.http_server}${subtitle.url}`;
@@ -260,8 +291,10 @@ const loadData = async () => {
                 currentSubtitle.value = subtitle.default ? tracks.subtitles.indexOf(subtitle) : -1;
                 trackElement.kind = 'subtitles';
                 videoElem.value.appendChild(trackElement);
+
+                currentSubtitle.value = tracks.subtitles.findIndex(sub => sub.default);
               }
-              subtitles.value = videoElem.value.textTracks;
+              subtitles.value = tracks.subtitles;
             }
           }
 
@@ -316,6 +349,7 @@ onUnmounted(() => {
     videoElem.value.pause();
     videoElem.value.src = '';
     videoElem.value.load();
+    if (jassubRenderer.value) jassubRenderer.value.destroy();
   }
   toggleFullscreen(false);
   clearInterval(gamepadInterval);
@@ -323,15 +357,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-screen h-screen flex flex-col justify-center items-center relative" :class="{ 'cursor-none': !showControls }">
+  <div class="w-screen h-screen flex flex-col justify-center items-center relative overflow-hidden" :class="{ 'cursor-none': !showControls }">
     <div class="w-full">
-      <video ref="videoElem" class="w-screen h-screen" :class="{
-        'controls-visible': showControls,
-      }">
+      <video ref="videoElem" class="w-screen h-screen">
         <source ref="sourceElem" type="video/mp4" />
       </video>
     </div>
-    <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 bg-opacity-50">
+    <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 transition-colors" :class="{ 'bg-background/25': showControls }">
       <div v-if="showControls" class="flex">
         <ChevronLeft class="cursor-pointer" @click="router.go(-1)" />
       </div>
@@ -377,9 +409,9 @@ onUnmounted(() => {
             <span>{{ formatTime(videoElem.currentTime) }} / {{ formatTime(videoElem.duration) }}</span>
           </div>
           <div class="absolute left-1/2 transform -translate-x-1/2 flex gap-4">
-            <RotateCcw @click="backward" class="cursor-pointer" />
+            <RotateCcw @click="changeProgress(-10);" class="cursor-pointer" />
             <component :is="playing ? Pause : Play" class="cursor-pointer" @click="togglePlaying" />
-            <RotateCw @click="forward" class="cursor-pointer" />
+            <RotateCw @click="changeProgress(-10);" class="cursor-pointer" />
           </div>
           <div class="flex gap-4">
             <div
@@ -395,7 +427,7 @@ onUnmounted(() => {
                 :max="1"
                 :step="0.01"
               />
-              <component :is="playerVolume[0] === 0 ? VolumeX : playerVolume[0] < 0.5 ? Volume1 : Volume2" class="cursor-pointer" @click="() => playerVolume[0] = playerVolume[0] === 0 ? 0.5 : 0" />
+              <component :is="playerVolume[0] === 0 ? VolumeX : playerVolume[0] < 0.5 ? Volume1 : Volume2" class="cursor-pointer" @click="() => playerVolume = [playerVolume[0] === 0 ? 0.5 : 0]" />
             </div>
             <HoverCard v-if="subtitles && subtitles.length > 0" v-model:open="isHoveringTracks">
               <HoverCardTrigger as-child>
@@ -438,16 +470,18 @@ onUnmounted(() => {
                     @click="() => router.push({ path: `/watch/${episode.id}`, replace: true })"
                   >
                     <span>{{ episode.episode_number }}. {{ episode.title }}</span>
-                    <div class="flex gap-4">
+                    <div class="flex gap-4 items-start">
                       <TMDBImage
                         v-if="episode.still_path"
                         :image="episode.still_path"
                         :alt="episode.title"
                         type="still"
                         size="w300"
-                        class="w-48 h-auto object-cover"
+                        class="w-48 h-auto object-cover flex-shrink-0"
                       />
-                      <span>{{ episode.overview }}</span>
+                      <span class="flex-1">
+                        {{ episode.overview }}
+                      </span>
                     </div>
                   </div>
                 </ScrollArea>

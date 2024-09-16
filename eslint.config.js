@@ -24,7 +24,7 @@ export default [
       }
     }
   },
-  ...vueI18n.configs['recommended'],
+  ...vueI18n.configs["flat/base"],
   {
     rules: {
       '@intlify/vue-i18n/no-dynamic-keys': 'error',
@@ -54,7 +54,7 @@ export default [
         },
       ],
     },
-    settins: {
+    settings: {
       'vue-i18n': {
         localeDir: './src/translations/*.ts',
         messageSyntaxVersion: '^9.0.0',

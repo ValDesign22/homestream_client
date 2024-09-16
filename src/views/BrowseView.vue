@@ -120,10 +120,7 @@ async function selectRandomTopRated(store: Record<string, IMovie[] | ITvShow[]>,
   const previewVideoKey = await fetch(`${http_server}/preview?id=${randomItem.id}`, {
     method: 'GET',
   });
-  if (previewVideoKey.ok) {
-    const response = await previewVideoKey.text();
-    videoKey.value = response || '';
-  }
+  if (previewVideoKey.ok) videoKey.value = await previewVideoKey.text() || '';
 
   return randomItem;
 }
@@ -173,8 +170,14 @@ const gamepadInterval = setInterval(() => {
     currentIndex = currentIndex === focusableElements.length - 1 ? 0 : currentIndex + 1;
     (focusableElements[currentIndex] as HTMLElement).focus();
   }
-  if (gamepad.value.axes[3] < -0.5) window.scrollBy(0, -100);
-  if (gamepad.value.axes[3] > 0.5) window.scrollBy(0, 100);
+  if (gamepad.value.axes[3] < -0.5) window.scrollBy({
+    top: -100,
+    behavior: 'smooth',
+  });
+  if (gamepad.value.axes[3] > 0.5) window.scrollBy({
+    top: 100,
+    behavior: 'smooth',
+  });
   if (gamepad.value.buttons[0].pressed) (focusedElement as HTMLElement).click();
 }, 200);
 
