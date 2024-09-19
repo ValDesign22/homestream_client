@@ -364,10 +364,10 @@ onUnmounted(() => {
       </video>
     </div>
     <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 transition-colors" :class="{ 'bg-background/25': showControls }">
-      <div v-if="showControls" class="flex">
+      <div v-show="showControls" class="flex">
         <ChevronLeft class="cursor-pointer" @click="router.go(-1)" />
       </div>
-      <div v-if="!playing" class="flex flex-col gap-4">
+      <div v-show="!playing" class="flex flex-col gap-4">
         <TMDBImage
           v-if="movieLogo"
           :image="movieLogo"
@@ -389,7 +389,7 @@ onUnmounted(() => {
           }}
         </h2>
       </div>
-      <div v-if="showControls" ref="controlsBox" class="flex flex-col gap-4">
+      <div v-show="showControls" ref="controlsBox" class="flex flex-col gap-4">
         <div v-if="tvShow" class="flex justify-end">
           <Button v-if="nextEpisode && isEnding" @click="nextVideo">
             <span>{{ $t('pages.watch.next') }}</span>

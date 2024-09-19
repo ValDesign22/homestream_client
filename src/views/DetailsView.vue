@@ -255,7 +255,7 @@ onUnmounted(() => clearInterval(interval));
             <span v-if="lastWatchedItem && progressItem && progressItem.id === item.id && progressItem.progress > 0">{{ $t('pages.details.continue') }}</span>
             <span v-else>{{ $t('pages.details.watch') }}</span>
           </Button>
-          <span v-if="lastWatchedItem && progressItem && progressItem.id === item.id && progressItem.progress > 0">{{ $t('pages.details.time_left', { time: lastWatchedItem.runtime - (lastWatchedItem.runtime * progressItem.progress / 100) }) }}</span>
+          <span v-if="lastWatchedItem && progressItem && progressItem.id === item.id && progressItem.progress > 0">{{ $t('pages.details.time_left', { time: Math.floor(lastWatchedItem.runtime - (lastWatchedItem.runtime * progressItem.progress / 100)) }) }}</span>
           <span v-else>{{ $t('pages.details.runtime', { runtime: videoItem!.runtime }) }}</span>
           <TooltipProvider>
             <Tooltip>
@@ -295,9 +295,9 @@ onUnmounted(() => clearInterval(interval));
             </DropdownMenuTrigger>
           </DropdownMenu>
         </div>
-        <div v-if="videoItem" class="flex gap-4 items-center max-w-2xl">
+        <div v-if="videoItem && lastWatchedItem && progressItem" class="flex gap-4 items-center max-w-2xl">
           <Progress
-            v-if="lastWatchedItem && progressItem && progressItem.id === item.id && progressItem.progress > 0"
+            v-if="progressItem.id === item.id && progressItem.progress > 0"
             class="h-2"
             :modelValue="progressItem.progress"
           />

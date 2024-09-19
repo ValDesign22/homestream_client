@@ -40,7 +40,7 @@ const searchContent = ref<string>(route.query.q as string || '');
 const { isSupported, gamepads } = useGamepad();
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
 
-const toggleSettings = () => {
+const toggleSettingsMenu = () => {
   settingsOpened.value = !settingsOpened.value;
 };
 
@@ -123,7 +123,7 @@ onUnmounted(() => clearInterval(gamepadInterval));
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem class="cursor-pointer" @click="(props.toggleSettings || toggleSettings)()">
+            <DropdownMenuItem class="cursor-pointer" @click="(props.toggleSettings || toggleSettingsMenu)()">
               <Settings class="mr-2 h-4 w-4" />
               <span>{{ $t('components.navbar.settings') }}</span>
             </DropdownMenuItem>
@@ -132,5 +132,5 @@ onUnmounted(() => clearInterval(gamepadInterval));
       </DropdownMenu>
     </div>
   </nav>
-  <SettingsMenu v-if="props.full" :opened="settingsOpened" :toggleSettings="toggleSettings" />
+  <SettingsMenu v-if="props.full" :opened="settingsOpened" :toggleSettings="props.toggleSettings || toggleSettingsMenu" />
 </template>
