@@ -49,7 +49,7 @@ async function onSubmit(values: GenericObject) {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(newProfile)
+    body: JSON.stringify({ newProfile: newProfile }),
   });
 
   if (res.ok) profiles.value.push(newProfile);

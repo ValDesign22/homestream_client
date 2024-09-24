@@ -13,7 +13,7 @@ const patchProfile = async (profile: IProfile) => {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(profile),
+    body: JSON.stringify({ updatedProfile: profile }),
   });
 
   return res.ok;
