@@ -357,7 +357,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-screen h-screen flex flex-col justify-center items-center relative overflow-hidden" :class="{ 'cursor-none': !showControls }">
+  <div class="w-screen h-screen flex flex-col justify-center items-center relative overflow-hidden bg-black" :class="{ 'cursor-none': !showControls }">
     <div class="w-full">
       <video ref="videoElem" class="w-screen h-screen">
         <source ref="sourceElem" type="video/mp4" />

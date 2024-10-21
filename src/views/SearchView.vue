@@ -51,25 +51,27 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <NavBar full />
-  <div class="flex flex-col py-24 px-4">
-    <h1 v-if="results.length === 0" class="text-2xl">
-      {{ $t('pages.search.noResults', { query: route.query.q }) }}
-    </h1>
-    <div v-else class="flex flex-col gap-4">
-      <h1 class="text-2xl">
-        {{ $t('pages.search.results', { query: route.query.q }) }}
+  <div>
+    <NavBar full />
+    <div class="flex flex-col py-24 px-4">
+      <h1 v-if="results.length === 0" class="text-2xl">
+        {{ $t('pages.search.noResults', { query: route.query.q }) }}
       </h1>
-      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-4">
-        <div v-for="result in results" :key="result.id" class="overflow-hidden rounded-lg shadow-lg">
-          <TMDBImage
-            :image="result.poster_path"
-            :alt="result.title"
-            type="poster"
-            size="w500"
-            class="rounded-lg object-cover hover:scale-105 transition-transform cursor-pointer"
-            @click="() => $router.push({ path: `/details/${result.id}` })"
-          />
+      <div v-else class="flex flex-col gap-4">
+        <h1 class="text-2xl">
+          {{ $t('pages.search.results', { query: route.query.q }) }}
+        </h1>
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-4">
+          <div v-for="result in results" :key="result.id" class="overflow-hidden rounded-lg shadow-lg">
+            <TMDBImage
+              :image="result.poster_path"
+              :alt="result.title"
+              type="poster"
+              size="w500"
+              class="rounded-lg object-cover hover:scale-105 transition-transform cursor-pointer"
+              @click="() => $router.push({ path: `/details/${result.id}` })"
+            />
+          </div>
         </div>
       </div>
     </div>

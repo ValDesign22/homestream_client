@@ -197,239 +197,241 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <NavBar full />
-  <div
-    ref="videoPlayer"
-    tabindex="-1"
-    class="w-full h-screen absolute top-0 left-0"
-    :class="{ 'z-10': videoPlaying && !videoError, 'z-0': !videoPlaying || videoError }"
-  />
-  <div class="flex flex-col justify-center">
-    <div v-if="Object.keys(stores).length === 0" class="w-full h-auto">
-      <div v-for="(_, index) in 10" :key="index" class="flex flex-col gap-8 py-4 px-16">
-        <div class="w-full h-auto flex flex-col gap-4">
-          <Carousel class="relative w-full" :opts="{ align: 'start' }">
-            <CarouselContent>
-              <CarouselItem v-for="(_, index) in 25" :key="index" class="flex-grow basis-auto">
-                <div class="p-1 overflow-hidden rounded-lg">
-                  <Skeleton class="w-[185px] h-[278px] rounded-lg" />
-                </div>
-              </CarouselItem>
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-        </div>
-      </div>
-    </div>
-    <div v-else class="w-full h-auto">
-      <div v-if="randomSelected" class="w-full h-screen relative" v-intersection-observer="onIntersectionObserver">
-        <TMDBImage
-          :image="randomSelected.backdrop_path"
-          :alt="randomSelected.id.toString()"
-          type="backdrop"
-          size="original"
-          class="w-full h-full object-center object-cover relative"
-          :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
-        />
-        <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-tr from-background from-10% to-transparent">
-          <TMDBImage
-            v-if="randomSelected.logo_path"
-            :image="randomSelected.logo_path"
-            :alt="randomSelected.id.toString()"
-            type="logo"
-            size="original"
-            class="w-[20vw] h-auto object-cover"
-          />
-          <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ randomSelected.title }}</h2>
-          <span v-if="randomSelected.overview.length" class="max-w-2xl" @click="showFullOverview = !showFullOverview">
-            {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
-          </span>
-          <div class="flex gap-4">
-            <Button tabindex="0" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}` })">
-              <PlayIcon class="w-6 h-6" />
-              <span>
-                {{ $t('pages.browse.watch') }}
-              </span>
-            </Button>
-            <Button tabindex="0" variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}` })">
-              <InfoIcon class="w-6 h-6" />
-              <span>
-                {{ $t('pages.browse.details') }}
-              </span>
-            </Button>
+  <div>
+    <NavBar full />
+    <div
+      ref="videoPlayer"
+      tabindex="-1"
+      class="w-full h-screen absolute top-0 left-0"
+      :class="{ 'z-10': videoPlaying && !videoError, 'z-0': !videoPlaying || videoError }"
+    />
+    <div class="flex flex-col justify-center">
+      <div v-if="Object.keys(stores).length === 0" class="w-full h-auto">
+        <div v-for="(_, index) in 10" :key="index" class="flex flex-col gap-8 py-4 px-16">
+          <div class="w-full h-auto flex flex-col gap-4">
+            <Carousel class="relative w-full" :opts="{ align: 'start' }">
+              <CarouselContent>
+                <CarouselItem v-for="(_, index) in 25" :key="index" class="flex-grow basis-auto">
+                  <div class="p-1 overflow-hidden rounded-lg">
+                    <Skeleton class="w-[185px] h-[278px] rounded-lg" />
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
           </div>
         </div>
       </div>
-      <div class="flex flex-col gap-8 py-4 px-16">
-        <div v-if="user && history.length !== 0" class="w-full h-auto flex flex-col gap-4">
-          <h3 class="text-2xl font-bold">
-            {{ $t('pages.browse.continue') }}
-          </h3>
-          <Carousel
-            tabindex="-1"
-            class="relative w-full"
-            :opts="{
-              align: 'start',
-            }"
-          >
-            <CarouselContent>
-              <CarouselItem
-                v-for="item in history"
-                :key="item.id"
-                class="flex-grow basis-auto"
-              >
-                <div class="p-1 overflow-hidden rounded-lg">
-                  <TMDBImage
-                    tabindex="0"
-                    :image="item.poster_path"
-                    :alt="item.id.toString()"
-                    type="poster"
-                    size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}` })"
-                  />
-                </div>
-              </CarouselItem>
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+      <div v-else class="w-full h-auto">
+        <div v-if="randomSelected" class="w-full h-screen relative" v-intersection-observer="onIntersectionObserver">
+          <TMDBImage
+            :image="randomSelected.backdrop_path"
+            :alt="randomSelected.id.toString()"
+            type="backdrop"
+            size="original"
+            class="w-full h-full object-center object-cover relative"
+            :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
+          />
+          <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-tr from-background from-10% to-transparent">
+            <TMDBImage
+              v-if="randomSelected.logo_path"
+              :image="randomSelected.logo_path"
+              :alt="randomSelected.id.toString()"
+              type="logo"
+              size="original"
+              class="w-[20vw] h-auto object-cover"
+            />
+            <h2 v-else class="text-4xl font-bold sm:text-3xl">{{ randomSelected.title }}</h2>
+            <span v-if="randomSelected.overview.length" class="max-w-2xl" @click="showFullOverview = !showFullOverview">
+              {{ showFullOverview ? randomSelected.overview : randomSelected.overview.split(' ').slice(0, isMobile ? 10 : 50).join(' ') + '...' }}
+            </span>
+            <div class="flex gap-4">
+              <Button tabindex="0" class="flex items-center gap-2" @click="() => $router.push({ path: `/watch/${randomSelected!.id}` })">
+                <PlayIcon class="w-6 h-6" />
+                <span>
+                  {{ $t('pages.browse.watch') }}
+                </span>
+              </Button>
+              <Button tabindex="0" variant="secondary" class="flex items-center gap-2" @click="() => $router.push({ path: `/details/${randomSelected!.id}` })">
+                <InfoIcon class="w-6 h-6" />
+                <span>
+                  {{ $t('pages.browse.details') }}
+                </span>
+              </Button>
+            </div>
+          </div>
         </div>
-        <div v-if="user && user.watchlist.length !== 0" class="w-full h-auto flex flex-col gap-4">
-          <h3 class="text-2xl font-bold">
-            {{ $t('pages.browse.watchlist') }}
-          </h3>
-          <Carousel
-            tabindex="-1"
-            class="relative w-full"
-            :opts="{ align: 'start' }"
+        <div class="flex flex-col gap-8 py-4 px-16">
+          <div v-if="user && history.length !== 0" class="w-full h-auto flex flex-col gap-4">
+            <h3 class="text-2xl font-bold">
+              {{ $t('pages.browse.continue') }}
+            </h3>
+            <Carousel
+              tabindex="-1"
+              class="relative w-full"
+              :opts="{
+                align: 'start',
+              }"
+            >
+              <CarouselContent>
+                <CarouselItem
+                  v-for="item in history"
+                  :key="item.id"
+                  class="flex-grow basis-auto"
+                >
+                  <div class="p-1 overflow-hidden rounded-lg">
+                    <TMDBImage
+                      tabindex="0"
+                      :image="item.poster_path"
+                      :alt="item.id.toString()"
+                      type="poster"
+                      size="w185"
+                      class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                      @click="() => $router.push({ path: `/details/${item.id}` })"
+                    />
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+          <div v-if="user && user.watchlist.length !== 0" class="w-full h-auto flex flex-col gap-4">
+            <h3 class="text-2xl font-bold">
+              {{ $t('pages.browse.watchlist') }}
+            </h3>
+            <Carousel
+              tabindex="-1"
+              class="relative w-full"
+              :opts="{ align: 'start' }"
+            >
+              <CarouselContent>
+                <CarouselItem
+                  v-for="item in user.watchlist"
+                  :key="item.id"
+                  class="flex-grow basis-auto"
+                >
+                  <div class="p-1 overflow-hidden rounded-lg">
+                    <TMDBImage
+                      tabindex="0"
+                      :image="item.poster_path"
+                      :alt="item.id.toString()"
+                      type="poster"
+                      size="w185"
+                      class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                      @click="() => $router.push({ path: `/details/${item.id}` })"
+                    />
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+          <div v-if="user && user.favorites.length !== 0" class="w-full h-auto flex flex-col gap-4">
+            <h3 class="text-2xl font-bold">
+              {{ $t('pages.browse.favorites') }}
+            </h3>
+            <Carousel
+              tabindex="-1"
+              class="relative w-full"
+              :opts="{ align: 'start' }"
+            >
+              <CarouselContent>
+                <CarouselItem
+                  v-for="item in user.favorites"
+                  :key="item.id"
+                  class="flex-grow basis-auto"
+                >
+                  <div class="p-1 overflow-hidden rounded-lg">
+                    <TMDBImage
+                      tabindex="0"
+                      :image="item.poster_path"
+                      :alt="item.id.toString()"
+                      type="poster"
+                      size="w185"
+                      class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                      @click="() => $router.push({ path: `/details/${item.id}` })"
+                    />
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+          <div
+            v-for="(store, key) in stores"
+            :key="key"
+            class="w-full h-auto flex flex-col gap-4"
           >
-            <CarouselContent>
-              <CarouselItem
-                v-for="item in user.watchlist"
-                :key="item.id"
-                class="flex-grow basis-auto"
-              >
-                <div class="p-1 overflow-hidden rounded-lg">
-                  <TMDBImage
-                    tabindex="0"
-                    :image="item.poster_path"
-                    :alt="item.id.toString()"
-                    type="poster"
-                    size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}` })"
-                  />
-                </div>
-              </CarouselItem>
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-        </div>
-        <div v-if="user && user.favorites.length !== 0" class="w-full h-auto flex flex-col gap-4">
-          <h3 class="text-2xl font-bold">
-            {{ $t('pages.browse.favorites') }}
-          </h3>
-          <Carousel
-            tabindex="-1"
-            class="relative w-full"
-            :opts="{ align: 'start' }"
+            <h3 class="text-2xl font-bold">{{ key }}</h3>
+            <Carousel
+              tabindex="-1"
+              class="relative w-full"
+              :opts="{
+                align: 'start',
+              }"
+            >
+              <CarouselContent>
+                <CarouselItem
+                  v-for="item in store.slice(0, 25)"
+                  :key="item.id"
+                  class="flex-grow basis-auto"
+                >
+                  <div class="p-1 overflow-hidden rounded-lg">
+                    <TMDBImage
+                      tabindex="0"
+                      :image="item.poster_path"
+                      :alt="item.id.toString()"
+                      type="poster"
+                      size="w185"
+                      class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                      @click="() => $router.push({ path: `/details/${item.id}` })"
+                    />
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+          <div v-for="(genre, key) in genres"
+            :key="key"
+            class="w-full h-auto flex flex-col gap-4"
           >
-            <CarouselContent>
-              <CarouselItem
-                v-for="item in user.favorites"
-                :key="item.id"
-                class="flex-grow basis-auto"
-              >
-                <div class="p-1 overflow-hidden rounded-lg">
-                  <TMDBImage
-                    tabindex="0"
-                    :image="item.poster_path"
-                    :alt="item.id.toString()"
-                    type="poster"
-                    size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}` })"
-                  />
-                </div>
-              </CarouselItem>
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-        </div>
-        <div
-          v-for="(store, key) in stores"
-          :key="key"
-          class="w-full h-auto flex flex-col gap-4"
-        >
-          <h3 class="text-2xl font-bold">{{ key }}</h3>
-          <Carousel
-            tabindex="-1"
-            class="relative w-full"
-            :opts="{
-              align: 'start',
-            }"
-          >
-            <CarouselContent>
-              <CarouselItem
-                v-for="item in store.slice(0, 25)"
-                :key="item.id"
-                class="flex-grow basis-auto"
-              >
-                <div class="p-1 overflow-hidden rounded-lg">
-                  <TMDBImage
-                    tabindex="0"
-                    :image="item.poster_path"
-                    :alt="item.id.toString()"
-                    type="poster"
-                    size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}` })"
-                  />
-                </div>
-              </CarouselItem>
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-        </div>
-        <div v-for="(genre, key) in genres"
-          :key="key"
-          class="w-full h-auto flex flex-col gap-4"
-        >
-          <h2 class="text-2xl font-bold">{{ genre.name }}</h2>
-          <Carousel
-            tabindex="-1"
-            class="relative w-full"
-            :opts="{
-              align: 'start',
-            }"
-          >
-            <CarouselContent>
-              <CarouselItem
-                v-for="item in genre.items.slice(0, 25)"
-                :key="item.id"
-                class="flex-grow basis-auto"
-              >
-                <div class="p-1 overflow-hidden rounded-lg">
-                  <TMDBImage
-                    tabindex="0"
-                    :image="item.poster_path"
-                    :alt="item.id.toString()"
-                    type="poster"
-                    size="w185"
-                    class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
-                    @click="() => $router.push({ path: `/details/${item.id}` })"
-                  />
-                </div>
-              </CarouselItem>
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+            <h2 class="text-2xl font-bold">{{ genre.name }}</h2>
+            <Carousel
+              tabindex="-1"
+              class="relative w-full"
+              :opts="{
+                align: 'start',
+              }"
+            >
+              <CarouselContent>
+                <CarouselItem
+                  v-for="item in genre.items.slice(0, 25)"
+                  :key="item.id"
+                  class="flex-grow basis-auto"
+                >
+                  <div class="p-1 overflow-hidden rounded-lg">
+                    <TMDBImage
+                      tabindex="0"
+                      :image="item.poster_path"
+                      :alt="item.id.toString()"
+                      type="poster"
+                      size="w185"
+                      class="w-full h-auto object-cover rounded-lg cursor-pointer hover:scale-105 transition-transform"
+                      @click="() => $router.push({ path: `/details/${item.id}` })"
+                    />
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
         </div>
       </div>
     </div>

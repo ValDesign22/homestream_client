@@ -34,4 +34,19 @@ const router = createRouter({
   ]
 });
 
+router.afterEach((to, from) => {
+  if (from.path === '/' && to.path === '/browse') {
+    to.meta.transition = 'center';
+  }
+  if (from.path === '/browse' && to.path === '/') {
+    to.meta.transition = 'center';
+  }
+  if (from.path === '/browse' && to.path === '/details') {
+    to.meta.transition = 'center';
+  }
+  if ((from.path === '/browse' || from.path === '/details') && to.path === '/watch') {
+    to.meta.transition = 'scale';
+  }
+});
+
 export default router;

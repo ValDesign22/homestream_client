@@ -47,36 +47,38 @@ onMounted(async () => {
 </script>
 
 <template>
-  <NavBar :toggleSettings="toggleSettings" />
-  <div class="flex flex-col items-center justify-center h-screen gap-4">
-    <h2 class="text-2xl font-bold">
-      {{ $t('pages.home.selectProfile') }}
-    </h2>
-    <div class="flex flex-col items-center gap-2">
-      <span v-if="profiles.length === 0">
-        {{ $t('pages.home.noProfiles') }}
-      </span>
-      <div v-else class="flex justify-center flex-wrap gap-2">
-        <div v-for="profile in profiles" :key="profile.id" class="flex flex-col items-center gap-2 p-4 cursor-pointer rounded-lg hover:shadow-lg hover:bg-accent transition-colors" @click="() => selectProfile(profile)">
-          <Avatar size="lg" shape="square">
-            <AvatarImage :src="`https://avatar.vercel.sh/${profile.name}?size=128`" />
-            <AvatarFallback>{{ profile.name[0] }}</AvatarFallback>
-          </Avatar>
-          <span>{{ profile.name }}</span>
+  <div>
+    <NavBar :toggleSettings="toggleSettings" />
+    <div class="flex flex-col items-center justify-center h-screen gap-4">
+      <h2 class="text-2xl font-bold">
+        {{ $t('pages.home.selectProfile') }}
+      </h2>
+      <div class="flex flex-col items-center gap-2">
+        <span v-if="profiles.length === 0">
+          {{ $t('pages.home.noProfiles') }}
+        </span>
+        <div v-else class="flex justify-center flex-wrap gap-2">
+          <div v-for="profile in profiles" :key="profile.id" class="flex flex-col items-center gap-2 p-4 cursor-pointer rounded-lg hover:shadow-lg hover:bg-accent transition-colors" @click="() => selectProfile(profile)">
+            <Avatar size="lg" shape="square">
+              <AvatarImage :src="`https://avatar.vercel.sh/${profile.name}?size=128`" />
+              <AvatarFallback>{{ profile.name[0] }}</AvatarFallback>
+            </Avatar>
+            <span>{{ profile.name }}</span>
+          </div>
         </div>
       </div>
+      <div class="flex flex-col items-center gap-4">
+        <Button variant="outline" @click="() => $router.push({ path: '/profiles' })">
+          {{ $t('pages.home.manageProfiles') }}
+        </Button>
+      </div>
     </div>
-    <div class="flex flex-col items-center gap-4">
-      <Button variant="outline" @click="() => $router.push({ path: '/profiles' })">
-        {{ $t('pages.home.manageProfiles') }}
-      </Button>
+    <div class="absolute bottom-0 right-0 flex items-center justify-between w-full p-4">
+      <Settings class="cursor-pointer w-6 h-6" @click="toggleSettings" />
+      <span v-if="version" class="text-sm text-gray-500">
+        {{ $t('app.footerVersion', { version }) }}
+      </span>
     </div>
+    <SettingsMenu :opened="settingsOpened" :toggleSettings="toggleSettings" />
   </div>
-  <div class="absolute bottom-0 right-0 flex items-center justify-between w-full p-4">
-    <Settings class="cursor-pointer w-6 h-6" @click="toggleSettings" />
-    <span v-if="version" class="text-sm text-gray-500">
-      {{ $t('app.footerVersion', { version }) }}
-    </span>
-  </div>
-  <SettingsMenu :opened="settingsOpened" :toggleSettings="toggleSettings" />
 </template>

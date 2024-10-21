@@ -24,5 +24,9 @@ onBeforeMount(async () => {
 </script>
 
 <template>
-  <RouterView />
+  <RouterView v-slot="{ Component, route }">
+    <Transition :name="(route.meta.transition || 'scale') as string" mode="out-in">
+      <component :is="Component" />
+    </Transition>
+  </RouterView>
 </template>
