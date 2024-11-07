@@ -79,6 +79,10 @@ export default {
       next: 'Next episode',
       track_none: 'None'
     },
+    offline: {
+      title: 'No connection',
+      description: 'It seems you are offline. Please check your internet connection and try again.',
+    }
   },
   settings: {
     title: 'Settings',

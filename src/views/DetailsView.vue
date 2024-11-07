@@ -11,12 +11,9 @@ import useStore from '@/lib/stores';
 import getRecommendations from '@/utils/recommendations';
 import { IConfig, IEpisode, IMovie, IProfile, ITvShow } from '@/utils/types';
 import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { fetch } from '@tauri-apps/plugin-http';
-import { PlayerState, usePlayer } from '@vue-youtube/core';
 import { EllipsisVertical, PlayIcon, SquareCheck, SquarePlus, Star, StarOff } from 'lucide-vue-next';
 import { watch } from 'vue';
-import { onUnmounted } from 'vue';
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -40,14 +37,7 @@ const recommendations = ref<(IMovie | ITvShow)[]>([]);
 
 const currentSeason = ref<string>("0");
 
-const windowFocused = ref(true);
-const headerVisible = ref(true);
 const showFullOverview = ref(false);
-
-const videoKey = ref<string>('');
-const videoPlayer = ref();
-const videoPlaying = ref(false);
-const videoError = ref(false);
 
 const calculateProgress = (id: number, duration: number) => {
   if (!profile.value) return 0;
@@ -89,56 +79,6 @@ const getProgress = (): number => {
   }
   return 0;
 };
-
-const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
-  playerVars: {
-    autoplay: 1,
-    controls: 0,
-    iv_load_policy: 3,
-    rel: 0,
-    showinfo: 0,
-    modestbranding: 1,
-    loop: 0,
-  }
-});
-
-onError((event) => {
-  console.error('An error occurred while playing the video', event.data)
-  videoPlaying.value = false;
-  videoError.value = true;
-});
-
-onStateChange((event) => {
-  if (videoKey.value === '') return;
-  if (videoError.value) return;
-  if (event.data === PlayerState.PLAYING) videoPlaying.value = true;
-  if (event.data === PlayerState.ENDED) {
-    videoPlaying.value = false;
-    videoKey.value = '';
-  };
-  if (event.data === PlayerState.UNSTARTED) videoPlaying.value = false;
-});
-
-onReady((event) => {
-  if (!event.target) return;
-  if (videoKey.value === '') return;
-  if (videoError.value) return;
-  event.target.playVideo();
-  videoPlaying.value = true;
-});
-
-const interval = setInterval(async () => {
-  windowFocused.value = isMobile ? document.visibilityState === 'visible' : await getCurrentWindow().isFocused()
-  if (videoKey.value === '' || videoError.value || !instance.value) return videoPlaying.value = false;
-  if (!instance.value?.getDuration) return videoPlaying.value = false;
-  if (!windowFocused.value || !headerVisible.value) {
-    instance.value.pauseVideo();
-    videoPlaying.value = false;
-  } else {
-    instance.value.playVideo();
-    videoPlaying.value = true;
-  }
-}, 1000);
 
 const loadData = async () => {
   void store.$tauri.start();
@@ -187,11 +127,6 @@ const loadData = async () => {
 
         const recommendationsResponse = await getRecommendations(item.value);
         recommendations.value = recommendationsResponse;
-
-        const previewVideoKey = await fetch(`${config.http_server}/preview?id=${item.value.id}`, {
-          method: 'GET',
-        });
-        if (previewVideoKey.ok) videoKey.value = await previewVideoKey.text() || '';
       }
       else router.push({ path: '/browse' });
     }
@@ -215,18 +150,11 @@ watch(isInWatchlist, async () => {
   if (isInWatchlist.value) store.addToWatchlist(item.value);
   else store.removeFromWatchlist(item.value);
 });
-
-onUnmounted(() => clearInterval(interval));
 </script>
 
 <template>
   <div>
     <NavBar full />
-    <div
-      ref="videoPlayer"
-      class="w-full h-screen object-cover absolute top-0 left-0"
-      :class="{ 'z-10': videoPlaying && !videoError, 'z-0': !videoPlaying || videoError }"
-    />
     <div v-if="item" class="w-full h-auto">
       <div class="w-full h-screen relative">
         <TMDBImage
@@ -234,8 +162,7 @@ onUnmounted(() => clearInterval(interval));
           :alt="item.title"
           type="backdrop"
           size="original"
-          class="w-full h-full object-center object-cover relative"
-          :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
+          class="w-full h-full object-center object-cover relative z-10"
         />
         <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-tr from-background from-10% to-transparent">
           <TMDBImage
@@ -257,7 +184,7 @@ onUnmounted(() => clearInterval(interval));
               <span v-else>{{ $t('pages.details.watch') }}</span>
             </Button>
             <span v-if="lastWatchedItem && progressItem && progressItem.id === item.id && progressItem.progress > 0">{{ $t('pages.details.time_left', { time: Math.floor(lastWatchedItem.runtime - (lastWatchedItem.runtime * progressItem.progress / 100)) }) }}</span>
-            <span v-else>{{ $t('pages.details.runtime', { runtime: videoItem!.runtime }) }}</span>
+            <span v-else>{{ $t('pages.details.runtime', { runtime: videoItem?.runtime ?? 0 }) }}</span>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger as-child>

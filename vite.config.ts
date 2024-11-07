@@ -1,13 +1,13 @@
 import path from "node:path";
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
-import { internalIpV4Sync } from "internal-ip";
 import tailwind from "tailwindcss";
 import autoprefixer from "autoprefixer";
 
-const mobile = !!/android|ios/.exec(process.env.TAURI_ENV_PLATFORM);
+const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig(async () => ({
+  clearScreen: false,
   css: {
     postcss: {
       plugins: [tailwind(), autoprefixer()],
@@ -19,16 +19,15 @@ export default defineConfig(async () => ({
       "@": path.resolve(__dirname, "src"),
     },
   },
-  clearScreen: false,
   server: {
     port: 1420,
     strictPort: true,
-    host: mobile ? "0.0.0.0" : false,
-    hmr: mobile
+    host: host || false,
+    hmr: host
       ? {
         protocol: "ws",
-        host: internalIpV4Sync(),
-        port: 1430,
+        host,
+        port: 1421,
       }
       : undefined,
     watch: {

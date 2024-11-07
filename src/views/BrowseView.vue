@@ -9,10 +9,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { fetch } from '@tauri-apps/plugin-http';
 import { InfoIcon, PlayIcon } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { onUnmounted } from 'vue';
-import { vIntersectionObserver } from '@vueuse/components'
-import { PlayerState, usePlayer } from '@vue-youtube/core';
 import useStore from '@/lib/stores';
 import { getMovieFromId, getTvShowFromEpisode } from '@/utils/video';
 import { useGamepad } from '@vueuse/core';
@@ -27,58 +24,10 @@ const genres = ref<IGenre[]>([]);
 const randomSelected = ref<IMovie | ITvShow | null>(null);
 const history = ref<(IMovie | ITvShow)[]>([]);
 
-const windowFocused = ref(true);
-const headerVisible = ref(true);
 const showFullOverview = ref(false);
-
-const videoKey = ref<string>('');
-const videoPlayer = ref();
-const videoPlaying = ref(false);
-const videoError = ref(false);
 
 const { isSupported, gamepads } = useGamepad();
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'));
-
-const { instance, onError, onStateChange, onReady } =  usePlayer(videoKey, videoPlayer, {
-  playerVars: {
-    autoplay: 1,
-    controls: 0,
-    iv_load_policy: 3,
-    rel: 0,
-    showinfo: 0,
-    modestbranding: 1,
-    loop: 0,
-  }
-});
-
-onError((event) => {
-  console.error('An error occurred while playing the video', event.data)
-  videoPlaying.value = false;
-  videoError.value = true;
-});
-
-onStateChange((event) => {
-  if (videoKey.value === '') return;
-  if (videoError.value) return;
-  if (event.data === PlayerState.PLAYING) videoPlaying.value = true;
-  if (event.data === PlayerState.ENDED) {
-    videoPlaying.value = false
-    videoKey.value = '';
-  };
-  if (event.data === PlayerState.UNSTARTED) videoPlaying.value = false;
-});
-
-onReady((event) => {
-  if (!event.target) return;
-  if (videoKey.value === '') return;
-  if (videoError.value) return;
-  event.target.playVideo();
-  videoPlaying.value = true;
-});
-
-function onIntersectionObserver([{ isIntersecting }]: IntersectionObserverEntry[]) {
-  headerVisible.value = isIntersecting
-}
 
 async function fetchStores(http_server: string) {
   if (!http_server) return;
@@ -91,7 +40,7 @@ async function fetchStores(http_server: string) {
   else {
     stores.value = await response.json();
     genres.value = getGenres(stores.value);
-    randomSelected.value = await selectRandomTopRated(stores.value, http_server);
+    randomSelected.value = await selectRandomTopRated(stores.value);
   }
 }
 
@@ -111,16 +60,11 @@ function getGenres(stores: Record<string, IMovie[] | ITvShow[]>) {
   return genres;
 }
 
-async function selectRandomTopRated(store: Record<string, IMovie[] | ITvShow[]>, http_server: string): Promise<IMovie | ITvShow> {
+async function selectRandomTopRated(store: Record<string, IMovie[] | ITvShow[]>): Promise<IMovie | ITvShow> {
   const keys = Object.keys(store);
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
   const randomStore = store[randomKey];
   const randomItem = randomStore[Math.floor(Math.random() * randomStore.length)];
-  
-  const previewVideoKey = await fetch(`${http_server}/preview?id=${randomItem.id}`, {
-    method: 'GET',
-  });
-  if (previewVideoKey.ok) videoKey.value = await previewVideoKey.text() || '';
 
   return randomItem;
 }
@@ -141,19 +85,6 @@ async function parseHistory() {
       }
     });
 }
-
-const interval = setInterval(async () => {
-  windowFocused.value = isMobile ? document.visibilityState === 'visible' : await getCurrentWindow().isFocused();
-  if (videoKey.value === '' || videoError.value || !instance.value) return videoPlaying.value = false;
-  if (!instance.value?.getDuration) return videoPlaying.value = false;
-  if (!windowFocused.value || !headerVisible.value) {
-    instance.value.pauseVideo();
-    videoPlaying.value = false;
-  } else {
-    instance.value.playVideo();
-    videoPlaying.value = true;
-  }
-}, 1000);
 
 const gamepadInterval = setInterval(() => {
   if (!isSupported.value) return;
@@ -191,7 +122,6 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  clearInterval(interval)
   clearInterval(gamepadInterval)
 });
 </script>
@@ -199,12 +129,6 @@ onUnmounted(() => {
 <template>
   <div>
     <NavBar full />
-    <div
-      ref="videoPlayer"
-      tabindex="-1"
-      class="w-full h-screen absolute top-0 left-0"
-      :class="{ 'z-10': videoPlaying && !videoError, 'z-0': !videoPlaying || videoError }"
-    />
     <div class="flex flex-col justify-center">
       <div v-if="Object.keys(stores).length === 0" class="w-full h-auto">
         <div v-for="(_, index) in 10" :key="index" class="flex flex-col gap-8 py-4 px-16">
@@ -224,14 +148,13 @@ onUnmounted(() => {
         </div>
       </div>
       <div v-else class="w-full h-auto">
-        <div v-if="randomSelected" class="w-full h-screen relative" v-intersection-observer="onIntersectionObserver">
+        <div v-if="randomSelected" class="w-full h-screen relative">
           <TMDBImage
             :image="randomSelected.backdrop_path"
             :alt="randomSelected.id.toString()"
             type="backdrop"
             size="original"
-            class="w-full h-full object-center object-cover relative"
-            :class="{ 'z-[11]': !videoPlaying || videoError, 'z-[-1]': videoPlaying && !videoError }"
+            class="w-full h-full object-center object-cover relative z-10"
           />
           <div class="absolute z-[12] bottom-0 left-0 w-full h-full flex justify-end flex-col p-12 gap-4 bg-gradient-to-tr from-background from-10% to-transparent">
             <TMDBImage

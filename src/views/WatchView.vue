@@ -363,7 +363,7 @@ onUnmounted(() => {
         <source ref="sourceElem" type="video/mp4" />
       </video>
     </div>
-    <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 transition-colors" :class="{ 'bg-background/25': showControls }">
+    <div v-if="videoItem" class="absolute top-0 left-0 w-full h-full flex flex-col justify-between p-8 transition-colors" :class="{ 'bg-background/25': showControls && !playing }">
       <div v-show="showControls" class="flex">
         <ChevronLeft class="cursor-pointer" @click="router.go(-1)" />
       </div>

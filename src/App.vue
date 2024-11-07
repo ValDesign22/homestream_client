@@ -5,12 +5,14 @@ import { useRouter } from "vue-router";
 import { IConfig } from "@/utils/types";
 import useStore from "./lib/stores";
 import { useI18n } from "vue-i18n";
-import { useColorMode } from "@vueuse/core";
+import { useColorMode, useOnline } from "@vueuse/core";
+import OfflineView from "./views/OfflineView.vue";
 
 const router = useRouter();
 const store = useStore();
 const i18n = useI18n();
 useColorMode();
+const online = useOnline();
 
 onMounted(() => {
   void store.$tauri.start();
@@ -26,7 +28,8 @@ onBeforeMount(async () => {
 <template>
   <RouterView v-slot="{ Component, route }">
     <Transition :name="(route.meta.transition || 'scale') as string" mode="out-in">
-      <component :is="Component" />
+      <component v-if="online" :is="Component" />
+      <OfflineView v-else />
     </Transition>
   </RouterView>
 </template>

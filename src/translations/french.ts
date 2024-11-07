@@ -79,6 +79,10 @@ export default {
       next: 'Épisode suivant',
       track_none: 'Aucun',
     },
+    offline: {
+      title: 'Hors ligne',
+      description: 'Il semble que vous êtes hors ligne. Veuillez vérifier votre connexion Internet et réessayer.',
+    }
   },
   settings: {
     title: 'Paramètres',
