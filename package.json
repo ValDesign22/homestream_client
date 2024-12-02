@@ -34,7 +34,7 @@
     "tauri-plugin-pinia": "^0.7.0",
     "vee-validate": "^4.14.6",
     "vue": "3.5.12",
-    "vue-i18n": "10.0.4",
+    "vue-i18n": "10.0.5",
     "vue-router": "^4.4.5",
     "zod": "^3.23.8"
   },
