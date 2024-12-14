@@ -41,7 +41,6 @@ onMounted(async () => {
       'Content-Type': 'application/json'
     }
   });
-  console.log(profilesRes);
   if (!profilesRes.ok) profiles.value = [];
   else profiles.value = await profilesRes.json();
 });
